@@ -56,32 +56,8 @@ $conn->close();
 
 <body>
 
-    <!-- SIDEBAR -->
-    <div class="sidebar" id="sidebar">
-        <img src="../assets/img/ITMSLOGO.jpg" class="logo">
-
-        <h2 class="sidebar-title">ITMS InvenTech</h2>
-
-        <a class="active">
-            <span class="icon">🏠</span>
-            <span class="text">Dashboard</span>
-        </a>
-
-        <a href="user_create.php">
-            <span class="icon">👤</span>
-            <span class="text">Users</span>
-        </a>
-
-        <a href="analytics.php">
-            <span class="icon">📊</span>
-            <span class="text">Analytics</span>
-        </a>
-
-        <a href="add_report.php">
-            <span class="icon">📝</span>
-            <span class="text">Add Reports</span>
-        </a>
-    </div>
+    <!-- Side Bar -->
+    <?php include 'superadmin_sidebar.php'; ?>
 
     <!-- TOP NAVBAR -->
     <div class="topbar">
@@ -89,9 +65,9 @@ $conn->close();
             <button class="hamburger">&#9776;</button>
         </div>
         <div class="right">
-          <span class="username">
-        <?= htmlspecialchars($_SESSION['user']['username'] ?? '') ?>
-    </span>
+            <span class="username">
+                <?= htmlspecialchars($_SESSION['user']['username'] ?? '') ?>
+            </span>
 
             <img src="avatar.png" class="profile-pic">
         </div>
@@ -110,7 +86,7 @@ $conn->close();
                     <div class="card" onclick="openModal('<?php echo $div['name']; ?>')">
 
                         <div class="card-title">
-                            <?php echo $div['name'];?>
+                            <?php echo $div['name']; ?>
                         </div>
 
                         <div class="card-line">____________</div>

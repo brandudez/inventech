@@ -11,32 +11,8 @@
 
 <body>
 
-    <!-- SIDEBAR -->
-    <div class="sidebar" id="sidebar">
-        <img src="../assets/img/ITMSLOGO.jpg" class="logo">
-
-        <h2 class="sidebar-title">ITMS InvenTech</h2>
-
-        <a href="superadmin_dashboard.php">
-            <span class="icon">🏠</span>
-            <span class="text">Dashboard</span>
-        </a>
-
-        <a href="modify_admin.php">
-            <span class="icon">👤</span>
-            <span class="text">Modify Admin</span>
-        </a>
-
-        <a href="analytics.php">
-            <span class="icon">📊</span>
-            <span class="text">Analytics</span>
-        </a>
-
-        <a href="add_reports.php" class="active">
-            <span class="icon">📝</span>
-            <span class="text">Add Reports</span>
-        </a>
-    </div>
+    <!-- Side Bar -->
+    <?php include 'superadmin_sidebar.php'; ?>
 
     <!-- TOP NAVBAR -->
     <div class="topbar">
