@@ -10,7 +10,7 @@
         <span class="text">Dashboard</span>
     </a>
 
-    <a href="add_users.php" class="<?= basename($_SERVER['PHP_SELF']) == 'add_users.php' ? 'active' : '' ?>">
+    <a href="user_create.php" class="<?= basename($_SERVER['PHP_SELF']) == 'user_create.php' ? 'active' : '' ?>">
         <span class="icon">👤</span>
         <span class="text">Add User</span>
     </a>

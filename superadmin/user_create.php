@@ -226,34 +226,7 @@ while ($row = $rankQuery->fetch_assoc()) {
 </head>
 
 <body>
-
-    <!-- SIDEBAR -->
-    <div class="sidebar" id="sidebar">
-        <img src="../assets/img/ITMSLOGO.jpg" class="logo">
-
-        <h2 class="sidebar-title">ITMS InvenTech</h2>
-
-        <a href="superadmin_dashboard.php">
-            <span class="icon">🏠</span>
-            <span class="text">Dashboard</span>
-        </a>
-
-        <a href="user_create.php" class="active">
-            <span class="icon">👤</span>
-            <span class="text">Users</span>
-        </a>
-
-        <a href="analytics.php">
-            <span class="icon">📊</span>
-            <span class="text">Analytics</span>
-        </a>
-
-        <a href="add_report.php">
-            <span class="icon">📝</span>
-            <span class="text">Add Reports</span>
-        </a>
-    </div>
-
+  <?php include 'superadmin_sidebar.php'; ?>
     <!-- TOPBAR -->
     <div class="topbar">
         <div class="left">
@@ -261,7 +234,9 @@ while ($row = $rankQuery->fetch_assoc()) {
         </div>
 
         <div class="right">
-            <span class="username">Super Admin</span>
+             <span class="username">
+                <?= htmlspecialchars($_SESSION['user']['username'] ?? '') ?>
+            </span>
             <img src="avatar.png" class="profile-pic">
         </div>
     </div>
