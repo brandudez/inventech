@@ -1,0 +1,230 @@
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .topbar {
+            position: fixed;
+            top: 10px;
+            left: 240px;
+            right: 20px;
+            height: 60px;
+            background: #b3d4fc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transition: 0.3s;
+        }
+
+        /* WHEN SIDEBAR COLLAPSED */
+        .sidebar.collapsed~.topbar {
+            left: 95px;
+        }
+
+
+        /* HAMBURGER */
+        .hamburger {
+            font-size: 26px;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* RIGHT SIDE */
+        .right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 220px;
+            background-color: #b3d4fc;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100%;
+            border-radius: 0 10px 10px 0;
+            transition: 0.2s;
+            overflow: hidden;
+        }
+
+        /* COLLAPSED SIDEBAR */
+        .sidebar.collapsed {
+            width: 90px;
+            display: flex;
+            padding: 12px 0;
+        }
+
+        /* HIDE TEXT WHEN COLLAPSED */
+        .sidebar.collapsed .text,
+        .sidebar.collapsed .sidebar-title {
+            display: none;
+        }
+
+        /* LOGO */
+        .sidebar .logo {
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        /* CENTER ICONS */
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+        }
+
+        .sidebar.collapsed a {
+            justify-content: center;
+
+        }
+
+        /* ICON STYLE */
+        .icon {
+            font-size: 18px;
+        }
+
+        .sidebar img {
+            width: 50px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed img {
+            transform: scale(0.9);
+            width: 70px;
+            margin-left: 8px;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            text-decoration: none;
+            color: black;
+            font-weight: bold;
+            border-radius: 8px;
+        }
+
+        .sidebar a.active,
+        .sidebar a:hover {
+            background-color: #81c0f3;
+        }
+
+        /* Main content */
+        .main {
+            margin-left: 220px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            transition: 0.3s;
+        }
+
+        .sidebar.collapsed~.main {
+            margin-left: 100px;
+        }
+
+        /* Dashboard grid */
+        .content {
+            margin-top: 80px;
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, auto);
+            gap: 20px;
+        }
+
+        .card {
+            background-color: #b3d4fc;
+            padding: 20px;
+            border-radius: 15px;
+            width: 240px;
+            height: 150px;
+            margin-top: 25px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .card-title {
+            margin-bottom: 0px;
+        }
+
+        .card-line {
+            margin-top: -10px;
+            margin-bottom: 7px;
+        }
+
+        .card-count {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            background-color: #95c3fc;
+        }
+
+        .grid {
+            gap: 20px;
+        }
+
+        #deviceTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        #deviceTable th,
+        #deviceTable td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .status {
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+
+        .status.active {
+            background: #c8f7c5;
+            color: green;
+        }
