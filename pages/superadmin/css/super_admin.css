@@ -1,0 +1,334 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+/* ===== BODY ===== */
+body {
+    background: #f4f7fb;
+    overflow-x: hidden;
+}
+
+/* ===== MAIN ===== */
+.main {
+    margin-left: 220px;
+    padding-top: 80px;
+    min-height: 100vh;
+    transition: all 0.3s ease;
+}
+
+/* ===== MOVE CONTENT WHEN SIDEBAR COLLAPSED ===== */
+.sidebar.collapsed ~ .main {
+    margin-left: 90px;
+}
+
+/* ===== CONTENT ===== */
+.content {
+    padding: 25px;
+}
+
+/* ===== PAGE TITLE ===== */
+.page-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #0d6ea8;
+    margin-bottom: 30px;
+}
+
+/* ===== GRID ===== */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 22px;
+}
+
+/* ===== CARD ===== */
+.card {
+    background: #0d6ea8;
+    border-radius: 18px;
+    padding: 28px 20px;
+    color: white;
+    cursor: pointer;
+    transition: 0.25s ease;
+    box-shadow: 0 5px 18px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 170px;
+}
+
+/* ===== HOVER ===== */
+.card:hover {
+    transform: translateY(-5px);
+    background: #095782;
+}
+
+/* ===== CARD TITLE ===== */
+.card-title {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+}
+
+/* ===== CARD COUNT ===== */
+.card-count {
+    margin-top: 10px;
+    font-size: 42px;
+    font-weight: bold;
+}
+
+/* =======================================================
+   TABLE SECTION
+======================================================= */
+
+/* ===== TABLE CONTENT ===== */
+.contenttable {
+    margin-left: 220px;
+    margin-top: 80px;
+    padding: 25px;
+    transition: all 0.3s ease;
+}
+
+/* ===== ADJUST WHEN COLLAPSED ===== */
+.sidebar.collapsed ~ .contenttable {
+    margin-left: 90px;
+}
+
+/* ===== TABLE CONTAINER ===== */
+.table-container {
+    width: 100%;
+    background: #fff;
+    border-radius: 18px;
+    overflow-x: auto;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+}
+
+/* ===== TABLE ===== */
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1200px;
+}
+
+/* ===== TABLE HEADER ===== */
+.users-table thead {
+    background: #0d6ea8;
+}
+
+.users-table thead th {
+    color: white;
+    padding: 18px 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+    text-transform: uppercase;
+}
+
+/* ===== TABLE BODY ===== */
+.users-table tbody td {
+    padding: 16px 12px;
+    font-size: 13px;
+    text-align: center;
+    border-bottom: 1px solid #e5e7eb;
+    color: #333;
+    white-space: nowrap;
+}
+
+/* ===== ROW HOVER ===== */
+.users-table tbody tr:hover {
+    background: #f5f9fc;
+    transition: 0.2s ease;
+}
+
+/* ===== STATUS ===== */
+.status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.status.active {
+    background: #d1fae5;
+    color: #047857;
+}
+
+/* ===== RESPONSIVE ===== */
+@media screen and (max-width: 992px) {
+
+    .main,
+    .contenttable {
+        margin-left: 90px;
+    }
+
+    .grid {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+}
+
+.action-buttons {
+    display: flex;
+    margin-left: 15px;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-edit,
+.btn-delete {
+    padding: 8px 16px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    transition: 0.3s ease;
+    display: inline-block;
+}
+
+/* EDIT BUTTON */
+.btn-edit {
+    background: #4fc3f7;
+    box-shadow: 0 4px 10px rgba(79, 195, 247, 0.3);
+}
+
+.btn-edit:hover {
+    background: #29b6f6;
+    transform: translateY(-2px);
+}
+
+/* DELETE BUTTON */
+.btn-delete {
+    background: #ff3b30;
+    box-shadow: 0 4px 10px rgba(255, 59, 48, 0.3);
+}
+
+.btn-delete:hover {
+    background: #e60012;
+    transform: translateY(-2px);
+}
+  .pagination {
+            margin-top: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .pagination a,
+        .pagination span {
+            min-width: 42px;
+            height: 42px;
+            padding: 0 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.25s ease;
+            background: #ffffff;
+            color: #2c3e50;
+            border: 1px solid #dbe4ee;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .pagination a:hover {
+            background: #0d6ea8;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(13, 110, 168, 0.25);
+        }
+
+        .pagination .active {
+            background: linear-gradient(135deg, #0d6ea8, #2c5aa0);
+            color: white;
+            border: none;
+            box-shadow: 0 6px 15px rgba(13, 110, 168, 0.35);
+        }
+
+        .pagination .dots {
+            border: none;
+            background: transparent;
+            box-shadow: none;
+            color: #666;
+            pointer-events: none;
+        }
+
+/* ===== MOBILE ===== */
+@media screen and (max-width: 768px) {
+
+    .main,
+    .contenttable {
+        margin-left: 0;
+        padding-top: 70px;
+    }
+
+    .content,
+    .contenttable {
+        padding: 15px;
+    }
+
+    .page-title {
+        font-size: 24px;
+    }
+
+    .card {
+        min-height: 150px;
+    }.action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-edit,
+.btn-delete {
+    padding: 8px 16px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    transition: 0.3s ease;
+    display: inline-block;
+}
+
+/* EDIT BUTTON */
+.btn-edit {
+    background: #4fc3f7;
+    box-shadow: 0 4px 10px rgba(79, 195, 247, 0.3);
+}
+
+.btn-edit:hover {
+    background: #29b6f6;
+    transform: translateY(-2px);
+}
+
+/* DELETE BUTTON */
+.btn-delete {
+    background: #ff3b30;
+    box-shadow: 0 4px 10px rgba(255, 59, 48, 0.3);
+}
+
+.btn-delete:hover {
+    background: #e60012;
+    transform: translateY(-2px);
+}
+
+    .card-count {
+        font-size: 34px;
+    }
+
+    .users-table {
+        min-width: 1000px;
+    }
+}

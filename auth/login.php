@@ -62,7 +62,7 @@ if (!$user) {
     exit();
 }
 
-if ((int)$user['is_active'] !== 1) {
+if ((int) $user['is_active'] !== 1) {
     header("Location: ../index.php?error=account_disabled");
     exit();
 }
@@ -99,18 +99,18 @@ if (!isset($user['role_id'])) {
     exit();
 }
 
-switch ((int)$user['role_id']) {
+switch ((int) $user['role_id']) {
 
     case 1:
-        header("Location: ../superadmin/superadmin_dashboard.php");
+        header("Location: ../pages/superadmin/superadmin_dashboard.php");
         break;
 
     case 2:
-        header("Location: ../admin/admin_dashboard.php");
+        header("Location: ../pages/admin/admin_dashboard.php");
         break;
 
     case 3:
-        header("Location: ../encoder/encoder_dashboard.php");
+        header("Location: ../pages/encoder/encoder_dashboard.php");
         break;
 
     default:
