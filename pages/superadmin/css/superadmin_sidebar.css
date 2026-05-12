@@ -125,3 +125,64 @@
 .sidebar.collapsed .text {
     display: none;
 }
+/* ===== DROPDOWN ===== */
+.dropdown {
+    width: 100%;
+}
+
+.dropdown-btn {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: white;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.dropdown-btn:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.dropdown-content {
+    display: none;
+    flex-direction: column;
+    background: rgba(255,255,255,0.05);
+}
+
+.dropdown-content a {
+    padding: 12px 45px;
+    text-decoration: none;
+    color: white;
+    font-size: 14px;
+    transition: 0.2s ease;
+}
+
+.dropdown-content a:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.dropdown-content.show {
+    display: flex;
+}
+
+.arrow {
+    font-size: 12px;
+}
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* space between icon and text */
+}
+
+.menu-item .icon i {
+    font-size: 18px;
+}
+
+.menu-item .text {
+    font-size: 15px;
+    font-weight: 600;
+}

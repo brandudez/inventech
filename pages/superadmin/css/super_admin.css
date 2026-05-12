@@ -174,9 +174,10 @@ body {
     }
 }
 
+/* ACTION BUTTONS */
 .action-buttons {
     display: flex;
-    margin-left: 15px;
+    justify-content: center; /* centers horizontally */
     align-items: center;
     gap: 10px;
 }
@@ -194,11 +195,13 @@ body {
 }
 
 /* EDIT BUTTON */
-.btn-edit {
-    background: #4fc3f7;
-    box-shadow: 0 4px 10px rgba(79, 195, 247, 0.3);
-}
 
+.btn-edit {
+    background: #0d6ea8;
+    box-shadow: 0 4px 10px rgba(79, 195, 247, 0.3);
+    border: none;
+    cursor: pointer;
+}
 .btn-edit:hover {
     background: #29b6f6;
     transform: translateY(-2px);
@@ -290,8 +293,7 @@ body {
     gap: 10px;
 }
 
-.btn-edit,
-.btn-delete {
+.btn-edit{
     padding: 8px 16px;
     border-radius: 10px;
     text-decoration: none;
@@ -304,7 +306,7 @@ body {
 
 /* EDIT BUTTON */
 .btn-edit {
-    background: #4fc3f7;
+      background: #0d6ea8;
     box-shadow: 0 4px 10px rgba(79, 195, 247, 0.3);
 }
 
@@ -313,22 +315,47 @@ body {
     transform: translateY(-2px);
 }
 
-/* DELETE BUTTON */
-.btn-delete {
-    background: #ff3b30;
-    box-shadow: 0 4px 10px rgba(255, 59, 48, 0.3);
+}
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
 }
 
-.btn-delete:hover {
-    background: #e60012;
-    transform: translateY(-2px);
+.modal-content {
+    background: white;
+    width: 500px;
+    max-width: 90%;
+    margin: 5% auto;
+    padding: 20px;
+    border-radius: 10px;
 }
 
-    .card-count {
-        font-size: 34px;
-    }
+.closeModal {
+    float: right;
+    font-size: 25px;
+    cursor: pointer;
+}
 
-    .users-table {
-        min-width: 1000px;
-    }
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 10px;
+}
+
+.save-btn {
+    background: #0d6ea8;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
 }

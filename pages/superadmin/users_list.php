@@ -5,7 +5,7 @@ include("../../config/db.php");
 /* =========================
    PAGINATION SETTINGS
 ========================= */
-$limit = 8;
+$limit = 10;
 $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $page = max(1, $page);
 $offset = ($page - 1) * $limit;
@@ -86,15 +86,15 @@ $totalPages = ceil($totalRow['total'] / $limit);
                         <?php while ($row = $result->fetch_assoc()) { ?>
                             <tr>
 
-                                <td><?= htmlspecialchars($row['rank_name'] ?? 'N/A'); ?></td>
+                                <td><?= ($row['rank_name'] ?? 'N/A'); ?></td>
 
-                                <td><?= htmlspecialchars($row['full_name']); ?></td>
+                                <td><?= ($row['full_name']); ?></td>
 
-                                <td><?= htmlspecialchars($row['email']); ?></td>
+                                <td><?= ($row['email']); ?></td>
 
-                                <td><?= htmlspecialchars($row['division_name'] ?? 'N/A'); ?></td>
+                                <td><?= ($row['division_name'] ?? 'N/A'); ?></td>
 
-                                <td><?= htmlspecialchars($row['created_by'] ?? 'SYSTEM'); ?></td>
+                                <td><?= ($row['created_by'] ?? 'SYSTEM'); ?></td>
 
                                 <td>
                                     <?php if ($row['is_active']) { ?>
@@ -104,15 +104,9 @@ $totalPages = ceil($totalRow['total'] / $limit);
                                     <?php } ?>
                                 </td>
                                 <td class="action-buttons">
-                                    <a href="edit_user.php?id=<?= $row['id']; ?>" class="btn-edit">
+                                    <a href="modals/edit_modal.php?id=<?= $row['id']; ?>" class="btn-edit">
                                         Edit
                                     </a>
-
-                                    <a href="delete_user.php?id=<?= $row['id']; ?>" class="btn-delete"
-                                        onclick="return confirm('Delete this user?')">
-                                        Delete
-                                    </a>
-
                                 </td>
 
                             </tr>
