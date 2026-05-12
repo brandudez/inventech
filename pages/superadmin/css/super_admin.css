@@ -82,6 +82,148 @@ body {
     font-weight: bold;
 }
 
+/* FILTER DROPDOWN and SEARCH */
+.top-bar {
+    margin-top: 80px;
+    margin-left: 247px;
+    margin-right: 35px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+/* ===== AUTO ADJUST WHEN SIDEBAR COLLAPSED ===== */
+.sidebar.collapsed ~ .main {
+    margin-left: 90px;
+}
+
+/* ===== FILTERS ===== */
+.filters {
+    display: flex;
+    align-items: center;
+}
+
+/* ===== FILTER DROPDOWN ===== */
+.filter-select {
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid #e6eef5;
+    background: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c3e50;
+    cursor: pointer;
+    min-width: 160px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    transition: 0.3s ease;
+}
+
+/* ===== HOVER ===== */
+.filter-select:hover {
+    border-color: #0d6ea8;
+    transform: translateY(-2px);
+}
+
+/* ===== FOCUS ===== */
+.filter-select:focus {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(13,110,168,0.15);
+}
+
+/* ===== SEARCH CONTAINER ===== */
+.search-container {
+    display: flex;
+    align-items: center;
+}
+
+/* ===== SEARCH FORM ===== */
+.search-form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* ===== SEARCH INPUT ===== */
+.search-input {
+    width: 320px;
+
+    padding: 12px 18px;
+
+    border: 1px solid #dce3ec;
+    border-radius: 14px;
+
+    outline: none;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    background: #ffffff;
+
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+
+    transition: all 0.3s ease;
+}
+
+/* ===== INPUT FOCUS ===== */
+.search-input:focus {
+    border-color: #0d6ea8;
+    box-shadow: 0 0 0 4px rgba(13, 110, 168, 0.15);
+}
+
+/* ===== SEARCH BUTTON ===== */
+.search-btn {
+    border: none;
+
+    padding: 12px 22px;
+
+    border-radius: 24px;
+
+    background: linear-gradient(135deg, #0d6ea8, #2c5aa0);
+
+    color: white;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: all 0.3s ease;
+
+    box-shadow: 0 4px 14px rgba(13, 110, 168, 0.25);
+}
+
+/* ===== BUTTON HOVER ===== */
+.search-btn:hover {
+    transform: translateY(-2px);
+
+    box-shadow: 0 6px 18px rgba(13, 110, 168, 0.35);
+}
+
+/* ===== RESPONSIVE ===== */
+@media screen and (max-width: 768px) {
+
+    .top-bar {
+        margin-left: 100px;
+
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+        .sidebar.collapsed ~ .main .top-bar {
+        margin-left: 95px;
+    }
+
+    .search-form {
+        width: 100%;
+    }
+
+    .search-input {
+        width: 100%;
+    }
+}
+
+
 /* =======================================================
    TABLE SECTION
 ======================================================= */
@@ -89,7 +231,7 @@ body {
 /* ===== TABLE CONTENT ===== */
 .contenttable {
     margin-left: 220px;
-    margin-top: 80px;
+    margin-top: 10px;
     padding: 25px;
     transition: all 0.3s ease;
 }
@@ -174,7 +316,11 @@ body {
     }
 }
 
+
 /* ACTION BUTTONS */
+
+/* EDIT BUTTON */
+
 .action-buttons {
     display: flex;
     justify-content: center; /* centers horizontally */
@@ -182,8 +328,7 @@ body {
     gap: 10px;
 }
 
-.btn-edit,
-.btn-delete {
+.btn-edit{
     padding: 8px 16px;
     border-radius: 10px;
     text-decoration: none;
@@ -191,11 +336,13 @@ body {
     font-size: 13px;
     font-weight: 600;
     transition: 0.3s ease;
+    margin-left: 15px;
     display: inline-block;
+    background: #0d6ea8;
+    box-shadow: 0 4px 10px rgba(13, 110, 168, 0.3);
 }
 
 /* EDIT BUTTON */
-
 .btn-edit {
     background: #0d6ea8;
     box-shadow: 0 4px 10px rgba(79, 195, 247, 0.3);
@@ -207,65 +354,110 @@ body {
     transform: translateY(-2px);
 }
 
-/* DELETE BUTTON */
-.btn-delete {
-    background: #ff3b30;
-    box-shadow: 0 4px 10px rgba(255, 59, 48, 0.3);
+/* FOOTER LAYOUT */
+.table-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
 }
 
-.btn-delete:hover {
-    background: #e60012;
+/* STATS SECTION */
+.user-stats {
+    display: flex;
+    gap: 12px;
+}
+
+/* STAT CARDS */
+.stat-box {
+    min-width: 120px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: #fff;
+    border: 1px solid #e6eef5;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    text-align: center;
+}
+
+/* LABEL */
+.stat-box .label {
+    font-size: 12px;
+    color: #777;
+    display: block;
+}
+
+/* VALUE */
+.stat-box .value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #0d6ea8;
+}
+
+/* COLORS */
+.stat-box.active .value { color: green; }
+.stat-box.inactive .value { color: red; }
+
+/* PAGINATION*/
+.pagination {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* BUTTON STYLE */
+.pagination a,
+.pagination span {
+    min-width: 38px;
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0 12px;
+
+    border-radius: 12px;
+
+    text-decoration: none;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    background: #ffffff;
+    color: #2c3e50;
+
+    border: 1px solid #e6eef5;
+
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+
+    transition: 0.25s ease;
+}
+
+/* HOVER EFFECT */
+.pagination a:hover {
+    background: #0d6ea8;
+    color: white;
     transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(13,110,168,0.25);
 }
-  .pagination {
-            margin-top: 25px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
 
-        .pagination a,
-        .pagination span {
-            min-width: 42px;
-            height: 42px;
-            padding: 0 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.25s ease;
-            background: #ffffff;
-            color: #2c3e50;
-            border: 1px solid #dbe4ee;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-        }
+/* ACTIVE PAGE */
+.pagination .active {
+    background: linear-gradient(135deg, #0d6ea8, #2c5aa0);
+    color: white;
+    border: none;
+    box-shadow: 0 6px 14px rgba(13,110,168,0.3);
+}
 
-        .pagination a:hover {
-            background: #0d6ea8;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 14px rgba(13, 110, 168, 0.25);
-        }
-
-        .pagination .active {
-            background: linear-gradient(135deg, #0d6ea8, #2c5aa0);
-            color: white;
-            border: none;
-            box-shadow: 0 6px 15px rgba(13, 110, 168, 0.35);
-        }
-
-        .pagination .dots {
-            border: none;
-            background: transparent;
-            box-shadow: none;
-            color: #666;
-            pointer-events: none;
-        }
+/* DOTS */
+.pagination .dots {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: #888;
+}
 
 /* ===== MOBILE ===== */
 @media screen and (max-width: 768px) {
@@ -303,6 +495,7 @@ body {
     transition: 0.3s ease;
     display: inline-block;
 }
+
 
 /* EDIT BUTTON */
 .btn-edit {

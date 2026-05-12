@@ -1,5 +1,6 @@
 <!-- SIDEBAR -->
- <head>
+
+<head>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 
@@ -35,8 +36,8 @@
         <span class="text">Users List</span>
     </a>
 
-    <a href="../superadmin/analytics.php"
-        class="<?= basename($_SERVER['PHP_SELF']) == 'analytics.php' ? 'active' : '' ?>">
+    <a href="../superadmin/personnel_list.php"
+        class="<?= basename($_SERVER['PHP_SELF']) == 'personnel_list.php' ? 'active' : '' ?>">
         <span class="icon"><i class="bi bi-person-badge"></i></span>
         <span class="text">Personnel List</span>
     </a>
@@ -46,13 +47,13 @@
 
         <button class="dropdown-btn" id="deviceDropdownBtn">
 
-         <div class="menu-item">
-    <span class="icon">
-        <i class="bi bi-hdd-network"></i>
-    </span>
+            <div class="menu-item">
+                <span class="icon">
+                    <i class="bi bi-hdd-network"></i>
+                </span>
 
-    <span class="text">Devices</span>
-</div>
+                <span class="text">Devices</span>
+            </div>
             <span class="arrow"><i class="bi bi-chevron-down"></i></span>
 
         </button>
