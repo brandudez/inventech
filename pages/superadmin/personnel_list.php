@@ -64,27 +64,40 @@ $totalPages = ceil($totalRow['total'] / $limit);
     <?php include 'superadmin_navbar.php'; ?>
 
     <!-- Filters -->
-    <!-- SEARCH BAR -->
+    <!-- SEARCH + FILTER BAR -->
     <div class="top-bar">
-        <!-- FILTER -->
+        <!-- FILTER BUTTONS -->
         <div class="filters">
-            <select id="role-filter" class="filter-select">
-                <option value="">Filter</option>
-                <option value="role">Roles</option>
-                <option value="rank">Rank</option>
-                <option value="division">Division</option>
-            </select>
+
+            <button type="button" class="filter-btn">
+                Roles
+            </button>
+
+            <button type="button" class="filter-btn">
+                Rank
+            </button>
+
+            <button type="button" class="filter-btn">
+                Division
+            </button>
+
         </div>
 
         <!-- SEARCH -->
         <div class="search-container">
             <form class="search-form">
+
                 <input type="text" class="search-input" placeholder="Search users...">
+
                 <button type="submit" class="search-btn">
                     Search
                 </button>
+
             </form>
         </div>
+
+
+    </div>
     </div>
     <!-- TABLE -->
     <div class="contenttable">
@@ -94,10 +107,9 @@ $totalPages = ceil($totalRow['total'] / $limit);
 
                 <thead>
                     <tr>
-                        <th>ROLES</th>
+
                         <th>RANK</th>
                         <th>NAME</th>
-                        <th>EMAIL</th>
                         <th>DIVISION</th>
                         <th>CREATED BY</th>
                         <th>ACTIVE?</th>
@@ -109,13 +121,9 @@ $totalPages = ceil($totalRow['total'] / $limit);
                     <?php if ($result->num_rows > 0) { ?>
                         <?php while ($row = $result->fetch_assoc()) { ?>
                             <tr>
-                                <td><?= htmlspecialchars($row['role_id'] == 1 ? 'SUPER ADMIN' : 'USER'); ?></td>
-
                                 <td><?= ($row['rank_name'] ?? 'N/A'); ?></td>
 
                                 <td><?= ($row['full_name']); ?></td>
-
-                                <td><?= ($row['email']); ?></td>
 
                                 <td><?= ($row['division_name'] ?? 'N/A'); ?></td>
 

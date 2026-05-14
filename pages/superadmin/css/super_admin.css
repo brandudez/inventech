@@ -82,7 +82,10 @@ body {
     font-weight: bold;
 }
 
-/* FILTER DROPDOWN and SEARCH */
+/* =========================================================
+   FILTER and SEARCH
+========================================================= */
+
 .top-bar {
     margin-top: 80px;
     margin-left: 247px;
@@ -92,43 +95,81 @@ body {
     align-items: center;
     gap: 15px;
     flex-wrap: wrap;
+    transition: all 0.3s ease;
 }
-/* ===== AUTO ADJUST WHEN SIDEBAR COLLAPSED ===== */
-.sidebar.collapsed ~ .main {
-    margin-left: 90px;
-}
-
-/* ===== FILTERS ===== */
+/* ===== FILTER BUTTONS ===== */
 .filters {
     display: flex;
     align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
-/* ===== FILTER DROPDOWN ===== */
-.filter-select {
-    padding: 12px 16px;
-    border-radius: 12px;
-    border: 1px solid #e6eef5;
-    background: #fff;
+/* ===== DEFAULT (INACTIVE) BUTTON ===== */
+.filter-btn {
+    border: none;
+    padding: 12px 20px;
+    border-radius: 14px;
+    background: #e8f2fb; /* lighter version */
+    color: white;
+    background: #0d6ea8;
     font-size: 14px;
     font-weight: 600;
-    color: #2c3e50;
     cursor: pointer;
-    min-width: 160px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-    transition: 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 /* ===== HOVER ===== */
-.filter-select:hover {
-    border-color: #0d6ea8;
+.filter-btn:hover {
+    background: #2190d1;
     transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(13,110,168,0.15);
 }
 
-/* ===== FOCUS ===== */
-.filter-select:focus {
-    outline: none;
-    box-shadow: 0 0 0 4px rgba(13,110,168,0.15);
+/* ===== ACTIVE BUTTON ===== */
+.filter-btn.active {
+    background: #0d6ea8;
+    color: #ffffff;
+    box-shadow: 0 6px 18px rgba(13,110,168,0.35);
+}
+
+/* ===== ACTIVE HOVER (KEEP SAME STYLE) ===== */
+.filter-btn.active:hover {
+    background: #095a8a;
+}
+
+/* ===== WHEN SIDEBAR COLLAPSED ===== */
+.sidebar.collapsed ~ .top-bar {
+    margin-left: 115px;
+}
+
+
+/* ===== MOBILE ===== */
+
+@media screen and (max-width: 768px) {
+
+    .top-bar {
+        margin-left: 100px;
+
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .sidebar.collapsed ~ .top-bar {
+        margin-left: 95px;
+    }
+
+    .filter-dropdowns,
+    .filters {
+        width: 100%;
+    }
+
+    .dropdown-btn,
+    .filter-select {
+        width: 100%;
+    }
+
 }
 
 /* ===== SEARCH CONTAINER ===== */

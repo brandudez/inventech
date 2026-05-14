@@ -66,15 +66,24 @@ $totalPages = ceil($totalRow['total'] / $limit);
     <!-- Filters -->
     <!-- SEARCH BAR -->
     <div class="top-bar">
-        <!-- FILTER -->
+
+        <!-- FILTER BUTTONS -->
         <div class="filters">
-            <select id="role-filter" class="filter-select">
-                <option value="">Filter</option>
-                <option value="role">Roles</option>
-                <option value="rank">Rank</option>
-                <option value="division">Division</option>
-            </select>
+
+            <button type="button" class="filter-btn">
+                Roles
+            </button>
+
+            <button type="button" class="filter-btn">
+                Rank
+            </button>
+
+            <button type="button" class="filter-btn">
+                Division
+            </button>
+
         </div>
+
 
         <!-- SEARCH -->
         <div class="search-container">
