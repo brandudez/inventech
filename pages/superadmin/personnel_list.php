@@ -70,10 +70,6 @@ $totalPages = ceil($totalRow['total'] / $limit);
         <div class="filters">
 
             <button type="button" class="filter-btn">
-                Roles
-            </button>
-
-            <button type="button" class="filter-btn">
                 Rank
             </button>
 

@@ -593,3 +593,185 @@ body {
     padding: 10px 20px;
     cursor: pointer;
 }
+
+/* =========================================
+   MODAL OVERLAY
+========================================= */
+.edit-modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    inset: 0;
+
+    justify-content: center;
+    align-items: center;
+
+    background: rgba(13, 110, 168, 0.18); /* transparent blue */
+    backdrop-filter: blur(6px);
+
+    animation: fadeIn 0.25s ease;
+}
+
+/* =========================================
+   MODAL BOX
+========================================= */
+.edit-modal-content {
+    width: 480px;
+    max-width: 92%;
+
+    padding: 28px;
+
+    border-radius: 24px;
+
+    background: rgba(255, 255, 255, 0.78);
+
+    backdrop-filter: blur(14px);
+
+    border: 1px solid rgba(255,255,255,0.35);
+
+    box-shadow:
+        0 10px 35px rgba(0,0,0,0.15),
+        0 4px 12px rgba(13,110,168,0.12);
+
+    animation: modalPop 0.28s ease;
+}
+
+/* =========================================
+   TITLE
+========================================= */
+.edit-modal-content h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0d6ea8;
+
+    margin-bottom: 22px;
+}
+
+/* =========================================
+   CLOSE BUTTON
+========================================= */
+.close-modal {
+    float: right;
+
+    font-size: 28px;
+    font-weight: bold;
+
+    cursor: pointer;
+
+    color: #666;
+
+    transition: 0.25s ease;
+}
+
+.close-modal:hover {
+    color: #0d6ea8;
+    transform: rotate(90deg);
+}
+
+/* =========================================
+   FORM GROUP
+========================================= */
+.form-group {
+    margin-bottom: 18px;
+}
+
+/* LABEL */
+.form-group label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    color: #2c3e50;
+}
+
+/* INPUTS + SELECT */
+.form-group input,
+.form-group select {
+
+    width: 100%;
+
+    padding: 12px 14px;
+
+    border-radius: 14px;
+
+    border: 1px solid #dbe4ee;
+
+    background: rgba(255,255,255,0.75);
+
+    font-size: 14px;
+
+    outline: none;
+
+    transition: 0.25s ease;
+}
+
+/* FOCUS EFFECT */
+.form-group input:focus,
+.form-group select:focus {
+
+    border-color: #0d6ea8;
+
+    box-shadow: 0 0 0 4px rgba(13,110,168,0.12);
+}
+
+/* =========================================
+   SAVE BUTTON
+========================================= */
+.save-btn {
+
+    width: 100%;
+
+    padding: 14px;
+
+    border: none;
+
+    border-radius: 16px;
+
+    background: linear-gradient(135deg, #0d6ea8, #2c5aa0);
+
+    color: white;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: 0.3s ease;
+
+    box-shadow: 0 6px 18px rgba(13,110,168,0.22);
+}
+
+.save-btn:hover {
+    transform: translateY(-2px);
+
+    box-shadow: 0 8px 24px rgba(13,110,168,0.32);
+
+    background: linear-gradient(135deg, #1282c2, #3568b5);
+}
+
+/* =========================================
+   ANIMATIONS
+========================================= */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes modalPop {
+    from {
+        opacity: 0;
+        transform: scale(0.92) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}

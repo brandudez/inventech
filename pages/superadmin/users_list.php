@@ -5,7 +5,7 @@ include("../../config/db.php");
 /* =========================
    PAGINATION SETTINGS
 ========================= */
-$limit = 1;
+$limit = 10; // USERS PER PAGE
 $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $page = max(1, $page);
 $offset = ($page - 1) * $limit;
@@ -84,7 +84,6 @@ $totalPages = ceil($totalRow['total'] / $limit);
 
         </div>
 
-
         <!-- SEARCH -->
         <div class="search-container">
             <form class="search-form">
@@ -96,7 +95,11 @@ $totalPages = ceil($totalRow['total'] / $limit);
         </div>
     </div>
     <!-- TABLE -->
+    <!-- =========================
+     TABLE
+========================= -->
     <div class="contenttable">
+
         <div class="table-container">
 
             <table class="users-table">
@@ -115,59 +118,102 @@ $totalPages = ceil($totalRow['total'] / $limit);
                 </thead>
 
                 <tbody>
+
                     <?php if ($result->num_rows > 0) { ?>
+
                         <?php while ($row = $result->fetch_assoc()) { ?>
+
                             <tr>
-                                <td><?= htmlspecialchars($row['role_id'] == 1 ? 'SUPER ADMIN' : 'USER'); ?></td>
-
-                                <td><?= ($row['rank_name'] ?? 'N/A'); ?></td>
-
-                                <td><?= ($row['full_name']); ?></td>
-
-                                <td><?= ($row['email']); ?></td>
-
-                                <td><?= ($row['division_name'] ?? 'N/A'); ?></td>
-
-                                <td><?= ($row['created_by'] ?? 'SYSTEM'); ?></td>
-
                                 <td>
-                                    <?php if ($row['is_active']) { ?>
-                                        <span style="color:green; font-weight: bold;">YES</span>
-                                    <?php } else { ?>
-                                        <span style="color:red;">NO</span>
-                                    <?php } ?>
+                                    <?= htmlspecialchars($row['role_id'] == 1 ? 'SUPER ADMIN' : 'USER'); ?>
                                 </td>
+                                <td>
+                                    <?= ($row['rank_name'] ?? 'N/A'); ?>
+                                </td>
+                                <td>
+                                    <?= ($row['full_name']); ?>
+                                </td>
+                                <td>
+                                    <?= ($row['email']); ?>
+                                </td>
+                                <td>
+                                    <?= ($row['division_name'] ?? 'N/A'); ?>
+                                </td>
+                                <td>
+                                    <?= ($row['created_by'] ?? 'SYSTEM'); ?>
+                                </td>
+                                <td>
+
+                                    <?php if ($row['is_active']) { ?>
+
+                                        <span style="color:green; font-weight: bold;">
+                                            YES
+                                        </span>
+
+                                    <?php } else { ?>
+
+                                        <span style="color:red;">
+                                            NO
+                                        </span>
+
+                                    <?php } ?>
+
+                                </td>
+
                                 <td class="action-buttons">
-                                    <a href="modals/edit_modal.php?id=<?= $row['id']; ?>" class="btn-edit">
+
+                                    <button type="button" class="btn-edit" onclick="openEditModal(
+                                        '<?= $row['id']; ?>',
+                                        '<?= htmlspecialchars($row['full_name'] ?? '', ENT_QUOTES); ?>',
+                                        '<?= htmlspecialchars($row['email'] ?? '', ENT_QUOTES); ?>',
+                                        '<?= $row['role_id']; ?>',
+                                        '<?= $row['rank_id']; ?>',
+                                        '<?= $row['division_id']; ?>',
+                                        '<?= htmlspecialchars($row['created_by'] ?? 'SYSTEM', ENT_QUOTES); ?>',
+                                        '<?= $row['is_active']; ?>'
+                                    )">
+
                                         Edit
-                                    </a>
+
+                                    </button>
+
                                 </td>
 
                             </tr>
+
                         <?php } ?>
+
                     <?php } else { ?>
+
                         <tr>
-                            <td colspan="7" style="text-align:center;">No users found</td>
+
+                            <td colspan="8" style="text-align:center;">
+                                No users found
+                            </td>
+
                         </tr>
+
                     <?php } ?>
+
                 </tbody>
 
             </table>
-        </div>
-        <!-- PAGINATION (ONLY SHOW IF NEEDED) -->
 
+        </div>
+
+        <!-- PAGINATION -->
         <?php if ($totalPages > 1) { ?>
 
             <?php
-            // range logic (3 pages at a time)
-            $range = 1; // 1 left, current, 1 right = 3 total
+            $range = 1;
+
             $start = max(1, $page - $range);
             $end = min($totalPages, $page + $range);
             ?>
 
             <div class="table-footer">
 
-                <!-- LEFT SIDE: STATS -->
+                <!-- LEFT SIDE -->
                 <div class="user-stats">
 
                     <div class="stat-box total">
@@ -187,66 +233,259 @@ $totalPages = ceil($totalRow['total'] / $limit);
 
                 </div>
 
+                <!-- PAGINATION -->
                 <div class="pagination" style="margin-top:20px; text-align:center;">
 
                     <!-- PREV -->
                     <?php if ($page > 1) { ?>
+
                         <a href="?page=<?= $page - 1; ?>"
                             style="margin:5px; padding:6px 10px; text-decoration:none; background:#ddd; color:black;">
+
                             Prev
+
                         </a>
+
                     <?php } ?>
 
-                    <!-- FIRST PAGE (optional shortcut) -->
+                    <!-- FIRST -->
                     <?php if ($start > 1) { ?>
+
                         <a href="?page=1"
                             style="margin:5px; padding:6px 10px; text-decoration:none; background:#ddd; color:black;">
+
                             1
+
                         </a>
+
                         ...
+
                     <?php } ?>
 
-                    <!-- PAGE NUMBERS (ONLY 3 AT A TIME) -->
+                    <!-- PAGE NUMBERS -->
                     <?php for ($i = $start; $i <= $end; $i++) { ?>
-                        <a href="?page=<?= $i; ?>" style="margin:5px; padding:6px 10px; text-decoration:none;
-                  background:<?= ($i == $page) ? '#0d6ea8' : '#ddd'; ?>;
-                  color:<?= ($i == $page) ? 'white' : 'black'; ?>;">
+
+                        <a href="?page=<?= $i; ?>" style="
+                        margin:5px;
+                        padding:6px 10px;
+                        text-decoration:none;
+                        background:<?= ($i == $page) ? '#0d6ea8' : '#ddd'; ?>;
+                        color:<?= ($i == $page) ? 'white' : 'black'; ?>;
+                    ">
+
                             <?= $i; ?>
+
                         </a>
+
                     <?php } ?>
 
-                    <!-- LAST PAGE (optional shortcut) -->
+                    <!-- LAST -->
                     <?php if ($end < $totalPages) { ?>
+
                         ...
+
                         <a href="?page=<?= $totalPages; ?>"
                             style="margin:5px; padding:6px 10px; text-decoration:none; background:#ddd; color:black;">
+
                             <?= $totalPages; ?>
+
                         </a>
+
                     <?php } ?>
 
                     <!-- NEXT -->
                     <?php if ($page < $totalPages) { ?>
+
                         <a href="?page=<?= $page + 1; ?>"
                             style="margin:5px; padding:6px 10px; text-decoration:none; background:#ddd; color:black;">
+
                             Next
+
                         </a>
+
                     <?php } ?>
 
+                </div>
+
+            </div>
+
+        <?php } ?>
+
+    </div>
+
+
+    <!-- EDIT USER MODAL-->
+    <div id="editModal" class="edit-modal">
+
+        <div class="edit-modal-content">
+
+            <!-- CLOSE -->
+            <span class="close-modal" onclick="closeEditModal()">
+                &times;
+            </span>
+
+            <h2>Edit User</h2>
+
+            <form>
+
+                <!-- ROLE -->
+                <div class="form-group">
+
+                    <label>Role</label>
+
+                    <select id="edit_role">
+
+                        <option value="1">Admin</option>
+                        <option value="2">Encoder</option>
+
+                    </select>
 
                 </div>
-            <?php } ?>
+
+                <!-- RANK -->
+                <div class="form-group">
+
+                    <label>Rank</label>
+
+                    <select id="edit_rank">
+
+                        <option value="1">NUP</option>
+                        <option value="2">PAT</option>
+                        <option value="3">PCPL</option>
+                        <option value="4">PSSG</option>
+                        <option value="5">PMSG</option>
+                        <option value="6">PSMS</option>
+                        <option value="7">PCMS</option>
+                        <option value="8">PEMS</option>
+                        <option value="9">PLT</option>
+                        <option value="10">PCPT</option>
+                        <option value="11">PMAJ</option>
+                        <option value="12">PLTCOL</option>
+                        <option value="13">PCOL</option>
+                        <option value="14">PBGEN</option>
+
+                    </select>
+
+                </div>
+
+                <!-- NAME -->
+                <div class="form-group">
+
+                    <label>Name</label>
+
+                    <input type="text" id="edit_name">
+
+                </div>
+
+                <!-- EMAIL -->
+                <div class="form-group">
+
+                    <label>Email</label>
+
+                    <input type="email" id="edit_email">
+
+                </div>
+
+                <!-- DIVISION -->
+                <div class="form-group">
+
+                    <label>Division</label>
+
+                    <select id="edit_division">
+
+                        <option value="1">ITSD</option>
+                        <option value="2">SMD</option>
+                        <option value="3">ISSD</option>
+                        <option value="4">ITPMD</option>
+                        <option value="5">PTD</option>
+                        <option value="6">DMD</option>
+                        <option value="7">ARMD</option>
+                        <option value="8">PTDLAB</option>
+                        <option value="9">CI</option>
+                        <option value="10">PCR</option>
+                        <option value="11">LS</option>
+                        <option value="12">IHSS</option>
+                        <option value="13">BFS</option>
+                        <option value="14">SAO</option>
+                        <option value="15">SF</option>
+                        <option value="16">PCC-SF</option>
+
+                    </select>
+
+                </div>
+
+                <!-- CREATED BY -->
+                <div class="form-group">
+
+                    <label>Created By</label>
+
+                    <input type="text" id="edit_created_by" readonly>
+
+                </div>
+
+                <!-- STATUS -->
+                <div class="form-group">
+
+                    <label>Active</label>
+
+                    <select id="edit_status">
+
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+
+                    </select>
+
+                </div>
+
+                <!-- SAVE -->
+                <button type="button" class="save-btn">
+
+                    Save Changes
+
+                </button>
+
+            </form>
+
         </div>
 
-        <!-- SIDEBAR TOGGLE -->
-        <script>
-            const sidebar = document.getElementById("sidebar");
-            const hamburger = document.querySelector(".hamburger");
+    </div>
 
-            if (localStorage.getItem("sidebar") === "collapsed") {
-                sidebar.classList.add("collapsed");
+    <!-- SIDEBAR TOGGLE -->
+    <script>
+        const sidebar = document.getElementById("sidebar");
+        const hamburger = document.querySelector(".hamburger");
+
+        if (localStorage.getItem("sidebar") === "collapsed") {
+            sidebar.classList.add("collapsed");
+        }
+
+        hamburger.addEventListener("click", () => {
+            sidebar.classList.toggle("collapsed");
+
+            if (sidebar.classList.contains("collapsed")) {
+                localStorage.setItem("sidebar", "collapsed");
+            } else {
+                localStorage.setItem("sidebar", "expanded");
             }
+        });
+    </script>
+
+    <!-- edit modal script -->
+
+    <!-- SIDEBAR TOGGLE -->
+    <script>
+
+        const sidebar = document.getElementById("sidebar");
+        const hamburger = document.querySelector(".hamburger");
+
+        if (sidebar && localStorage.getItem("sidebar") === "collapsed") {
+            sidebar.classList.add("collapsed");
+        }
+
+        if (hamburger) {
 
             hamburger.addEventListener("click", () => {
+
                 sidebar.classList.toggle("collapsed");
 
                 if (sidebar.classList.contains("collapsed")) {
@@ -254,8 +493,52 @@ $totalPages = ceil($totalRow['total'] / $limit);
                 } else {
                     localStorage.setItem("sidebar", "expanded");
                 }
+
             });
-        </script>
+
+        }
+
+    </script>
+
+    <!-- EDIT MODAL SCRIPT -->
+    <script>
+
+        function openEditModal(
+            id,
+            name,
+            email,
+            role,
+            rank,
+            division,
+            created_by,
+            status
+        ) {
+
+            document.getElementById("editModal").style.display = "flex";
+
+            document.getElementById("edit_name").value = name;
+            document.getElementById("edit_email").value = email;
+
+            document.getElementById("edit_role").value = role;
+            document.getElementById("edit_rank").value = rank;
+            document.getElementById("edit_division").value = division;
+
+            document.getElementById("edit_created_by").value = created_by;
+            document.getElementById("edit_status").value = status;
+        }
+        function closeEditModal() {
+            document.getElementById("editModal").style.display = "none";
+        }
+        // CLOSE WHEN CLICK OUTSIDE
+        window.onclick = function (event) {
+            const modal = document.getElementById("editModal");
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+
+        };
+
+    </script>
 
 </body>
 
