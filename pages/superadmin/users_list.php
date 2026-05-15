@@ -6,7 +6,7 @@ include("../../config/db.php");
    PAGINATION
 ========================= */
 $limit = 10;
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $page = max(1, $page);
 $offset = ($page - 1) * $limit;
 
@@ -113,7 +113,7 @@ if (!empty($roleFilters)) {
 
     foreach ($roleFilters as $role) {
 
-        $params[] = (int)$role;
+        $params[] = (int) $role;
         $types .= "i";
     }
 }
@@ -129,7 +129,7 @@ if (!empty($rankFilters)) {
 
     foreach ($rankFilters as $rank) {
 
-        $params[] = (int)$rank;
+        $params[] = (int) $rank;
         $types .= "i";
     }
 }
@@ -143,7 +143,7 @@ if (!empty($divisionFilters)) {
     $sql .= " AND u.division_id IN ($placeholders)";
 
     foreach ($divisionFilters as $div) {
-        $params[] = (int)$div;
+        $params[] = (int) $div;
         $types .= "i";
     }
 }
@@ -194,20 +194,229 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 /* =========================
-   USER STATS
+   FILTERED USER STATS
 ========================= */
-$activeCount = $conn->query("
-SELECT COUNT(*) as total
-FROM users
-WHERE is_active = 1
-")->fetch_assoc()['total'];
 
-$inactiveCount = $conn->query("
-SELECT COUNT(*) as total
-FROM users
-WHERE is_active = 0
-")->fetch_assoc()['total'];
+/* =========================
+   ACTIVE COUNT
+========================= */
 
+$activeSql = "
+SELECT COUNT(*) as total
+
+FROM users u
+
+LEFT JOIN divisions d 
+    ON u.division_id = d.id
+
+LEFT JOIN ranks r 
+    ON u.rank_id = r.id
+
+LEFT JOIN roles rl 
+    ON u.role_id = rl.id
+
+WHERE u.is_active = 1
+";
+
+$activeParams = [];
+$activeTypes = "";
+
+/* SEARCH */
+if (!empty($search)) {
+
+    $activeSql .= "
+    AND (
+        u.first_name LIKE ?
+        OR u.middle_name LIKE ?
+        OR u.last_name LIKE ?
+        OR u.email LIKE ?
+        OR d.division LIKE ?
+        OR r.rank LIKE ?
+        OR rl.role_name LIKE ?
+    )
+    ";
+
+    $searchValue = "%$search%";
+
+    array_push(
+        $activeParams,
+        $searchValue,
+        $searchValue,
+        $searchValue,
+        $searchValue,
+        $searchValue,
+        $searchValue,
+        $searchValue
+    );
+
+    $activeTypes .= "sssssss";
+}
+
+/* ROLE FILTER */
+if (!empty($roleFilters)) {
+
+    $placeholders = implode(',', array_fill(0, count($roleFilters), '?'));
+
+    $activeSql .= " AND u.role_id IN ($placeholders)";
+
+    foreach ($roleFilters as $role) {
+
+        $activeParams[] = (int)$role;
+        $activeTypes .= "i";
+    }
+}
+
+/* RANK FILTER */
+if (!empty($rankFilters)) {
+
+    $placeholders = implode(',', array_fill(0, count($rankFilters), '?'));
+
+    $activeSql .= " AND u.rank_id IN ($placeholders)";
+
+    foreach ($rankFilters as $rank) {
+
+        $activeParams[] = (int)$rank;
+        $activeTypes .= "i";
+    }
+}
+
+/* DIVISION FILTER */
+if (!empty($divisionFilters)) {
+
+    $placeholders = implode(',', array_fill(0, count($divisionFilters), '?'));
+
+    $activeSql .= " AND u.division_id IN ($placeholders)";
+
+    foreach ($divisionFilters as $div) {
+
+        $activeParams[] = (int)$div;
+        $activeTypes .= "i";
+    }
+}
+
+$activeStmt = $conn->prepare($activeSql);
+
+if (!empty($activeParams)) {
+
+    $activeStmt->bind_param($activeTypes, ...$activeParams);
+}
+
+$activeStmt->execute();
+
+$activeResult = $activeStmt->get_result();
+
+$activeCount = $activeResult->fetch_assoc()['total'];
+
+
+/* =========================
+   INACTIVE COUNT
+========================= */
+
+$inactiveSql = "
+SELECT COUNT(*) as total
+
+FROM users u
+
+LEFT JOIN divisions d 
+    ON u.division_id = d.id
+
+LEFT JOIN ranks r 
+    ON u.rank_id = r.id
+
+LEFT JOIN roles rl 
+    ON u.role_id = rl.id
+
+WHERE u.is_active = 0
+";
+
+$inactiveParams = [];
+$inactiveTypes = "";
+
+/* SEARCH */
+if (!empty($search)) {
+
+    $inactiveSql .= "
+    AND (
+        u.first_name LIKE ?
+        OR u.middle_name LIKE ?
+        OR u.last_name LIKE ?
+        OR u.email LIKE ?
+        OR d.division LIKE ?
+        OR r.rank LIKE ?
+        OR rl.role_name LIKE ?
+    )
+    ";
+
+    $searchValue = "%$search%";
+
+    array_push(
+        $inactiveParams,
+        $searchValue,
+        $searchValue,
+        $searchValue,
+        $searchValue,
+        $searchValue,
+        $searchValue,
+        $searchValue
+    );
+
+    $inactiveTypes .= "sssssss";
+}
+
+/* ROLE FILTER */
+if (!empty($roleFilters)) {
+
+    $placeholders = implode(',', array_fill(0, count($roleFilters), '?'));
+
+    $inactiveSql .= " AND u.role_id IN ($placeholders)";
+
+    foreach ($roleFilters as $role) {
+
+        $inactiveParams[] = (int)$role;
+        $inactiveTypes .= "i";
+    }
+}
+
+/* RANK FILTER */
+if (!empty($rankFilters)) {
+
+    $placeholders = implode(',', array_fill(0, count($rankFilters), '?'));
+
+    $inactiveSql .= " AND u.rank_id IN ($placeholders)";
+
+    foreach ($rankFilters as $rank) {
+
+        $inactiveParams[] = (int)$rank;
+        $inactiveTypes .= "i";
+    }
+}
+
+/* DIVISION FILTER */
+if (!empty($divisionFilters)) {
+
+    $placeholders = implode(',', array_fill(0, count($divisionFilters), '?'));
+
+    $inactiveSql .= " AND u.division_id IN ($placeholders)";
+
+    foreach ($divisionFilters as $div) {
+
+        $inactiveParams[] = (int)$div;
+        $inactiveTypes .= "i";
+    }
+}
+
+$inactiveStmt = $conn->prepare($inactiveSql);
+
+if (!empty($inactiveParams)) {
+
+    $inactiveStmt->bind_param($inactiveTypes, ...$inactiveParams);
+}
+
+$inactiveStmt->execute();
+
+$inactiveResult = $inactiveStmt->get_result();
+
+$inactiveCount = $inactiveResult->fetch_assoc()['total'];
 /* =========================
    FETCH ROLE FILTERS
 ========================= */
@@ -248,17 +457,14 @@ ORDER BY id ASC
 
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <link rel="stylesheet"
-        href="../superadmin/css/super_admin.css">
+    <link rel="stylesheet" href="../superadmin/css/super_admin.css">
 
-    <link rel="stylesheet"
-        href="css/superadmin_navbar.css">
+    <link rel="stylesheet" href="css/superadmin_navbar.css">
 
-    <link rel="stylesheet"
-        href="./css/superadmin_sidebar.css">
+    <link rel="stylesheet" href="./css/superadmin_sidebar.css">
 
     <title>Users List</title>
 
@@ -273,130 +479,157 @@ ORDER BY id ASC
     <?php include 'superadmin_navbar.php'; ?>
 
     <!-- TOP BAR -->
-    <div class="top-bar">
+<div class="top-bar">
 
-        <div class="filters">
+    <div class="filters">
 
-            <form method="GET" class="filter-form" id="filterForm">
+        <form method="GET" class="filter-form" id="filterForm">
 
-    <!-- ROLE FILTER -->
-    <div class="dropdown-filter">
+            <!-- FILTER GROUPS -->
+            <div class="filter-groups d-flex gap-3">
 
-        <button type="button"
-            class="filter-btn"
-            onclick="toggleDropdown('roleDropdown')">
+                <!-- ROLE -->
+                <div class="dropdown">
 
-            Roles
+                    <button 
+                        class="btn filter-btn dropdown-toggle" 
+                        type="button" 
+                        data-bs-toggle="dropdown"
+                        data-bs-auto-close="outside">
+                        Roles
+                    </button>
 
-        </button>
+                    <ul class="dropdown-menu p-3">
 
-        <div class="dropdown-content"
-            id="roleDropdown">
+                        <?php while ($role = $rolesResult->fetch_assoc()): ?>
 
-            <?php while ($role = $rolesResult->fetch_assoc()) { ?>
+                            <li>
+                                <label class="dropdown-item">
+                                    <input
+                                        type="checkbox"
+                                        name="roles[]"
+                                        value="<?= $role['id']; ?>"
+                                        <?= in_array($role['id'], $roleFilters) ? 'checked' : ''; ?>
+                                    >
+                                    <?= htmlspecialchars($role['role_name']); ?>
+                                </label>
+                            </li>
 
-                <label>
+                        <?php endwhile; ?>
 
-                    <input
-                        type="checkbox"
-                        name="roles[]"
-                        value="<?= $role['id']; ?>"
-                        onchange="submitFilters()"
-                        <?= in_array($role['id'], $roleFilters) ? 'checked' : ''; ?>>
+                        <!-- APPLY BUTTON (OPTIONAL BUT RECOMMENDED) -->
+                        <li class="mt-2">
+                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                Apply
+                            </button>
+                        </li>
 
-                    <?= htmlspecialchars($role['role_name']); ?>
+                    </ul>
 
-                </label>
+                </div>
 
-            <?php } ?>
+                <!-- DIVISION -->
+                <div class="dropdown">
 
-        </div>
+                    <button 
+                        class="btn filter-btn dropdown-toggle" 
+                        type="button" 
+                        data-bs-toggle="dropdown"
+                        data-bs-auto-close="outside">
+                        Division
+                    </button>
 
-    </div>
-        <!-- DIVISION FILTER -->
-<div class="dropdown-filter">
+                    <ul class="dropdown-menu p-3 dropdown-scroll">
 
-    <button type="button"
-        class="filter-btn"
-        onclick="toggleDropdown('divisionDropdown')">
+                        <?php while ($division = $divisionsResult->fetch_assoc()): ?>
 
-        Division
+                            <li>
+                                <label class="dropdown-item">
+                                    <input
+                                        type="checkbox"
+                                        name="divisions[]"
+                                        value="<?= $division['id']; ?>"
+                                        <?= in_array($division['id'], $divisionFilters) ? 'checked' : ''; ?>
+                                    >
+                                    <?= htmlspecialchars($division['division']); ?>
+                                </label>
+                            </li>
 
-    </button>
+                        <?php endwhile; ?>
 
-    <div class="dropdown-content" id="divisionDropdown">
+                        <li class="mt-2">
+                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                Apply
+                            </button>
+                        </li>
 
-        <?php while ($division = $divisionsResult->fetch_assoc()) { ?>
+                    </ul>
 
-            <label>
+                </div>
 
-                <input
-                    type="checkbox"
-                    name="divisions[]"
-                    value="<?= $division['id']; ?>"
-                    onchange="submitFilters()"
-                    <?= in_array($division['id'], $divisionFilters) ? 'checked' : ''; ?>>
+                <!-- RANK -->
+                <div class="dropdown">
 
-                <?= htmlspecialchars($division['division']); ?>
+                    <button 
+                        class="btn filter-btn dropdown-toggle" 
+                        type="button" 
+                        data-bs-toggle="dropdown"
+                        data-bs-auto-close="outside">
+                        Rank
+                    </button>
 
-            </label>
+                    <ul class="dropdown-menu p-3 dropdown-scroll">
 
-        <?php } ?>
+                        <?php while ($rank = $ranksResult->fetch_assoc()): ?>
+
+                            <li>
+                                <label class="dropdown-item">
+                                    <input
+                                        type="checkbox"
+                                        name="ranks[]"
+                                        value="<?= $rank['id']; ?>"
+                                        <?= in_array($rank['id'], $rankFilters) ? 'checked' : ''; ?>
+                                    >
+                                    <?= htmlspecialchars($rank['rank']); ?>
+                                </label>
+                            </li>
+
+                        <?php endwhile; ?>
+
+                        <li class="mt-2">
+                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                Apply
+                            </button>
+                        </li>
+
+                    </ul>
+
+                </div>
+
+            </div>
+
+            <!-- SEARCH -->
+            <div class="search-container">
+
+                <input 
+                    type="text" 
+                    name="search" 
+                    class="search-input" 
+                    placeholder="Search users..."
+                    value="<?= htmlspecialchars($search); ?>"
+                >
+
+                <button type="submit" class="search-btn" style="margin-left: 10px;">
+                    Search
+                </button>
+
+            </div>
+
+        </form>
 
     </div>
 
 </div>
-    <!-- RANK FILTER -->
-    <div class="dropdown-filter">
-
-        <button type="button"
-            class="filter-btn"
-            onclick="toggleDropdown('rankDropdown')">
-
-            Rank
-
-        </button>
-
-        <div class="dropdown-content"
-            id="rankDropdown">
-
-            <?php while ($rank = $ranksResult->fetch_assoc()) { ?>
-
-                <label>
-
-                    <input
-                        type="checkbox"
-                        name="ranks[]"
-                        value="<?= $rank['id']; ?>"
-                        onchange="submitFilters()"
-                        <?= in_array($rank['id'], $rankFilters) ? 'checked' : ''; ?>>
-
-                    <?= htmlspecialchars($rank['rank']); ?>
-
-                </label>
-
-            <?php } ?>
-
-        </div>
-
-    </div>
-    
-
-    <!-- SEARCH -->
-    <input
-        type="text"
-        name="search"
-        class="search-input"
-        placeholder="Search users..."
-        value="<?= htmlspecialchars($search); ?>"
-        onkeyup="liveSearch(event)">
-
-</form>
-
-        </div>
-
-    </div>
-
     <!-- TABLE -->
     <div class="contenttable">
 
@@ -473,14 +706,23 @@ ORDER BY id ASC
 
                                 <td class="action-buttons">
 
-                                    <button type="button"
-                                        class="btn-edit">
+                             <button
+    type="button"
+    class="btn-edit"
+    onclick="openEditModal(
+        '<?= $row['id']; ?>',
+        '<?= htmlspecialchars($row['full_name'] ?? '', ENT_QUOTES); ?>',
+        '<?= htmlspecialchars($row['email'] ?? '', ENT_QUOTES); ?>',
+        '<?= $row['role_id']; ?>',
+        '<?= $row['rank_id']; ?>',
+        '<?= $row['division_id']; ?>',
+        '<?= htmlspecialchars($row['created_by'] ?? 'SYSTEM', ENT_QUOTES); ?>',
+        '<?= $row['is_active']; ?>'
+    )">
+    Edit
+</button>
 
-                                        Edit
-
-                                    </button>
-
-                                </td>
+                            </td>   
 
                             </tr>
 
@@ -490,8 +732,7 @@ ORDER BY id ASC
 
                         <tr>
 
-                            <td colspan="8"
-                                style="text-align:center;">
+                            <td colspan="8" style="text-align:center;">
 
                                 No users found
 
@@ -597,32 +838,137 @@ ORDER BY id ASC
         </div>
 
     </div>
+<!-- =========================
+     EDIT USER MODAL
+     (UPDATED: ADDED FORM ACTION + HIDDEN ID + FIXED INPUT NAMES)
+========================= -->
+<div id="editModal" class="edit-modal">
+
+    <div class="edit-modal-content">
+
+        <span class="close-modal" onclick="closeEditModal()">&times;</span>
+
+        <h2>Edit User</h2>
+
+        <!-- 🔥 ADDED: form action for backend update -->
+        <form method="POST" action="update_user.php">
+
+            <!-- 🔥 ADDED: hidden user id -->
+            <input type="hidden" name="user_id" id="edit_id">
+
+            <!-- ROLE -->
+            <div class="form-group">
+                <label>Role</label>
+
+                <!-- 🔥 ADDED: name attribute -->
+                <select id="edit_role" name="role">
+                    <option value="1">Superadmin</option>
+                    <option value="2">Admin</option>
+                    <option value="3">Encoder</option>
+                </select>
+            </div>
+
+            <!-- RANK -->
+            <div class="form-group">
+                <label>Rank</label>
+
+                <!-- 🔥 ADDED: name attribute -->
+                <select id="edit_rank" name="rank">
+                    <option value="1">NUP</option>
+                    <option value="2">PAT</option>
+                    <option value="3">PCPL</option>
+                    <option value="4">PSSG</option>
+                    <option value="5">PMSG</option>
+                    <option value="6">PSMS</option>
+                    <option value="7">PCMS</option>
+                    <option value="8">PEMS</option>
+                    <option value="9">PLT</option>
+                    <option value="10">PCPT</option>
+                    <option value="11">PMAJ</option>
+                    <option value="12">PLTCOL</option>
+                    <option value="13">PCOL</option>
+                    <option value="14">PBGEN</option>
+                </select>
+            </div>
+
+            <!-- NAME -->
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="edit_name" name="name">
+            </div>
+
+            <!-- EMAIL (READONLY) -->
+            <div class="form-group">
+                <label>Email</label>
+
+                <!-- 🔥 CHANGED: readonly (cannot edit email) -->
+                <input type="email" id="edit_email" name="email" readonly>
+            </div>
+
+            <!-- DIVISION -->
+            <div class="form-group">
+                <label>Division</label>
+
+                <!-- 🔥 ADDED: name attribute -->
+                <select id="edit_division" name="division">
+                    <option value="1">ITSD</option>
+                    <option value="2">SMD</option>
+                    <option value="3">ISSD</option>
+                    <option value="4">ITPMD</option>
+                    <option value="5">PTD</option>
+                    <option value="6">DMD</option>
+                    <option value="7">ARMD</option>
+                    <option value="8">PTDLAB</option>
+                    <option value="9">CI</option>
+                    <option value="10">PCR</option>
+                    <option value="11">LS</option>
+                    <option value="12">IHSS</option>
+                    <option value="13">BFS</option>
+                    <option value="14">SAO</option>
+                    <option value="15">SF</option>
+                    <option value="16">PCC-SF</option>
+                </select>
+            </div>
+
+            <!-- CREATED BY -->
+            <div class="form-group">
+                <label>Created By</label>
+                <input type="text" id="edit_created_by" readonly>
+            </div>
+
+            <!-- STATUS -->
+            <div class="form-group">
+                <label>Active</label>
+
+                <!-- 🔥 ADDED: name attribute -->
+                <select id="edit_status" name="status">
+                    <option value="1">Yes</option>
+                    <option value="0">No</option>
+                </select>
+            </div>
+
+            <!-- SAVE -->
+            <button type="submit" class="save-btn">
+                Save Changes
+            </button>
+
+        </form>
+
+    </div>
+</div>
 
     <!-- JAVASCRIPT -->
-<script>
+    <script>
 
-    function toggleDropdown(id) {
+        function toggleDropdown(id) {
 
-        document
-            .getElementById(id)
-            .classList.toggle("show");
+            document
+                .getElementById(id)
+                .classList.toggle("show");
 
-    }
+        }
 
-    function submitFilters() {
-
-        document
-            .getElementById("filterForm")
-            .submit();
-
-    }
-
-    // SEARCH ON ENTER
-    function liveSearch(event) {
-
-        if (event.key === "Enter") {
-
-            event.preventDefault();
+        function submitFilters() {
 
             document
                 .getElementById("filterForm")
@@ -630,26 +976,82 @@ ORDER BY id ASC
 
         }
 
-    }
+        // SEARCH ON ENTER
+        function liveSearch(event) {
 
-    // CLOSE DROPDOWN
-    window.onclick = function(e) {
+            if (event.key === "Enter") {
 
-        if (!e.target.matches('.filter-btn')) {
+                event.preventDefault();
 
-            document
-                .querySelectorAll(".dropdown-content")
-                .forEach(drop => {
+                document
+                    .getElementById("filterForm")
+                    .submit();
 
-                    drop.classList.remove("show");
-
-                });
+            }
 
         }
 
-    };
+        // CLOSE DROPDOWN
+        window.onclick = function (e) {
 
+            if (!e.target.matches('.filter-btn')) {
+
+                document
+                    .querySelectorAll(".dropdown-content")
+                    .forEach(drop => {
+
+                        drop.classList.remove("show");
+
+                    });
+
+            }
+
+        };
+
+    </script>
+        <!-- EDIT MODAL SCRIPT -->
+<script>
+
+function openEditModal(
+    id,
+    name,
+    email,
+    role,
+    rank,
+    division,
+    created_by,
+    status
+) {
+
+    document.getElementById("editModal").style.display = "flex";
+    document.body.classList.add("modal-open");
+
+    document.getElementById("edit_id").value = id;
+
+    document.getElementById("edit_name").value = name;
+    document.getElementById("edit_email").value = email;
+    document.getElementById("edit_created_by").value = created_by;
+
+    document.getElementById("edit_role").value = role;
+    document.getElementById("edit_rank").value = rank;
+    document.getElementById("edit_division").value = division;
+    document.getElementById("edit_status").value = status;
+}
+
+function closeEditModal() {
+    document.getElementById("editModal").style.display = "none";
+    document.body.classList.remove("modal-open");
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById("editModal");
+
+    if (event.target == modal) {
+        closeEditModal();
+    }
+};
 </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>    
 
 </body>
 
