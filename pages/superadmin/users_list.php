@@ -176,7 +176,16 @@ $totalPages = ceil($totalUsers / $limit);
 /* =========================
    FINAL QUERY
 ========================= */
-$sql .= " ORDER BY u.id DESC LIMIT ? OFFSET ?";
+$sql .= "
+ORDER BY 
+    CASE rl.role_name
+        WHEN 'Superadmin' THEN 1
+        WHEN 'Admin' THEN 2
+        WHEN 'Encoder' THEN 3
+        ELSE 4
+    END ASC,
+    u.id DESC
+LIMIT ? OFFSET ?";
 
 $params[] = $limit;
 $params[] = $offset;
@@ -425,7 +434,13 @@ SELECT
     id,
     role_name
 FROM roles
-ORDER BY role_name ASC
+ORDER BY 
+    CASE role_name
+        WHEN 'Superadmin' THEN 1
+        WHEN 'Admin' THEN 2
+        WHEN 'Encoder' THEN 3
+        ELSE 4
+    END ASC
 ");
 
 /* =========================
@@ -511,7 +526,7 @@ ORDER BY id ASC
                                         value="<?= $role['id']; ?>"
                                         <?= in_array($role['id'], $roleFilters) ? 'checked' : ''; ?>
                                     >
-                                    <?= htmlspecialchars($role['role_name']); ?>
+                                  <?= ucfirst(htmlspecialchars($role['role_name'])); ?>
                                 </label>
                             </li>
 
