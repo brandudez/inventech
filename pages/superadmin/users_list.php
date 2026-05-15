@@ -3,56 +3,265 @@ session_start();
 include("../../config/db.php");
 
 /* =========================
-   PAGINATION SETTINGS
+   PAGINATION
 ========================= */
-$limit = 10; // USERS PER PAGE
-$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+$limit = 10;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $page = max(1, $page);
 $offset = ($page - 1) * $limit;
 
 /* =========================
-   FETCH USERS
+   SEARCH
 ========================= */
-$stmt = $conn->prepare("
-    SELECT 
-        u.id, u.username, u.email, u.role_id, u.division_id, u.rank_id, u.is_active,
+$search = trim($_GET['search'] ?? '');
 
-        TRIM(CONCAT(u.first_name, ' ', IFNULL(u.middle_name, ''), ' ', u.last_name)) AS full_name,
+/* =========================
+   FILTERS
+========================= */
+$roleFilters = $_GET['roles'] ?? [];
+$rankFilters = $_GET['ranks'] ?? [];
+$divisionFilters = $_GET['divisions'] ?? [];
 
-        d.division AS division_name,
-        r.rank AS rank_name,
-        c.username AS created_by
+$roleFilters = is_array($roleFilters) ? $roleFilters : [];
+$rankFilters = is_array($rankFilters) ? $rankFilters : [];
+$divisionFilters = is_array($divisionFilters) ? $divisionFilters : [];
+/* =========================
+   BASE QUERY
+========================= */
+$sql = "
+SELECT 
+    u.id,
+    u.username,
+    u.email,
+    u.role_id,
+    u.division_id,
+    u.rank_id,
+    u.is_active,
 
-    FROM users u
-    LEFT JOIN divisions d ON u.division_id = d.id
-    LEFT JOIN ranks r ON u.rank_id = r.id
-    LEFT JOIN users c ON u.creator_user_id = c.id
-    ORDER BY u.id DESC
-    LIMIT ? OFFSET ?
-");
+    TRIM(CONCAT(
+        u.first_name, ' ',
+        IFNULL(u.middle_name, ''), ' ',
+        u.last_name
+    )) AS full_name,
 
-$stmt->bind_param("ii", $limit, $offset);
+    d.division AS division_name,
+    r.rank AS rank_name,
+    rl.role_name AS role_name,
+    c.username AS created_by
+
+FROM users u
+
+LEFT JOIN divisions d 
+    ON u.division_id = d.id
+
+LEFT JOIN ranks r 
+    ON u.rank_id = r.id
+
+LEFT JOIN roles rl 
+    ON u.role_id = rl.id
+
+LEFT JOIN users c 
+    ON u.creator_user_id = c.id
+
+WHERE 1=1
+";
+
+$params = [];
+$types = "";
+
+/* =========================
+   SEARCH CONDITION
+========================= */
+if (!empty($search)) {
+
+    $sql .= "
+    AND (
+        u.first_name LIKE ?
+        OR u.middle_name LIKE ?
+        OR u.last_name LIKE ?
+        OR u.email LIKE ?
+        OR d.division LIKE ?
+        OR r.rank LIKE ?
+        OR rl.role_name LIKE ?
+    )
+    ";
+
+    $searchValue = "%$search%";
+
+    array_push(
+        $params,
+        $searchValue,
+        $searchValue,
+        $searchValue,
+        $searchValue,
+        $searchValue,
+        $searchValue,
+        $searchValue
+    );
+
+    $types .= "sssssss";
+}
+
+/* =========================
+   ROLE FILTER
+========================= */
+if (!empty($roleFilters)) {
+
+    $placeholders = implode(',', array_fill(0, count($roleFilters), '?'));
+
+    $sql .= " AND u.role_id IN ($placeholders)";
+
+    foreach ($roleFilters as $role) {
+
+        $params[] = (int)$role;
+        $types .= "i";
+    }
+}
+
+/* =========================
+   RANK FILTER
+========================= */
+if (!empty($rankFilters)) {
+
+    $placeholders = implode(',', array_fill(0, count($rankFilters), '?'));
+
+    $sql .= " AND u.rank_id IN ($placeholders)";
+
+    foreach ($rankFilters as $rank) {
+
+        $params[] = (int)$rank;
+        $types .= "i";
+    }
+}
+/* =========================
+   DIVISION FILTER (NEW)
+========================= */
+if (!empty($divisionFilters)) {
+
+    $placeholders = implode(',', array_fill(0, count($divisionFilters), '?'));
+
+    $sql .= " AND u.division_id IN ($placeholders)";
+
+    foreach ($divisionFilters as $div) {
+        $params[] = (int)$div;
+        $types .= "i";
+    }
+}
+
+/* =========================
+   COUNT TOTAL USERS
+========================= */
+$countSql = "
+SELECT COUNT(*) as total
+FROM (
+    $sql
+) AS filteredUsers
+";
+
+$countStmt = $conn->prepare($countSql);
+
+if (!empty($params)) {
+
+    $countStmt->bind_param($types, ...$params);
+}
+
+$countStmt->execute();
+
+$totalResult = $countStmt->get_result();
+$totalRow = $totalResult->fetch_assoc();
+
+$totalUsers = $totalRow['total'];
+$totalPages = ceil($totalUsers / $limit);
+
+/* =========================
+   FINAL QUERY
+========================= */
+$sql .= " ORDER BY u.id DESC LIMIT ? OFFSET ?";
+
+$params[] = $limit;
+$params[] = $offset;
+
+$types .= "ii";
+
+$stmt = $conn->prepare($sql);
+
+if (!empty($params)) {
+
+    $stmt->bind_param($types, ...$params);
+}
+
 $stmt->execute();
 $result = $stmt->get_result();
 
 /* =========================
-   TOTAL USERS (FOR PAGES)
+   USER STATS
 ========================= */
-$totalResult = $conn->query("SELECT COUNT(*) AS total FROM users");
-$totalRow = $totalResult->fetch_assoc();
-$totalPages = ceil($totalRow['total'] / $limit);
+$activeCount = $conn->query("
+SELECT COUNT(*) as total
+FROM users
+WHERE is_active = 1
+")->fetch_assoc()['total'];
+
+$inactiveCount = $conn->query("
+SELECT COUNT(*) as total
+FROM users
+WHERE is_active = 0
+")->fetch_assoc()['total'];
+
+/* =========================
+   FETCH ROLE FILTERS
+========================= */
+$rolesResult = $conn->query("
+SELECT 
+    id,
+    role_name
+FROM roles
+ORDER BY role_name ASC
+");
+
+/* =========================
+   FETCH RANK FILTERS
+========================= */
+$ranksResult = $conn->query("
+SELECT 
+    id,
+    rank
+FROM ranks
+ORDER BY id ASC
+");
+/* =========================
+   FETCH DIVISION FILTERS
+========================= */
+$divisionsResult = $conn->query("
+SELECT 
+    id,
+    division
+FROM divisions
+ORDER BY id ASC
+");
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../superadmin/css/super_admin.css">
-    <link rel="stylesheet" href="css/superadmin_navbar.css">
-    <link rel="stylesheet" href="./css/superadmin_sidebar.css">
-    <title>User's List</title>
+
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet"
+        href="../superadmin/css/super_admin.css">
+
+    <link rel="stylesheet"
+        href="css/superadmin_navbar.css">
+
+    <link rel="stylesheet"
+        href="./css/superadmin_sidebar.css">
+
+    <title>Users List</title>
+
 </head>
 
 <body>
@@ -60,44 +269,135 @@ $totalPages = ceil($totalRow['total'] / $limit);
     <!-- SIDEBAR -->
     <?php include 'superadmin_sidebar.php'; ?>
 
-    <!-- TOP NAVBAR -->
+    <!-- NAVBAR -->
     <?php include 'superadmin_navbar.php'; ?>
 
-    <!-- Filters -->
-    <!-- SEARCH BAR -->
+    <!-- TOP BAR -->
     <div class="top-bar">
 
-        <!-- FILTER BUTTONS -->
         <div class="filters">
 
-            <button type="button" class="filter-btn">
-                Roles
-            </button>
+            <form method="GET" class="filter-form" id="filterForm">
 
-            <button type="button" class="filter-btn">
-                Rank
-            </button>
+    <!-- ROLE FILTER -->
+    <div class="dropdown-filter">
 
-            <button type="button" class="filter-btn">
-                Division
-            </button>
+        <button type="button"
+            class="filter-btn"
+            onclick="toggleDropdown('roleDropdown')">
+
+            Roles
+
+        </button>
+
+        <div class="dropdown-content"
+            id="roleDropdown">
+
+            <?php while ($role = $rolesResult->fetch_assoc()) { ?>
+
+                <label>
+
+                    <input
+                        type="checkbox"
+                        name="roles[]"
+                        value="<?= $role['id']; ?>"
+                        onchange="submitFilters()"
+                        <?= in_array($role['id'], $roleFilters) ? 'checked' : ''; ?>>
+
+                    <?= htmlspecialchars($role['role_name']); ?>
+
+                </label>
+
+            <?php } ?>
 
         </div>
 
-        <!-- SEARCH -->
-        <div class="search-container">
-            <form class="search-form">
-                <input type="text" class="search-input" placeholder="Search users...">
-                <button type="submit" class="search-btn">
-                    Search
-                </button>
-            </form>
-        </div>
     </div>
+        <!-- DIVISION FILTER -->
+<div class="dropdown-filter">
+
+    <button type="button"
+        class="filter-btn"
+        onclick="toggleDropdown('divisionDropdown')">
+
+        Division
+
+    </button>
+
+    <div class="dropdown-content" id="divisionDropdown">
+
+        <?php while ($division = $divisionsResult->fetch_assoc()) { ?>
+
+            <label>
+
+                <input
+                    type="checkbox"
+                    name="divisions[]"
+                    value="<?= $division['id']; ?>"
+                    onchange="submitFilters()"
+                    <?= in_array($division['id'], $divisionFilters) ? 'checked' : ''; ?>>
+
+                <?= htmlspecialchars($division['division']); ?>
+
+            </label>
+
+        <?php } ?>
+
+    </div>
+
+</div>
+    <!-- RANK FILTER -->
+    <div class="dropdown-filter">
+
+        <button type="button"
+            class="filter-btn"
+            onclick="toggleDropdown('rankDropdown')">
+
+            Rank
+
+        </button>
+
+        <div class="dropdown-content"
+            id="rankDropdown">
+
+            <?php while ($rank = $ranksResult->fetch_assoc()) { ?>
+
+                <label>
+
+                    <input
+                        type="checkbox"
+                        name="ranks[]"
+                        value="<?= $rank['id']; ?>"
+                        onchange="submitFilters()"
+                        <?= in_array($rank['id'], $rankFilters) ? 'checked' : ''; ?>>
+
+                    <?= htmlspecialchars($rank['rank']); ?>
+
+                </label>
+
+            <?php } ?>
+
+        </div>
+
+    </div>
+    
+
+    <!-- SEARCH -->
+    <input
+        type="text"
+        name="search"
+        class="search-input"
+        placeholder="Search users..."
+        value="<?= htmlspecialchars($search); ?>"
+        onkeyup="liveSearch(event)">
+
+</form>
+
+        </div>
+
+    </div>
+
     <!-- TABLE -->
-    <!-- =========================
-     TABLE
-========================= -->
     <div class="contenttable">
 
         <div class="table-container">
@@ -105,7 +405,9 @@ $totalPages = ceil($totalRow['total'] / $limit);
             <table class="users-table">
 
                 <thead>
+
                     <tr>
+
                         <th>ROLES</th>
                         <th>RANK</th>
                         <th>NAME</th>
@@ -114,7 +416,9 @@ $totalPages = ceil($totalRow['total'] / $limit);
                         <th>CREATED BY</th>
                         <th>ACTIVE?</th>
                         <th>ACTION</th>
+
                     </tr>
+
                 </thead>
 
                 <tbody>
@@ -124,35 +428,42 @@ $totalPages = ceil($totalRow['total'] / $limit);
                         <?php while ($row = $result->fetch_assoc()) { ?>
 
                             <tr>
+
                                 <td>
-                                    <?= htmlspecialchars($row['role_id'] == 1 ? 'SUPER ADMIN' : 'USER'); ?>
+                                    <?= htmlspecialchars($row['role_name'] ?? 'N/A'); ?>
                                 </td>
+
                                 <td>
-                                    <?= ($row['rank_name'] ?? 'N/A'); ?>
+                                    <?= htmlspecialchars($row['rank_name'] ?? 'N/A'); ?>
                                 </td>
+
                                 <td>
-                                    <?= ($row['full_name']); ?>
+                                    <?= htmlspecialchars($row['full_name']); ?>
                                 </td>
+
                                 <td>
-                                    <?= ($row['email']); ?>
+                                    <?= htmlspecialchars($row['email']); ?>
                                 </td>
+
                                 <td>
-                                    <?= ($row['division_name'] ?? 'N/A'); ?>
+                                    <?= htmlspecialchars($row['division_name'] ?? 'N/A'); ?>
                                 </td>
+
                                 <td>
-                                    <?= ($row['created_by'] ?? 'SYSTEM'); ?>
+                                    <?= htmlspecialchars($row['created_by'] ?? 'SYSTEM'); ?>
                                 </td>
+
                                 <td>
 
                                     <?php if ($row['is_active']) { ?>
 
-                                        <span style="color:green; font-weight: bold;">
+                                        <span style="color:green; font-weight:bold;">
                                             YES
                                         </span>
 
                                     <?php } else { ?>
 
-                                        <span style="color:red;">
+                                        <span style="color:red; font-weight:bold;">
                                             NO
                                         </span>
 
@@ -162,16 +473,8 @@ $totalPages = ceil($totalRow['total'] / $limit);
 
                                 <td class="action-buttons">
 
-                                    <button type="button" class="btn-edit" onclick="openEditModal(
-                                        '<?= $row['id']; ?>',
-                                        '<?= htmlspecialchars($row['full_name'] ?? '', ENT_QUOTES); ?>',
-                                        '<?= htmlspecialchars($row['email'] ?? '', ENT_QUOTES); ?>',
-                                        '<?= $row['role_id']; ?>',
-                                        '<?= $row['rank_id']; ?>',
-                                        '<?= $row['division_id']; ?>',
-                                        '<?= htmlspecialchars($row['created_by'] ?? 'SYSTEM', ENT_QUOTES); ?>',
-                                        '<?= $row['is_active']; ?>'
-                                    )">
+                                    <button type="button"
+                                        class="btn-edit">
 
                                         Edit
 
@@ -187,8 +490,11 @@ $totalPages = ceil($totalRow['total'] / $limit);
 
                         <tr>
 
-                            <td colspan="8" style="text-align:center;">
+                            <td colspan="8"
+                                style="text-align:center;">
+
                                 No users found
+
                             </td>
 
                         </tr>
@@ -201,46 +507,59 @@ $totalPages = ceil($totalRow['total'] / $limit);
 
         </div>
 
-        <!-- PAGINATION -->
-        <?php if ($totalPages > 1) { ?>
+        <!-- FOOTER -->
+        <div class="table-footer">
 
-            <?php
-            $range = 1;
+            <!-- STATS -->
+            <div class="user-stats">
 
-            $start = max(1, $page - $range);
-            $end = min($totalPages, $page + $range);
-            ?>
+                <div class="stat-box total">
 
-            <div class="table-footer">
+                    <span class="label">
+                        Total Users
+                    </span>
 
-                <!-- LEFT SIDE -->
-                <div class="user-stats">
-
-                    <div class="stat-box total">
-                        <span class="label">Total Users</span>
-                        <span class="value">0</span>
-                    </div>
-
-                    <div class="stat-box active">
-                        <span class="label">Active</span>
-                        <span class="value">0</span>
-                    </div>
-
-                    <div class="stat-box inactive">
-                        <span class="label">Inactive</span>
-                        <span class="value">0</span>
-                    </div>
+                    <span class="value">
+                        <?= $totalUsers; ?>
+                    </span>
 
                 </div>
 
-                <!-- PAGINATION -->
-                <div class="pagination" style="margin-top:20px; text-align:center;">
+                <div class="stat-box active">
+
+                    <span class="label">
+                        Active
+                    </span>
+
+                    <span class="value">
+                        <?= $activeCount; ?>
+                    </span>
+
+                </div>
+
+                <div class="stat-box inactive">
+
+                    <span class="label">
+                        Inactive
+                    </span>
+
+                    <span class="value">
+                        <?= $inactiveCount; ?>
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- PAGINATION -->
+            <?php if ($totalPages > 1) { ?>
+
+                <div class="pagination">
 
                     <!-- PREV -->
                     <?php if ($page > 1) { ?>
 
-                        <a href="?page=<?= $page - 1; ?>"
-                            style="margin:5px; padding:6px 10px; text-decoration:none; background:#ddd; color:black;">
+                        <a href="?page=<?= $page - 1; ?>&search=<?= urlencode($search); ?>">
 
                             Prev
 
@@ -248,46 +567,13 @@ $totalPages = ceil($totalRow['total'] / $limit);
 
                     <?php } ?>
 
-                    <!-- FIRST -->
-                    <?php if ($start > 1) { ?>
-
-                        <a href="?page=1"
-                            style="margin:5px; padding:6px 10px; text-decoration:none; background:#ddd; color:black;">
-
-                            1
-
-                        </a>
-
-                        ...
-
-                    <?php } ?>
-
                     <!-- PAGE NUMBERS -->
-                    <?php for ($i = $start; $i <= $end; $i++) { ?>
+                    <?php for ($i = 1; $i <= $totalPages; $i++) { ?>
 
-                        <a href="?page=<?= $i; ?>" style="
-                        margin:5px;
-                        padding:6px 10px;
-                        text-decoration:none;
-                        background:<?= ($i == $page) ? '#0d6ea8' : '#ddd'; ?>;
-                        color:<?= ($i == $page) ? 'white' : 'black'; ?>;
-                    ">
+                        <a href="?page=<?= $i; ?>&search=<?= urlencode($search); ?>"
+                            class="<?= ($i == $page) ? 'active-page' : ''; ?>">
 
                             <?= $i; ?>
-
-                        </a>
-
-                    <?php } ?>
-
-                    <!-- LAST -->
-                    <?php if ($end < $totalPages) { ?>
-
-                        ...
-
-                        <a href="?page=<?= $totalPages; ?>"
-                            style="margin:5px; padding:6px 10px; text-decoration:none; background:#ddd; color:black;">
-
-                            <?= $totalPages; ?>
 
                         </a>
 
@@ -296,8 +582,7 @@ $totalPages = ceil($totalRow['total'] / $limit);
                     <!-- NEXT -->
                     <?php if ($page < $totalPages) { ?>
 
-                        <a href="?page=<?= $page + 1; ?>"
-                            style="margin:5px; padding:6px 10px; text-decoration:none; background:#ddd; color:black;">
+                        <a href="?page=<?= $page + 1; ?>&search=<?= urlencode($search); ?>">
 
                             Next
 
@@ -307,238 +592,64 @@ $totalPages = ceil($totalRow['total'] / $limit);
 
                 </div>
 
-            </div>
-
-        <?php } ?>
-
-    </div>
-
-
-    <!-- EDIT USER MODAL-->
-    <div id="editModal" class="edit-modal">
-
-        <div class="edit-modal-content">
-
-            <!-- CLOSE -->
-            <span class="close-modal" onclick="closeEditModal()">
-                &times;
-            </span>
-
-            <h2>Edit User</h2>
-
-            <form>
-
-                <!-- ROLE -->
-                <div class="form-group">
-
-                    <label>Role</label>
-
-                    <select id="edit_role">
-
-                        <option value="1">Admin</option>
-                        <option value="2">Encoder</option>
-
-                    </select>
-
-                </div>
-
-                <!-- RANK -->
-                <div class="form-group">
-
-                    <label>Rank</label>
-
-                    <select id="edit_rank">
-
-                        <option value="1">NUP</option>
-                        <option value="2">PAT</option>
-                        <option value="3">PCPL</option>
-                        <option value="4">PSSG</option>
-                        <option value="5">PMSG</option>
-                        <option value="6">PSMS</option>
-                        <option value="7">PCMS</option>
-                        <option value="8">PEMS</option>
-                        <option value="9">PLT</option>
-                        <option value="10">PCPT</option>
-                        <option value="11">PMAJ</option>
-                        <option value="12">PLTCOL</option>
-                        <option value="13">PCOL</option>
-                        <option value="14">PBGEN</option>
-
-                    </select>
-
-                </div>
-
-                <!-- NAME -->
-                <div class="form-group">
-
-                    <label>Name</label>
-
-                    <input type="text" id="edit_name">
-
-                </div>
-
-                <!-- EMAIL -->
-                <div class="form-group">
-
-                    <label>Email</label>
-
-                    <input type="email" id="edit_email">
-
-                </div>
-
-                <!-- DIVISION -->
-                <div class="form-group">
-
-                    <label>Division</label>
-
-                    <select id="edit_division">
-
-                        <option value="1">ITSD</option>
-                        <option value="2">SMD</option>
-                        <option value="3">ISSD</option>
-                        <option value="4">ITPMD</option>
-                        <option value="5">PTD</option>
-                        <option value="6">DMD</option>
-                        <option value="7">ARMD</option>
-                        <option value="8">PTDLAB</option>
-                        <option value="9">CI</option>
-                        <option value="10">PCR</option>
-                        <option value="11">LS</option>
-                        <option value="12">IHSS</option>
-                        <option value="13">BFS</option>
-                        <option value="14">SAO</option>
-                        <option value="15">SF</option>
-                        <option value="16">PCC-SF</option>
-
-                    </select>
-
-                </div>
-
-                <!-- CREATED BY -->
-                <div class="form-group">
-
-                    <label>Created By</label>
-
-                    <input type="text" id="edit_created_by" readonly>
-
-                </div>
-
-                <!-- STATUS -->
-                <div class="form-group">
-
-                    <label>Active</label>
-
-                    <select id="edit_status">
-
-                        <option value="1">Yes</option>
-                        <option value="0">No</option>
-
-                    </select>
-
-                </div>
-
-                <!-- SAVE -->
-                <button type="button" class="save-btn">
-
-                    Save Changes
-
-                </button>
-
-            </form>
+            <?php } ?>
 
         </div>
 
     </div>
 
-    <!-- SIDEBAR TOGGLE -->
-    <script>
-        const sidebar = document.getElementById("sidebar");
-        const hamburger = document.querySelector(".hamburger");
+    <!-- JAVASCRIPT -->
+<script>
 
-        if (localStorage.getItem("sidebar") === "collapsed") {
-            sidebar.classList.add("collapsed");
-        }
+    function toggleDropdown(id) {
 
-        hamburger.addEventListener("click", () => {
-            sidebar.classList.toggle("collapsed");
+        document
+            .getElementById(id)
+            .classList.toggle("show");
 
-            if (sidebar.classList.contains("collapsed")) {
-                localStorage.setItem("sidebar", "collapsed");
-            } else {
-                localStorage.setItem("sidebar", "expanded");
-            }
-        });
-    </script>
+    }
 
-    <!-- edit modal script -->
+    function submitFilters() {
 
-    <!-- SIDEBAR TOGGLE -->
-    <script>
+        document
+            .getElementById("filterForm")
+            .submit();
 
-        const sidebar = document.getElementById("sidebar");
-        const hamburger = document.querySelector(".hamburger");
+    }
 
-        if (sidebar && localStorage.getItem("sidebar") === "collapsed") {
-            sidebar.classList.add("collapsed");
-        }
+    // SEARCH ON ENTER
+    function liveSearch(event) {
 
-        if (hamburger) {
+        if (event.key === "Enter") {
 
-            hamburger.addEventListener("click", () => {
+            event.preventDefault();
 
-                sidebar.classList.toggle("collapsed");
-
-                if (sidebar.classList.contains("collapsed")) {
-                    localStorage.setItem("sidebar", "collapsed");
-                } else {
-                    localStorage.setItem("sidebar", "expanded");
-                }
-
-            });
+            document
+                .getElementById("filterForm")
+                .submit();
 
         }
 
-    </script>
+    }
 
-    <!-- EDIT MODAL SCRIPT -->
-    <script>
+    // CLOSE DROPDOWN
+    window.onclick = function(e) {
 
-        function openEditModal(
-            id,
-            name,
-            email,
-            role,
-            rank,
-            division,
-            created_by,
-            status
-        ) {
+        if (!e.target.matches('.filter-btn')) {
 
-            document.getElementById("editModal").style.display = "flex";
+            document
+                .querySelectorAll(".dropdown-content")
+                .forEach(drop => {
 
-            document.getElementById("edit_name").value = name;
-            document.getElementById("edit_email").value = email;
+                    drop.classList.remove("show");
 
-            document.getElementById("edit_role").value = role;
-            document.getElementById("edit_rank").value = rank;
-            document.getElementById("edit_division").value = division;
+                });
 
-            document.getElementById("edit_created_by").value = created_by;
-            document.getElementById("edit_status").value = status;
         }
-        function closeEditModal() {
-            document.getElementById("editModal").style.display = "none";
-        }
-        // CLOSE WHEN CLICK OUTSIDE
-        window.onclick = function (event) {
-            const modal = document.getElementById("editModal");
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
 
-        };
+    };
 
-    </script>
+</script>
 
 </body>
 

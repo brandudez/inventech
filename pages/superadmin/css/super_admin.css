@@ -775,3 +775,37 @@ body {
         transform: scale(1) translateY(0);
     }
 }
+/* FILTERS */
+.filter-form {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.dropdown-filter {
+    position: relative;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    top: 55px;
+    left: 0;
+    background: white;
+    min-width: 200px;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    z-index: 999;
+}
+
+.dropdown-content label {
+    display: block;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.dropdown-content.show {
+    display: block;
+}
