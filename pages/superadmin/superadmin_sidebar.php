@@ -60,27 +60,27 @@
 
         <div class="dropdown-content" id="deviceDropdown">
 
-            <a href="../superadmin/desktops.php">
+            <a href="../superadmin/devices_desktops.php">
                 <i class="bi bi-pc"></i> Desktops
             </a>
 
-            <a href="../superadmin/laptops.php">
+            <a href="../superadmin/devices_laptops.php">
                 <i class="bi bi-laptop"></i> Laptops
             </a>
 
-            <a href="../superadmin/printers.php">
+            <a href="../superadmin/devices_printers.php">
                 <i class="bi bi-printer"></i> Printers
             </a>
 
-            <a href="../superadmin/routers.php">
+            <a href="../superadmin/devices_routers.php">
                 <i class="bi bi-router"></i> Routers
             </a>
 
-            <a href="../superadmin/switches.php">
+            <a href="../superadmin/devices_switches.php">
                 <i class="bi bi-diagram-3"></i> Switches
             </a>
 
-            <a href="../superadmin/firewalls.php">
+            <a href="../superadmin/devices_firewalls.php">
                 <i class="bi bi-shield-lock"></i> Firewalls
             </a>
 

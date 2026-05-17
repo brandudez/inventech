@@ -10,8 +10,10 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    /* SCROLLABLE */
+    overflow-y: auto;
+    overflow-x: hidden;
     transition: 0.3s ease;
-    overflow: hidden;
 }
 
 /* ===== COLLAPSED ===== */
@@ -185,4 +187,49 @@
 .menu-item .text {
     font-size: 15px;
     font-weight: 600;
+}
+
+ /* SCROLLABLE */
+/* OPTIONAL: SMOOTH SCROLLBAR */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.25);
+    border-radius: 10px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,0,0,0.4);
+}
+/* ===== CENTER DEVICE ICON WHEN COLLAPSED ===== */
+.sidebar.collapsed .dropdown-btn {
+    justify-content: center;
+    padding: 14px 0;
+}
+
+/* HIDE DEVICE TEXT WHEN COLLAPSED */
+.sidebar.collapsed .dropdown-btn .text {
+    display: none;
+}
+
+/* HIDE ARROW WHEN COLLAPSED */
+.sidebar.collapsed .dropdown-btn .arrow {
+    display: none;
+}
+
+/* CENTER MENU ITEM */
+.sidebar.collapsed .menu-item {
+    width: 100%;
+    justify-content: center;
+}
+
+/* REMOVE EXTRA SPACE */
+.sidebar.collapsed .menu-item .icon {
+    margin: 0;
 }
