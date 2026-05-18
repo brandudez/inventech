@@ -1,17 +1,175 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
-} ?>
+}
+
+include("../../config/db.php");
+
+/* =========================
+   PAGINATION
+========================= */
+$limit = 10;
+
+$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+$page = max(1, $page);
+
+$offset = ($page - 1) * $limit;
+
+/* =========================
+   SEARCH
+========================= */
+$search = trim($_GET['search'] ?? '');
+
+/* =========================
+   FILTERS
+========================= */
+$division_filter = trim($_GET['division'] ?? '');
+$os_filter = trim($_GET['os'] ?? '');
+$office_filter = trim($_GET['office_application'] ?? '');
+
+/* =========================
+   WHERE CONDITIONS
+========================= */
+$where = [];
+$params = [];
+$types = '';
+
+/* SEARCH */
+if (!empty($search)) {
+
+    $where[] = "(
+        l.device_name LIKE ? OR
+
+        CONCAT(
+            p.first_name, ' ',
+            p.middle_name, ' ',
+            p.last_name
+        ) LIKE ? OR
+
+        l.ip_address LIKE ? OR
+        l.guid LIKE ? OR
+        l.mac_address LIKE ?
+    )";
+
+    $searchValue = "%$search%";
+
+    for ($i = 0; $i < 5; $i++) {
+        $params[] = $searchValue;
+        $types .= 's';
+    }
+}
+
+/* DIVISION FILTER */
+if (!empty($division_filter)) {
+    $where[] = "dv.division = ?";
+    $params[] = $division_filter;
+    $types .= 's';
+}
+
+/* OS FILTER */
+if (!empty($os_filter)) {
+    $where[] = "l.os = ?";
+    $params[] = $os_filter;
+    $types .= 's';
+}
+
+/* OFFICE FILTER */
+if (!empty($office_filter)) {
+    $where[] = "l.office_application = ?";
+    $params[] = $office_filter;
+    $types .= 's';
+}
+
+$whereSQL = '';
+if (!empty($where)) {
+    $whereSQL = "WHERE " . implode(" AND ", $where);
+}
+
+/* =========================
+   TOTAL LAPTOPS
+========================= */
+$totalQuery = "
+    SELECT COUNT(*) as total
+    FROM laptops l
+
+    LEFT JOIN personnels p ON l.personnel_id = p.id
+    LEFT JOIN divisions dv ON l.division_id = dv.id
+    LEFT JOIN endpoint_security es ON l.endpoint_security_id = es.id
+
+    $whereSQL
+";
+
+$stmtTotal = $conn->prepare($totalQuery);
+
+if (!empty($params)) {
+    $stmtTotal->bind_param($types, ...$params);
+}
+
+$stmtTotal->execute();
+$totalResult = $stmtTotal->get_result();
+$totalDevices = $totalResult->fetch_assoc()['total'];
+
+$totalPages = ceil($totalDevices / $limit);
+
+/* =========================
+   GET TABLE DATA
+========================= */
+$query = "
+    SELECT 
+        l.*,
+
+        CONCAT(
+            p.first_name, ' ',
+            p.middle_name, ' ',
+            p.last_name
+        ) AS personnel_name,
+
+        dv.division AS division_name,
+
+        es.antivirus AS endpoint_security_name
+
+    FROM laptops l
+
+    LEFT JOIN personnels p ON l.personnel_id = p.id
+    LEFT JOIN divisions dv ON l.division_id = dv.id
+    LEFT JOIN endpoint_security es ON l.endpoint_security_id = es.id
+
+    $whereSQL
+
+    ORDER BY l.id DESC
+
+    LIMIT ?, ?
+";
+
+$stmt = $conn->prepare($query);
+
+$finalParams = $params;
+$finalTypes = $types . 'ii';
+
+$finalParams[] = $offset;
+$finalParams[] = $limit;
+
+$stmt->bind_param($finalTypes, ...$finalParams);
+
+$stmt->execute();
+$result = $stmt->get_result();
+?>
 
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <link rel="stylesheet" href="../superadmin/css/devices_desktop_laptops.css">
+
     <link rel="stylesheet" href="css/superadmin_navbar.css">
+
     <link rel="stylesheet" href="./css/superadmin_sidebar.css">
 
     <title>Desktop Devices</title>
@@ -26,113 +184,162 @@ if (session_status() === PHP_SESSION_NONE) {
     <!-- TOP NAVBAR -->
     <?php include 'superadmin_navbar.php'; ?>
 
-    <!-- Filters -->
-    <!-- SEARCH BAR -->
+    <!-- TOP BAR -->
     <div class="top-bar">
 
-        <!-- FILTER BUTTONS -->
+        <!-- FILTERS -->
         <div class="filters">
 
-            <!-- DIVISION -->
-            <div class="dropdown">
+            <form method="GET" id="filterForm">
 
-                <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                    data-bs-auto-close="outside">
+                <!-- DIVISION -->
+                <select
+                    name="division"
+                    class="form-select mb-2"
+                    onchange="document.getElementById('filterForm').submit();">
 
-                    Division
+                    <option value="">All Divisions</option>
 
-                </button>
+                    <?php
+                    $divisions = [
+                        "ITSD",
+                        "SMD",
+                        "ISSD",
+                        "ITPMD",
+                        "PTD",
+                        "DMD",
+                        "ARMD",
+                        "PTDLAB",
+                        "CI",
+                        "PCR",
+                        "LS",
+                        "IHSS",
+                        "BFS",
+                        "SAO",
+                        "SF",
+                        "PCC-SF"
+                    ];
 
-                <ul class="dropdown-menu p-3 dropdown-scroll">
+                    foreach ($divisions as $division):
+                    ?>
 
-                    <li><label class="dropdown-item">ITSD</label></li>
-                    <li><label class="dropdown-item">SMD</label></li>
-                    <li><label class="dropdown-item">ISSD</label></li>
-                    <li><label class="dropdown-item">ITPMD</label></li>
-                    <li><label class="dropdown-item">PTD</label></li>
-                    <li><label class="dropdown-item">DMD</label></li>
-                    <li><label class="dropdown-item">ARMD</label></li>
-                    <li><label class="dropdown-item">PTDLAB</label></li>
-                    <li><label class="dropdown-item">CI</label></li>
-                    <li><label class="dropdown-item">PCR</label></li>
-                    <li><label class="dropdown-item">LS</label></li>
-                    <li><label class="dropdown-item">IHSS</label></li>
-                    <li><label class="dropdown-item">BFS</label></li>
-                    <li><label class="dropdown-item">SAO</label></li>
-                    <li><label class="dropdown-item">SF</label></li>
-                    <li><label class="dropdown-item">PCC-SF</label></li>
+                        <option
+                            value="<?= $division ?>"
+                            <?= $division_filter == $division ? 'selected' : '' ?>>
 
-                </ul>
+                            <?= $division ?>
 
-            </div>
+                        </option>
 
-            <!-- OPERATING SYSTEM -->
-            <div class="dropdown">
+                    <?php endforeach; ?>
 
-                <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                    data-bs-auto-close="outside">
+                </select>
 
-                    Operating System
+                <!-- OPERATING SYSTEM -->
+                <select
+                    name="os"
+                    class="form-select mb-2"
+                    onchange="document.getElementById('filterForm').submit();">
 
-                </button>
+                    <option value="">All Operating Systems</option>
 
-                <ul class="dropdown-menu p-3 dropdown-scroll">
+                    <?php
+                    $operatingSystems = [
+                        "Windows 10",
+                        "Windows 10 Pro",
+                        "Windows 11",
+                        "Windows 11 Pro"
+                    ];
 
-                    <li><label class="dropdown-item">Windows 10</label></li>
-                    <li><label class="dropdown-item">Windows 10 Pro</label></li>
-                    <li><label class="dropdown-item">Windows 11</label></li>
-                    <li><label class="dropdown-item">Windows 11 Pro</label></li>
-                    <li><label class="dropdown-item">Windows 12 (Upcoming)</label></li>
+                    foreach ($operatingSystems as $os):
+                    ?>
 
-                </ul>
+                        <option
+                            value="<?= $os ?>"
+                            <?= $os_filter == $os ? 'selected' : '' ?>>
 
-            </div>
+                            <?= $os ?>
 
-            <!-- OFFICE APPLICATION -->
-            <div class="dropdown">
+                        </option>
 
-                <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                    data-bs-auto-close="outside">
+                    <?php endforeach; ?>
 
-                    Office Application
+                </select>
 
-                </button>
+                <!-- OFFICE APPLICATION -->
+                <select
+                    name="office_application"
+                    class="form-select mb-2"
+                    onchange="document.getElementById('filterForm').submit();">
 
-                <ul class="dropdown-menu p-3 dropdown-scroll">
+                    <option value="">All Office Applications</option>
 
-                    <li><label class="dropdown-item">Microsoft 365 (M365)</label></li>
-                    <li><label class="dropdown-item">WPS Office</label></li>
+                    <?php
+                    $officeApps = [
+                        "Microsoft 365 (M365)",
+                        "Microsoft Office 2021 Professional",
+                        "WPS Office",
+                        "Microsoft Word",
+                        "Google Docs",
+                        "Microsoft Excel",
+                        "Google Sheets",
+                        "Microsoft PowerPoint"
+                    ];
 
-                    <li>
-                        <hr>
-                    </li>
+                    foreach ($officeApps as $office):
+                    ?>
 
-                    <li><label class="dropdown-item">Microsoft Word</label></li>
-                    <li><label class="dropdown-item">Google Docs</label></li>
-                    <li><label class="dropdown-item">WPS Writer</label></li>
+                        <option
+                            value="<?= $office ?>"
+                            <?= $office_filter == $office ? 'selected' : '' ?>>
 
-                    <li><label class="dropdown-item">Microsoft Excel</label></li>
-                    <li><label class="dropdown-item">Google Sheets</label></li>
-                    <li><label class="dropdown-item">WPS Spreadsheets</label></li>
+                            <?= $office ?>
 
-                    <li><label class="dropdown-item">Microsoft PowerPoint</label></li>
-                    <li><label class="dropdown-item">Google Slides</label></li>
+                        </option>
 
-                </ul>
+                    <?php endforeach; ?>
 
-            </div>
+                </select>
+
+            </form>
 
         </div>
 
         <!-- SEARCH -->
         <div class="search-container">
-            <form class="search-form">
-                <input type="text" class="search-input" placeholder="Search laptops...">
+
+            <form class="search-form" method="GET">
+
+                <input
+                    type="hidden"
+                    name="division"
+                    value="<?= htmlspecialchars($division_filter) ?>">
+
+                <input
+                    type="hidden"
+                    name="os"
+                    value="<?= htmlspecialchars($os_filter) ?>">
+
+                <input
+                    type="hidden"
+                    name="office_application"
+                    value="<?= htmlspecialchars($office_filter) ?>">
+
+                <input
+                    type="text"
+                    name="search"
+                    class="search-input"
+                    placeholder="Search desktops..."
+                    value="<?= htmlspecialchars($search) ?>">
+
                 <button type="submit" class="search-btn">
                     Search
                 </button>
+
             </form>
+
         </div>
+
     </div>
 
     <!-- TABLE -->
@@ -145,6 +352,7 @@ if (session_status() === PHP_SESSION_NONE) {
                 <thead>
 
                     <tr>
+
                         <th>DEVICE NAME</th>
                         <th>PERSONNEL</th>
                         <th>DIVISION</th>
@@ -156,16 +364,16 @@ if (session_status() === PHP_SESSION_NONE) {
                         <th>OFFICE LICENSE KEY</th>
                         <th>IS OFFICE LICENSED?</th>
                         <th>ENDPOINT SECURITY</th>
-                        <th>NO OF INSTALLED ENDPOINT SECURITY</th>
+                        <th>NO OF INSTALLED ANTIVIRUS</th>
                         <th>DATE INSTALLED</th>
                         <th>GUID</th>
                         <th>MAC ADDRESS</th>
                         <th>CPU BRAND</th>
                         <th>CPU CORES</th>
-                        <th>GB OF RAM</th>
+                        <th>GB RAM</th>
                         <th>MONITOR BRAND</th>
                         <th>MONITOR SIZE</th>
-                        <th>NO OF USER ACCOUNT</th>
+                        <th>NO OF USER ACCOUNTS</th>
                         <th>USER ACCOUNT TYPE</th>
                         <th>AUTHORIZED SOFTWARE</th>
                         <th>UNAUTHORIZED SOFTWARE</th>
@@ -174,66 +382,135 @@ if (session_status() === PHP_SESSION_NONE) {
                         <th>PREVIOUS HANDLERS</th>
                         <th>IS REMOTELY ACCESSIBLE?</th>
                         <th>ACTION</th>
+
                     </tr>
 
                 </thead>
 
                 <tbody>
 
-                    <!-- SAMPLE ROW -->
-                    <tr>
+                    <?php if ($result->num_rows > 0): ?>
 
-                        <td>DESKTOP-001</td>
-                        <td>Juan Dela Cruz</td>
-                        <td>ITSD</td>
-                        <td>192.168.1.10</td>
-                        <td>Windows 11 Pro</td>
-                        <td>YES</td>
-                        <td>XXXXX-XXXXX</td>
-                        <td>Microsoft Office 365</td>
-                        <td>OFFICE-KEY-001</td>
-                        <td>YES</td>
-                        <td>Windows Defender</td>
-                        <td>1</td>
-                        <td>2026-05-18</td>
-                        <td>GUID-123456</td>
-                        <td>00:1A:2B:3C:4D</td>
-                        <td>Intel Core i5</td>
-                        <td>6</td>
-                        <td>16 GB</td>
-                        <td>Samsung</td>
-                        <td>24"</td>
-                        <td>2</td>
-                        <td>Administrator</td>
-                        <td>Chrome, Zoom</td>
-                        <td>None</td>
-                        <td>2025-01-10</td>
-                        <td>PAR-2025-001</td>
-                        <td>Pedro Santos</td>
-                        <td>YES</td>
+                        <?php while ($row = $result->fetch_assoc()): ?>
 
-                        <td class="action-buttons">
+                            <tr>
 
-                            <button type="button" class="btn-edit">
+                                <td><?= htmlspecialchars($row['device_name'] ?? '') ?></td>
 
-                                Edit
+                                <td>
+                                    <?= htmlspecialchars($row['personnel_name'] ?? '') ?>
+                                </td>
 
-                            </button>
+                                <!-- FIXED DIVISION -->
+                                <td>
+                                    <?= htmlspecialchars($row['division_name'] ?? '') ?>
+                                </td>
 
-                        </td>
+                                <td><?= htmlspecialchars($row['ip_address'] ?? '') ?></td>
 
-                    </tr>
+                                <td><?= htmlspecialchars($row['os'] ?? '') ?></td>
+
+                                <td>
+                                    <?= ($row['is_os_licensed'] == 1) ? 'Yes' : 'No' ?>
+                                </td>
+
+                                <td><?= htmlspecialchars($row['os_license_key'] ?? '') ?></td>
+
+                                <td><?= htmlspecialchars($row['office_application'] ?? '') ?></td>
+
+                                <td><?= htmlspecialchars($row['office_license_key'] ?? '') ?></td>
+
+                                <td>
+                                    <?= ($row['is_office_licensed'] == 1) ? 'Yes' : 'No' ?>
+                                </td>
+
+                                <td>
+    <?= htmlspecialchars($row['endpoint_security_name'] ?? '') ?>
+</td>
+
+                                <td>
+                                    <?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?>
+                                </td>
+
+                                <td><?= htmlspecialchars($row['date_installed'] ?? '') ?></td>
+
+                                <td><?= htmlspecialchars($row['guid'] ?? '') ?></td>
+
+                                <td><?= htmlspecialchars($row['mac_address'] ?? '') ?></td>
+
+                                <td><?= htmlspecialchars($row['cpu_brand'] ?? '') ?></td>
+
+                                <td><?= htmlspecialchars($row['cpu_cores'] ?? '') ?></td>
+
+                                <td><?= htmlspecialchars($row['gb_ram'] ?? '') ?></td>
+
+                                <td><?= htmlspecialchars($row['monitor_brand'] ?? '') ?></td>
+
+                                <td><?= htmlspecialchars($row['monitor_size_inches'] ?? '') ?></td>
+
+                                <td><?= htmlspecialchars($row['no_of_user_accounts'] ?? '') ?></td>
+
+                                <td><?= htmlspecialchars($row['user_account_type'] ?? '') ?></td>
+
+                                <td><?= htmlspecialchars($row['authorized_software'] ?? '') ?></td>
+
+                                <td><?= htmlspecialchars($row['unauthorized_software'] ?? '') ?></td>
+
+                                <td><?= htmlspecialchars($row['created_date'] ?? '') ?></td>
+
+                                <td><?= htmlspecialchars($row['par_serial_no'] ?? '') ?></td>
+
+                                <td><?= htmlspecialchars($row['previous_owners_id'] ?? '') ?></td>
+
+                                <td>
+                                    <?= ($row['is_remote_acc'] == 1) ? 'Yes' : 'No' ?>
+                                </td>
+
+                                <td>
+
+                                    <a
+                                        href="edit_device.php?id=<?= $row['id'] ?>"
+                                        class="btn btn-primary btn-sm">
+
+                                        Edit
+
+                                    </a>
+
+                                    <a
+                                        href="delete_device.php?id=<?= $row['id'] ?>"
+                                        class="btn btn-danger btn-sm"
+                                        onclick="return confirm('Delete this device?')">
+
+                                        Delete
+
+                                    </a>
+
+                                </td>
+
+                            </tr>
+
+                        <?php endwhile; ?>
+
+                    <?php else: ?>
+
+                        <tr>
+
+                            <td colspan="28" class="text-center">
+                                No devices found.
+                            </td>
+
+                        </tr>
+
+                    <?php endif; ?>
 
                 </tbody>
 
             </table>
 
         </div>
-
-        <!-- FOOTER -->
+  <!-- FOOTER -->
         <div class="table-footer">
 
-            <!-- STATS -->
             <div class="user-stats">
 
                 <div class="stat-box total">
@@ -243,31 +520,7 @@ if (session_status() === PHP_SESSION_NONE) {
                     </span>
 
                     <span class="value">
-                        2
-                    </span>
-
-                </div>
-
-                <div class="stat-box active">
-
-                    <span class="label">
-                        Active
-                    </span>
-
-                    <span class="value">
-                        2
-                    </span>
-
-                </div>
-
-                <div class="stat-box inactive">
-
-                    <span class="label">
-                        Inactive
-                    </span>
-
-                    <span class="value">
-                        0
+                        <?= $totalDevices ?>
                     </span>
 
                 </div>
@@ -277,28 +530,51 @@ if (session_status() === PHP_SESSION_NONE) {
             <!-- PAGINATION -->
             <div class="pagination">
 
-                <a href="#">
-                    Prev
-                </a>
+                <?php if ($page > 1): ?>
 
-                <a href="#" class="active-page">
-                    1
-                </a>
+                    <a href="?page=<?= $page - 1 ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division_filter) ?>&os=<?= urlencode($os_filter) ?>&office_application=<?= urlencode($office_filter) ?>">
 
-                <a href="#">
-                    2
-                </a>
+                        Prev
 
-                <a href="#">
-                    Next
-                </a>
+                    </a>
+
+                <?php endif; ?>
+
+                <?php
+                $startPage = max(1, $page - 1);
+                $endPage = min($totalPages, $startPage + 2);
+
+                for ($i = $startPage; $i <= $endPage; $i++):
+                ?>
+
+                    <a
+                        href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division_filter) ?>&os=<?= urlencode($os_filter) ?>&office_application=<?= urlencode($office_filter) ?>"
+                        class="<?= $i == $page ? 'active-page' : '' ?>">
+
+                        <?= $i ?>
+
+                    </a>
+
+                <?php endfor; ?>
+
+                <?php if ($page < $totalPages): ?>
+
+                    <a href="?page=<?= $page + 1 ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division_filter) ?>&os=<?= urlencode($os_filter) ?>&office_application=<?= urlencode($office_filter) ?>">
+
+                        Next
+
+                    </a>
+
+                <?php endif; ?>
 
             </div>
 
         </div>
 
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 
 </html>

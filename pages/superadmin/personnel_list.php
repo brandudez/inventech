@@ -6,10 +6,8 @@ include("../../config/db.php");
    PAGINATION
 ========================= */
 $limit = 10;
-
 $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $page = max(1, $page);
-
 $offset = ($page - 1) * $limit;
 
 /* =========================
@@ -31,38 +29,38 @@ $divisionFilters = is_array($divisionFilters) ? $divisionFilters : [];
 ========================= */
 $sql = "
 SELECT 
-    u.id,
-    u.username,
-    u.email,
-    u.role_id,
-    u.division_id,
-    u.rank_id,
-    u.is_active,
+    p.id,
+    p.division_id,
+    p.rank_id,
+    p.first_name,
+    p.middle_name,
+    p.last_name,
+    p.is_active,
+    p.created_by,
 
     TRIM(CONCAT(
-        u.first_name, ' ',
-        IFNULL(u.middle_name, ''), ' ',
-        u.last_name
+        p.first_name, ' ',
+        IFNULL(p.middle_name, ''), ' ',
+        p.last_name
     )) AS full_name,
 
     d.division AS division_name,
     r.rank AS rank_name,
-    rl.role_name AS role_name,
-    c.username AS created_by
+    rl.role_name AS created_by
 
-FROM users u
+FROM personnels p
 
 LEFT JOIN divisions d 
-    ON u.division_id = d.id
+    ON p.division_id = d.id
 
 LEFT JOIN ranks r 
-    ON u.rank_id = r.id
+    ON p.rank_id = r.id
+
+LEFT JOIN users u 
+    ON p.created_by = u.id
 
 LEFT JOIN roles rl 
     ON u.role_id = rl.id
-
-LEFT JOIN users c 
-    ON u.creator_user_id = c.id
 
 WHERE 1=1
 ";
@@ -71,42 +69,32 @@ $params = [];
 $types = "";
 
 /* =========================
-   SEARCH FILTER
+   SEARCH
 ========================= */
 if (!empty($search)) {
-
     $sql .= "
     AND (
-        u.first_name LIKE ?
-        OR u.middle_name LIKE ?
-        OR u.last_name LIKE ?
+        p.first_name LIKE ?
+        OR p.middle_name LIKE ?
+        OR p.last_name LIKE ?
         OR d.division LIKE ?
         OR r.rank LIKE ?
+        OR rl.role_name LIKE ?
     )
     ";
-
     $searchValue = "%$search%";
-
-    array_push(
-        $params,
-        $searchValue,
-        $searchValue,
-        $searchValue,
-        $searchValue,
-        $searchValue
-    );
-
-    $types .= "sssss";
+    for ($i = 0; $i < 6; $i++) {
+        $params[] = $searchValue;
+        $types .= "s";
+    }
 }
 
 /* =========================
    RANK FILTER
 ========================= */
 if (!empty($rankFilters)) {
-
     $placeholders = implode(',', array_fill(0, count($rankFilters), '?'));
-    $sql .= " AND u.rank_id IN ($placeholders)";
-
+    $sql .= " AND p.rank_id IN ($placeholders)";
     foreach ($rankFilters as $rank) {
         $params[] = (int)$rank;
         $types .= "i";
@@ -117,10 +105,8 @@ if (!empty($rankFilters)) {
    DIVISION FILTER
 ========================= */
 if (!empty($divisionFilters)) {
-
     $placeholders = implode(',', array_fill(0, count($divisionFilters), '?'));
-    $sql .= " AND u.division_id IN ($placeholders)";
-
+    $sql .= " AND p.division_id IN ($placeholders)";
     foreach ($divisionFilters as $div) {
         $params[] = (int)$div;
         $types .= "i";
@@ -128,30 +114,54 @@ if (!empty($divisionFilters)) {
 }
 
 /* =========================
-   COUNT TOTAL USERS
+   COUNT QUERY
 ========================= */
 $countSql = "
 SELECT COUNT(*) as total
-FROM (
-    $sql
-) AS filteredUsers
+FROM personnels p
+LEFT JOIN divisions d ON p.division_id = d.id
+LEFT JOIN ranks r ON p.rank_id = r.id
+LEFT JOIN users u ON p.created_by = u.id
+LEFT JOIN roles rl ON u.role_id = rl.id
+WHERE 1=1
 ";
 
-$countStmt = $conn->prepare($countSql);
+$countParams = $params;
+$countTypes = $types;
 
-if (!empty($params)) {
-    $countStmt->bind_param($types, ...$params);
+/* rebuild same filters in count */
+if (!empty($search)) {
+    $countSql .= "
+    AND (
+        p.first_name LIKE ?
+        OR p.middle_name LIKE ?
+        OR p.last_name LIKE ?
+        OR d.division LIKE ?
+        OR r.rank LIKE ?
+        OR rl.role_name LIKE ?
+    )";
 }
 
-$countStmt->execute();
-$totalResult = $countStmt->get_result();
-$totalRow = $totalResult->fetch_assoc();
+if (!empty($rankFilters)) {
+    $placeholders = implode(',', array_fill(0, count($rankFilters), '?'));
+    $countSql .= " AND p.rank_id IN ($placeholders)";
+}
 
-$totalUsers = $totalRow['total'];
+if (!empty($divisionFilters)) {
+    $placeholders = implode(',', array_fill(0, count($divisionFilters), '?'));
+    $countSql .= " AND p.division_id IN ($placeholders)";
+}
+
+$countStmt = $conn->prepare($countSql);
+if (!empty($countParams)) {
+    $countStmt->bind_param($countTypes, ...$countParams);
+}
+$countStmt->execute();
+$totalUsers = $countStmt->get_result()->fetch_assoc()['total'];
 $totalPages = ceil($totalUsers / $limit);
 
 /* =========================
-   FINAL QUERY (🔥 RANK SORT FIX)
+   FINAL QUERY
 ========================= */
 $sql .= "
 ORDER BY 
@@ -172,7 +182,7 @@ ORDER BY
         WHEN 'NUP' THEN 14
         ELSE 15
     END ASC,
-    u.id DESC
+    p.id DESC
 LIMIT ? OFFSET ?
 ";
 
@@ -181,164 +191,23 @@ $params[] = $offset;
 $types .= "ii";
 
 $stmt = $conn->prepare($sql);
-
 if (!empty($params)) {
     $stmt->bind_param($types, ...$params);
 }
-
 $stmt->execute();
 $result = $stmt->get_result();
 
 /* =========================
-   ACTIVE COUNT
+   ACTIVE / INACTIVE
 ========================= */
-$activeSql = "
-SELECT COUNT(*) as total
-FROM users u
-LEFT JOIN divisions d ON u.division_id = d.id
-LEFT JOIN ranks r ON u.rank_id = r.id
-WHERE u.is_active = 1
-";
-
-$activeParams = [];
-$activeTypes = "";
-
-if (!empty($search)) {
-    $activeSql .= "
-    AND (
-        u.first_name LIKE ?
-        OR u.middle_name LIKE ?
-        OR u.last_name LIKE ?
-        OR d.division LIKE ?
-        OR r.rank LIKE ?
-    )
-    ";
-
-    $searchValue = "%$search%";
-
-    array_push($activeParams,
-        $searchValue,
-        $searchValue,
-        $searchValue,
-        $searchValue,
-        $searchValue
-    );
-
-    $activeTypes .= "sssss";
-}
-
-if (!empty($rankFilters)) {
-    $placeholders = implode(',', array_fill(0, count($rankFilters), '?'));
-    $activeSql .= " AND u.rank_id IN ($placeholders)";
-
-    foreach ($rankFilters as $rank) {
-        $activeParams[] = (int)$rank;
-        $activeTypes .= "i";
-    }
-}
-
-if (!empty($divisionFilters)) {
-    $placeholders = implode(',', array_fill(0, count($divisionFilters), '?'));
-    $activeSql .= " AND u.division_id IN ($placeholders)";
-
-    foreach ($divisionFilters as $div) {
-        $activeParams[] = (int)$div;
-        $activeTypes .= "i";
-    }
-}
-
-$activeStmt = $conn->prepare($activeSql);
-
-if (!empty($activeParams)) {
-    $activeStmt->bind_param($activeTypes, ...$activeParams);
-}
-
-$activeStmt->execute();
-$activeResult = $activeStmt->get_result();
-$activeCount = $activeResult->fetch_assoc()['total'];
-
-/* =========================
-   INACTIVE COUNT
-========================= */
-$inactiveSql = "
-SELECT COUNT(*) as total
-FROM users u
-LEFT JOIN divisions d ON u.division_id = d.id
-LEFT JOIN ranks r ON u.rank_id = r.id
-WHERE u.is_active = 0
-";
-
-$inactiveParams = [];
-$inactiveTypes = "";
-
-if (!empty($search)) {
-    $inactiveSql .= "
-    AND (
-        u.first_name LIKE ?
-        OR u.middle_name LIKE ?
-        OR u.last_name LIKE ?
-        OR d.division LIKE ?
-        OR r.rank LIKE ?
-    )
-    ";
-
-    $searchValue = "%$search%";
-
-    array_push($inactiveParams,
-        $searchValue,
-        $searchValue,
-        $searchValue,
-        $searchValue,
-        $searchValue
-    );
-
-    $inactiveTypes .= "sssss";
-}
-
-if (!empty($rankFilters)) {
-    $placeholders = implode(',', array_fill(0, count($rankFilters), '?'));
-    $inactiveSql .= " AND u.rank_id IN ($placeholders)";
-
-    foreach ($rankFilters as $rank) {
-        $inactiveParams[] = (int)$rank;
-        $inactiveTypes .= "i";
-    }
-}
-
-if (!empty($divisionFilters)) {
-    $placeholders = implode(',', array_fill(0, count($divisionFilters), '?'));
-    $inactiveSql .= " AND u.division_id IN ($placeholders)";
-
-    foreach ($divisionFilters as $div) {
-        $inactiveParams[] = (int)$div;
-        $inactiveTypes .= "i";
-    }
-}
-
-$inactiveStmt = $conn->prepare($inactiveSql);
-
-if (!empty($inactiveParams)) {
-    $inactiveStmt->bind_param($inactiveTypes, ...$inactiveParams);
-}
-
-$inactiveStmt->execute();
-$inactiveResult = $inactiveStmt->get_result();
-$inactiveCount = $inactiveResult->fetch_assoc()['total'];
+$activeCount = $conn->query("SELECT COUNT(*) as total FROM personnels WHERE is_active = 1")->fetch_assoc()['total'];
+$inactiveCount = $conn->query("SELECT COUNT(*) as total FROM personnels WHERE is_active = 0")->fetch_assoc()['total'];
 
 /* =========================
    FILTER OPTIONS
 ========================= */
-$ranksResult = $conn->query("
-SELECT id, rank
-FROM ranks
-ORDER BY id ASC
-");
-
-$divisionsResult = $conn->query("
-SELECT id, division
-FROM divisions
-ORDER BY id ASC
-");
+$ranksResult = $conn->query("SELECT id, rank FROM ranks ORDER BY id ASC");
+$divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id ASC");
 ?>
 
 <!DOCTYPE html>
@@ -534,9 +403,9 @@ ORDER BY id ASC
                                     <?= htmlspecialchars($row['division_name'] ?? 'N/A'); ?>
                                 </td>
 
-                                <td>
-                                    <?= htmlspecialchars($row['created_by'] ?? 'SYSTEM'); ?>
-                                </td>
+                             <td>
+    <?= htmlspecialchars($row['created_by'] ?? 'SYSTEM'); ?>
+</td>
 
                                 <td>
 
@@ -562,7 +431,7 @@ ORDER BY id ASC
                                     type="button"
                                     class="btn-edit"
 
-                                  onclick="openEditModal(
+                                 onclick="openEditModal(
     '<?= $row['id']; ?>',
     '<?= htmlspecialchars($row['full_name'] ?? '', ENT_QUOTES); ?>',
     '<?= $row['rank_id']; ?>',

@@ -5,26 +5,35 @@ include("../../config/db.php");
 /* =========================
    GET FORM DATA
 ========================= */
-$user_id = $_POST['user_id'];
-$rank = $_POST['rank'];
+$user_id  = $_POST['user_id'];
+$rank     = $_POST['rank'];
 $division = $_POST['division'];
-$status = $_POST['status'];
-$name = trim($_POST['name']);
+$status   = $_POST['status'];
+$name     = trim($_POST['name']);
+
+/* =========================
+   VALIDATION (BASIC SAFETY)
+========================= */
+if (!$user_id) {
+    die("Invalid user ID");
+}
 
 /* =========================
    SPLIT NAME
 ========================= */
-$nameParts = explode(' ', $name);
+$nameParts = preg_split('/\s+/', $name);
 
-$first_name = $nameParts[0] ?? '';
+$first_name  = $nameParts[0] ?? '';
 $middle_name = '';
-$last_name = '';
+$last_name   = '';
 
-if (count($nameParts) == 2) {
+$count = count($nameParts);
+
+if ($count == 2) {
 
     $last_name = $nameParts[1];
 
-} elseif (count($nameParts) >= 3) {
+} elseif ($count >= 3) {
 
     $middle_name = $nameParts[1];
 
@@ -32,10 +41,10 @@ if (count($nameParts) == 2) {
 }
 
 /* =========================
-   UPDATE USER
+   UPDATE PERSONNEL (FIXED)
 ========================= */
 $stmt = $conn->prepare("
-UPDATE users
+UPDATE personnels
 SET
     first_name = ?,
     middle_name = ?,
