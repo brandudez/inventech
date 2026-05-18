@@ -166,7 +166,7 @@ $result = $stmt->get_result();
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <link rel="stylesheet" href="../superadmin/css/devices.css">
+    <link rel="stylesheet" href="../superadmin/css/desktop_laptop.css">
 
     <link rel="stylesheet" href="css/superadmin_navbar.css">
 
@@ -187,149 +187,149 @@ $result = $stmt->get_result();
     <!-- TOP BAR -->
     <div class="top-bar">
 
-        <!-- FILTERS -->
-        <div class="filters">
+       <!-- FILTERS -->
+<div class="filters">
 
-            <form method="GET" id="filterForm">
+    <form method="GET" id="filterForm">
 
-                <!-- DIVISION -->
-                <select
-                    name="division"
-                    class="form-select mb-2"
-                    onchange="document.getElementById('filterForm').submit();">
+        <!-- =========================
+             DIVISION DROPDOWN
+        ========================== -->
+        <div class="dropdown">
 
-                    <option value="">All Divisions</option>
+            <button class="btn filter-btn dropdown-toggle" type="button"
+                data-bs-toggle="dropdown" data-bs-auto-close="outside">
 
-                    <?php
-                    $divisions = [
-                        "ITSD",
-                        "SMD",
-                        "ISSD",
-                        "ITPMD",
-                        "PTD",
-                        "DMD",
-                        "ARMD",
-                        "PTDLAB",
-                        "CI",
-                        "PCR",
-                        "LS",
-                        "IHSS",
-                        "BFS",
-                        "SAO",
-                        "SF",
-                        "PCC-SF"
-                    ];
+                <?= !empty($division_filter) ? $division_filter : 'Division' ?>
 
-                    foreach ($divisions as $division):
-                    ?>
+            </button>
 
-                        <option
-                            value="<?= $division ?>"
-                            <?= $division_filter == $division ? 'selected' : '' ?>>
+            <ul class="dropdown-menu dropdown-scroll">
+
+                <?php
+                $divisions = [
+                    "ITSD","SMD","ISSD","ITPMD","PTD","DMD","ARMD",
+                    "PTDLAB","CI","PCR","LS","IHSS","BFS","SAO","SF","PCC-SF"
+                ];
+
+                foreach ($divisions as $division):
+                ?>
+                    <li>
+                        <label class="dropdown-item">
+                            <input type="radio" name="division"
+                                value="<?= $division ?>"
+                                onchange="document.getElementById('filterForm').submit();"
+                                <?= $division_filter == $division ? 'checked' : '' ?>>
 
                             <?= $division ?>
+                        </label>
+                    </li>
+                <?php endforeach; ?>
 
-                        </option>
-
-                    <?php endforeach; ?>
-
-                </select>
-
-                <!-- OPERATING SYSTEM -->
-                <select
-                    name="os"
-                    class="form-select mb-2"
-                    onchange="document.getElementById('filterForm').submit();">
-
-                    <option value="">All Operating Systems</option>
-
-                    <?php
-                    $operatingSystems = [
-                        "Windows 10",
-                        "Windows 10 Pro",
-                        "Windows 11",
-                        "Windows 11 Pro"
-                    ];
-
-                    foreach ($operatingSystems as $os):
-                    ?>
-
-                        <option
-                            value="<?= $os ?>"
-                            <?= $os_filter == $os ? 'selected' : '' ?>>
-
-                            <?= $os ?>
-
-                        </option>
-
-                    <?php endforeach; ?>
-
-                </select>
-
-                <!-- OFFICE APPLICATION -->
-                <select
-                    name="office_application"
-                    class="form-select mb-2"
-                    onchange="document.getElementById('filterForm').submit();">
-
-                    <option value="">All Office Applications</option>
-
-                    <?php
-                    $officeApps = [
-                        "Microsoft 365 (M365)",
-                        "Microsoft Office 2021 Professional",
-                        "WPS Office",
-                        "Microsoft Word",
-                        "Google Docs",
-                        "Microsoft Excel",
-                        "Google Sheets",
-                        "Microsoft PowerPoint"
-                    ];
-
-                    foreach ($officeApps as $office):
-                    ?>
-
-                        <option
-                            value="<?= $office ?>"
-                            <?= $office_filter == $office ? 'selected' : '' ?>>
-
-                            <?= $office ?>
-
-                        </option>
-
-                    <?php endforeach; ?>
-
-                </select>
-
-            </form>
+            </ul>
 
         </div>
+
+        <!-- =========================
+             OPERATING SYSTEM DROPDOWN
+        ========================== -->
+        <div class="dropdown">
+
+            <button class="btn filter-btn dropdown-toggle" type="button"
+                data-bs-toggle="dropdown" data-bs-auto-close="outside">
+
+                <?= !empty($os_filter) ? $os_filter : 'Operating System' ?>
+
+            </button>
+
+            <ul class="dropdown-menu dropdown-scroll">
+
+                <?php
+                $operatingSystems = [
+                    "Windows 10",
+                    "Windows 10 Pro",
+                    "Windows 11",
+                    "Windows 11 Pro"
+                ];
+
+                foreach ($operatingSystems as $os):
+                ?>
+                    <li>
+                        <label class="dropdown-item">
+                            <input type="radio" name="os"
+                                value="<?= $os ?>"
+                                onchange="document.getElementById('filterForm').submit();"
+                                <?= $os_filter == $os ? 'checked' : '' ?>>
+
+                            <?= $os ?>
+                        </label>
+                    </li>
+                <?php endforeach; ?>
+
+            </ul>
+
+        </div>
+
+        <!-- =========================
+             OFFICE APPLICATION DROPDOWN
+        ========================== -->
+        <div class="dropdown">
+
+            <button class="btn filter-btn dropdown-toggle" type="button"
+                data-bs-toggle="dropdown" data-bs-auto-close="outside">
+
+                <?= !empty($office_filter) ? $office_filter : 'Office Application' ?>
+
+            </button>
+
+            <ul class="dropdown-menu dropdown-scroll">
+
+                <?php
+                $officeApps = [
+                    "Microsoft 365 (M365)",
+                    "Microsoft Office 2021 Professional",
+                    "WPS Office",
+                    "Microsoft Word",
+                    "Google Docs",
+                    "Microsoft Excel",
+                    "Google Sheets",
+                    "Microsoft PowerPoint"
+                ];
+
+                foreach ($officeApps as $office):
+                ?>
+                    <li>
+                        <label class="dropdown-item">
+                            <input type="radio" name="office_application"
+                                value="<?= $office ?>"
+                                onchange="document.getElementById('filterForm').submit();"
+                                <?= $office_filter == $office ? 'checked' : '' ?>>
+
+                            <?= $office ?>
+                        </label>
+                    </li>
+                <?php endforeach; ?>
+
+            </ul>
+
+        </div>
+
+    </form>
+
+</div>
 
         <!-- SEARCH -->
         <div class="search-container">
 
             <form class="search-form" method="GET">
 
-                <input
-                    type="hidden"
-                    name="division"
-                    value="<?= htmlspecialchars($division_filter) ?>">
+                <input type="hidden" name="division" value="<?= htmlspecialchars($division_filter) ?>">
 
-                <input
-                    type="hidden"
-                    name="os"
-                    value="<?= htmlspecialchars($os_filter) ?>">
+                <input type="hidden" name="os" value="<?= htmlspecialchars($os_filter) ?>">
 
-                <input
-                    type="hidden"
-                    name="office_application"
-                    value="<?= htmlspecialchars($office_filter) ?>">
+                <input type="hidden" name="office_application" value="<?= htmlspecialchars($office_filter) ?>">
 
-                <input
-                    type="text"
-                    name="search"
-                    class="search-input"
-                    placeholder="Search desktops..."
+                <input type="text" name="search" class="search-input" placeholder="Search desktops..."
                     value="<?= htmlspecialchars($search) ?>">
 
                 <button type="submit" class="search-btn">
@@ -425,8 +425,8 @@ $result = $stmt->get_result();
                                 </td>
 
                                 <td>
-    <?= htmlspecialchars($row['endpoint_security_name'] ?? '') ?>
-</td>
+                                    <?= htmlspecialchars($row['endpoint_security_name'] ?? '') ?>
+                                </td>
 
                                 <td>
                                     <?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?>
@@ -468,17 +468,13 @@ $result = $stmt->get_result();
 
                                 <td>
 
-                                    <a
-                                        href="edit_device.php?id=<?= $row['id'] ?>"
-                                        class="btn btn-primary btn-sm">
+                                    <a href="edit_device.php?id=<?= $row['id'] ?>" class="btn btn-primary btn-sm">
 
                                         Edit
 
                                     </a>
 
-                                    <a
-                                        href="delete_device.php?id=<?= $row['id'] ?>"
-                                        class="btn btn-danger btn-sm"
+                                    <a href="delete_device.php?id=<?= $row['id'] ?>" class="btn btn-danger btn-sm"
                                         onclick="return confirm('Delete this device?')">
 
                                         Delete
@@ -508,7 +504,7 @@ $result = $stmt->get_result();
             </table>
 
         </div>
-  <!-- FOOTER -->
+        <!-- FOOTER -->
         <div class="table-footer">
 
             <div class="user-stats">
@@ -532,7 +528,8 @@ $result = $stmt->get_result();
 
                 <?php if ($page > 1): ?>
 
-                    <a href="?page=<?= $page - 1 ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division_filter) ?>&os=<?= urlencode($os_filter) ?>&office_application=<?= urlencode($office_filter) ?>">
+                    <a
+                        href="?page=<?= $page - 1 ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division_filter) ?>&os=<?= urlencode($os_filter) ?>&office_application=<?= urlencode($office_filter) ?>">
 
                         Prev
 
@@ -545,10 +542,9 @@ $result = $stmt->get_result();
                 $endPage = min($totalPages, $startPage + 2);
 
                 for ($i = $startPage; $i <= $endPage; $i++):
-                ?>
+                    ?>
 
-                    <a
-                        href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division_filter) ?>&os=<?= urlencode($os_filter) ?>&office_application=<?= urlencode($office_filter) ?>"
+                    <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division_filter) ?>&os=<?= urlencode($os_filter) ?>&office_application=<?= urlencode($office_filter) ?>"
                         class="<?= $i == $page ? 'active-page' : '' ?>">
 
                         <?= $i ?>
@@ -559,7 +555,8 @@ $result = $stmt->get_result();
 
                 <?php if ($page < $totalPages): ?>
 
-                    <a href="?page=<?= $page + 1 ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division_filter) ?>&os=<?= urlencode($os_filter) ?>&office_application=<?= urlencode($office_filter) ?>">
+                    <a
+                        href="?page=<?= $page + 1 ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division_filter) ?>&os=<?= urlencode($os_filter) ?>&office_application=<?= urlencode($office_filter) ?>">
 
                         Next
 
