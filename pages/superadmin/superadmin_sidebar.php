@@ -60,34 +60,69 @@
 
         <div class="dropdown-content" id="deviceDropdown">
 
-            <a href="../superadmin/devices_desktops.php">
-                <span class="icon"><i class="bi bi-pc"></i></span>
-                <span class="text">Desktops</span>
+
+            <a href="../superadmin/device_desktops.php"
+                class="<?= basename($_SERVER['PHP_SELF']) == 'device_desktops.php' ? 'active' : '' ?>">
+                <div class="menu-item">
+                    <span class="icon"><i class="bi bi-laptop"></i></span>
+                    <span class="text">Desktops</span>
+                </div>
             </a>
 
-            <a href="../superadmin/devices_laptops.php">
-                <span class="icon"><i class="bi bi-laptop"></i></span>
-                <span class="text">Laptops</span>
+            <a href="../superadmin/device_laptops.php"
+                class="<?= basename($_SERVER['PHP_SELF']) == 'device_laptops.php' ? 'active' : '' ?>">
+                <div class="menu-item">
+                    <span class="icon"><i class="bi bi-laptop"></i></span>
+                    <span class="text">Laptops</span>
+                </div>
             </a>
 
-            <a href="../superadmin/devices_printers.php">
-                <span class="icon"><i class="bi bi-printer"></i></span>
-                <span class="text">Printers</span>
+            <a href="../superadmin/device_printers.php"
+                class="<?= basename($_SERVER['PHP_SELF']) == 'device_printers.php' ? 'active' : '' ?>">
+                <div class="menu-item">
+                    <span class="icon"><i class="bi bi-printer"></i></span>
+                    <span class="text">Printers</span>
+                </div>
             </a>
 
-            <a href="../superadmin/devices_routers.php">
-                <span class="icon"><i class="bi bi-router"></i></span>
-                <span class="text">Routers</span>
+            <a href="../superadmin/device_cameras.php"
+                class="<?= basename($_SERVER['PHP_SELF']) == 'device_cameras.php' ? 'active' : '' ?>">
+                <div class="menu-item">
+                    <span class="icon"><i class="bi bi-camera"></i></span>
+                    <span class="text">Cameras</span>
+                </div>
             </a>
 
-            <a href="../superadmin/devices_switches.php">
-                <span class="icon"><i class="bi bi-diagram-3"></i></span>
-                <span class="text">Switches</span>
+            <a href="../superadmin/device_headsets.php"
+                class="<?= basename($_SERVER['PHP_SELF']) == 'device_headsets.php' ? 'active' : '' ?>">
+                <div class="menu-item">
+                    <span class="icon"><i class="bi bi-headset"></i></span>
+                    <span class="text">Headsets</span>
+                </div>
             </a>
 
-            <a href="../superadmin/devices_firewalls.php">
-                <span class="icon"><i class="bi bi-shield-lock"></i></span>
-                <span class="text">Firewalls</span>
+            <a href="../superadmin/device_switches.php"
+                class="<?= basename($_SERVER['PHP_SELF']) == 'device_switches.php' ? 'active' : '' ?>">
+                <div class="menu-item">
+                    <span class="icon"><i class="bi bi-diagram-3"></i></span>
+                    <span class="text">Switches</span>
+                </div>
+            </a>
+
+            <a href="../superadmin/device_routers.php"
+                class="<?= basename($_SERVER['PHP_SELF']) == 'device_routers.php' ? 'active' : '' ?>">
+                <div class="menu-item">
+                    <span class="icon"><i class="bi bi-router"></i></span>
+                    <span class="text">Routers</span>
+                </div>
+            </a>
+
+            <a href="../superadmin/device_firewalls.php"
+                class="<?= basename($_SERVER['PHP_SELF']) == 'device_firewalls.php' ? 'active' : '' ?>">
+                <div class="menu-item">
+                    <span class="icon"><i class="bi bi-shield-lock"></i></span>
+                    <span class="text">Firewalls</span>
+                </div>
             </a>
 
         </div>

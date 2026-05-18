@@ -10,7 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../superadmin/css/devices_desktop_laptops.css">
+    <link rel="stylesheet" href="../superadmin/css/devices.css">
     <link rel="stylesheet" href="css/superadmin_navbar.css">
     <link rel="stylesheet" href="./css/superadmin_sidebar.css">
 
@@ -127,7 +127,7 @@ if (session_status() === PHP_SESSION_NONE) {
         <!-- SEARCH -->
         <div class="search-container">
             <form class="search-form">
-                <input type="text" class="search-input" placeholder="Search laptops...">
+                <input type="text" class="search-input" placeholder="Search desktops...">
                 <button type="submit" class="search-btn">
                     Search
                 </button>
