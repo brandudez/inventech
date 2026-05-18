@@ -61,27 +61,33 @@
         <div class="dropdown-content" id="deviceDropdown">
 
             <a href="../superadmin/devices_desktops.php">
-                <i class="bi bi-pc"></i> Desktops
+                <span class="icon"><i class="bi bi-pc"></i></span>
+                <span class="text">Desktops</span>
             </a>
 
             <a href="../superadmin/devices_laptops.php">
-                <i class="bi bi-laptop"></i> Laptops
+                <span class="icon"><i class="bi bi-laptop"></i></span>
+                <span class="text">Laptops</span>
             </a>
 
             <a href="../superadmin/devices_printers.php">
-                <i class="bi bi-printer"></i> Printers
+                <span class="icon"><i class="bi bi-printer"></i></span>
+                <span class="text">Printers</span>
             </a>
 
             <a href="../superadmin/devices_routers.php">
-                <i class="bi bi-router"></i> Routers
+                <span class="icon"><i class="bi bi-router"></i></span>
+                <span class="text">Routers</span>
             </a>
 
             <a href="../superadmin/devices_switches.php">
-                <i class="bi bi-diagram-3"></i> Switches
+                <span class="icon"><i class="bi bi-diagram-3"></i></span>
+                <span class="text">Switches</span>
             </a>
 
             <a href="../superadmin/devices_firewalls.php">
-                <i class="bi bi-shield-lock"></i> Firewalls
+                <span class="icon"><i class="bi bi-shield-lock"></i></span>
+                <span class="text">Firewalls</span>
             </a>
 
         </div>
@@ -96,7 +102,7 @@
     const toggleBtn = document.getElementById("toggleBtn");
     const sidebar = document.getElementById("sidebar");
 
-    /* ===== LOAD SAVED STATE ===== */
+    /* ===== LOAD SIDEBAR STATE ===== */
     if (localStorage.getItem("sidebar") === "collapsed") {
 
         sidebar.classList.add("collapsed");
@@ -127,9 +133,27 @@
     const deviceDropdown =
         document.getElementById("deviceDropdown");
 
+    /* ===== LOAD DROPDOWN STATE ===== */
+    if (localStorage.getItem("devicesDropdown") === "open") {
+
+        deviceDropdown.classList.add("show");
+
+    }
+
+    /* ===== TOGGLE DROPDOWN ===== */
     deviceDropdownBtn.addEventListener("click", () => {
 
         deviceDropdown.classList.toggle("show");
+
+        if (deviceDropdown.classList.contains("show")) {
+
+            localStorage.setItem("devicesDropdown", "open");
+
+        } else {
+
+            localStorage.setItem("devicesDropdown", "closed");
+
+        }
 
     });
 
