@@ -166,8 +166,9 @@ $result = $stmt->get_result();
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <link rel="stylesheet" href="../superadmin/css/devices_desktop_laptops.css">
-
+=======
+    <link rel="stylesheet" href="../superadmin/css/devices.css">
+>>>>>>> 95dd1c6381a15c702e5646169f23109c5fa09d19:pages/superadmin/device_desktops.php
     <link rel="stylesheet" href="css/superadmin_navbar.css">
 
     <link rel="stylesheet" href="./css/superadmin_sidebar.css">
