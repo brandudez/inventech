@@ -1,4 +1,4 @@
-        TOP BUTTONS
+        /* TOP BUTTONS */
         .filter-btn,
         .search-btn,
         .btn-edit,
@@ -44,7 +44,7 @@
     flex-direction: row;
     align-items: start-end;
     gap: 12px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 /* ===== DEFAULT (INACTIVE) BUTTON ===== */
@@ -150,7 +150,7 @@
 .search-container {
     display: flex;
     align-items: center;
-    margin-left: 360px;
+    margin-left: 330px;
 }
 
 /* ===== SEARCH FORM ===== */
@@ -440,4 +440,5 @@
     display: flex;
     align-items: center;
     gap: 10px;
+}
 }

@@ -10,7 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../superadmin/css/devices_desktop.css">
+    <link rel="stylesheet" href="../superadmin/css/devices_desktop_laptops.css">
     <link rel="stylesheet" href="css/superadmin_navbar.css">
     <link rel="stylesheet" href="./css/superadmin_sidebar.css">
 
@@ -32,17 +32,96 @@ if (session_status() === PHP_SESSION_NONE) {
 
         <!-- FILTER BUTTONS -->
         <div class="filters">
-            <button type="button" class="filter-btn">
-                Division
-            </button>
 
-            <button type="button" class="filter-btn">
-                Operating System
-            </button>
+            <!-- DIVISION -->
+            <div class="dropdown">
 
-            <button type="button" class="filter-btn">
-                Office Application
-            </button>
+                <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside">
+
+                    Division
+
+                </button>
+
+                <ul class="dropdown-menu p-3 dropdown-scroll">
+
+                    <li><label class="dropdown-item">ITSD</label></li>
+                    <li><label class="dropdown-item">SMD</label></li>
+                    <li><label class="dropdown-item">ISSD</label></li>
+                    <li><label class="dropdown-item">ITPMD</label></li>
+                    <li><label class="dropdown-item">PTD</label></li>
+                    <li><label class="dropdown-item">DMD</label></li>
+                    <li><label class="dropdown-item">ARMD</label></li>
+                    <li><label class="dropdown-item">PTDLAB</label></li>
+                    <li><label class="dropdown-item">CI</label></li>
+                    <li><label class="dropdown-item">PCR</label></li>
+                    <li><label class="dropdown-item">LS</label></li>
+                    <li><label class="dropdown-item">IHSS</label></li>
+                    <li><label class="dropdown-item">BFS</label></li>
+                    <li><label class="dropdown-item">SAO</label></li>
+                    <li><label class="dropdown-item">SF</label></li>
+                    <li><label class="dropdown-item">PCC-SF</label></li>
+
+                </ul>
+
+            </div>
+
+            <!-- OPERATING SYSTEM -->
+            <div class="dropdown">
+
+                <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside">
+
+                    Operating System
+
+                </button>
+
+                <ul class="dropdown-menu p-3 dropdown-scroll">
+
+                    <li><label class="dropdown-item">Windows 10</label></li>
+                    <li><label class="dropdown-item">Windows 10 Pro</label></li>
+                    <li><label class="dropdown-item">Windows 11</label></li>
+                    <li><label class="dropdown-item">Windows 11 Pro</label></li>
+                    <li><label class="dropdown-item">Windows 12 (Upcoming)</label></li>
+
+                </ul>
+
+            </div>
+
+            <!-- OFFICE APPLICATION -->
+            <div class="dropdown">
+
+                <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside">
+
+                    Office Application
+
+                </button>
+
+                <ul class="dropdown-menu p-3 dropdown-scroll">
+
+                    <li><label class="dropdown-item">Microsoft 365 (M365)</label></li>
+                    <li><label class="dropdown-item">WPS Office</label></li>
+
+                    <li>
+                        <hr>
+                    </li>
+
+                    <li><label class="dropdown-item">Microsoft Word</label></li>
+                    <li><label class="dropdown-item">Google Docs</label></li>
+                    <li><label class="dropdown-item">WPS Writer</label></li>
+
+                    <li><label class="dropdown-item">Microsoft Excel</label></li>
+                    <li><label class="dropdown-item">Google Sheets</label></li>
+                    <li><label class="dropdown-item">WPS Spreadsheets</label></li>
+
+                    <li><label class="dropdown-item">Microsoft PowerPoint</label></li>
+                    <li><label class="dropdown-item">Google Slides</label></li>
+
+                </ul>
+
+            </div>
+
         </div>
 
         <!-- SEARCH -->
@@ -132,50 +211,6 @@ if (session_status() === PHP_SESSION_NONE) {
                         <td>PAR-2025-001</td>
                         <td>Pedro Santos</td>
                         <td>YES</td>
-
-                        <td class="action-buttons">
-
-                            <button type="button" class="btn-edit">
-
-                                Edit
-
-                            </button>
-
-                        </td>
-
-                    </tr>
-
-                    <!-- SAMPLE ROW -->
-                    <tr>
-
-                        <td>DESKTOP-002</td>
-                        <td>Maria Santos</td>
-                        <td>SMD</td>
-                        <td>192.168.1.20</td>
-                        <td>Windows 10 Pro</td>
-                        <td>NO</td>
-                        <td>N/A</td>
-                        <td>Microsoft Office 2019</td>
-                        <td>OFFICE-KEY-002</td>
-                        <td>YES</td>
-                        <td>Kaspersky</td>
-                        <td>2</td>
-                        <td>2026-04-12</td>
-                        <td>GUID-654321</td>
-                        <td>11:22:33:44:55</td>
-                        <td>AMD Ryzen 5</td>
-                        <td>8</td>
-                        <td>8 GB</td>
-                        <td>LG</td>
-                        <td>22"</td>
-                        <td>1</td>
-                        <td>Standard User</td>
-                        <td>Teams, Chrome</td>
-                        <td>Torrent</td>
-                        <td>2024-11-05</td>
-                        <td>PAR-2024-002</td>
-                        <td>Juan Dela Cruz</td>
-                        <td>NO</td>
 
                         <td class="action-buttons">
 
