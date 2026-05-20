@@ -587,22 +587,22 @@ $result = $stmt->get_result();
                         <th>OFFICE LICENSE KEY</th>
                         <th>IS OFFICE LICENSED?</th>
                         <th>ENDPOINT SECURITY</th>
-                        <th>NO OF INSTALLED ANTIVIRUS</th>
+                        <th># OF INSTALLED ANTIVIRUS</th>
                         <th>DATE INSTALLED</th>
                         <th>GUID</th>
                         <th>MAC ADDRESS</th>
                         <th>CPU BRAND</th>
-                        <th>CPU CORES</th>
-                        <th>GB RAM</th>
+                        <th># OF CPU CORES</th>
+                        <th>GBs OF RAM</th>
                         <th>MONITOR BRAND</th>
                         <th>MONITOR SIZE</th>
-                        <th>NO OF USER ACCOUNTS</th>
+                        <th># OF USER ACCOUNTS</th>
                         <th>USER ACCOUNT TYPE</th>
                         <th>AUTHORIZED SOFTWARE</th>
                         <th>UNAUTHORIZED SOFTWARE</th>
                         <th>ACQUISITION DATE</th>
                         <th>PAR SERIAL NUMBER</th>
-                        <th>PREVIOUS HANDLERS</th>
+                        <th>PREVIOUS HANDLER/S</th>
                         <th>IS REMOTELY ACCESSIBLE?</th>
                         <th>ACTION</th>
 

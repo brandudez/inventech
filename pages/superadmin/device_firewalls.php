@@ -146,7 +146,7 @@ $query = "
     SELECT
         f.*,
         d.division,
-        CONCAT(p.first_name, ' ', COALESCE(p.middle_name, ''), ' ', p.last_name) AS personnel_name
+        CONCAT(p.last_name, ', ', p.first_name, ' ', p.middle_name) AS personnel_name
     FROM firewalls f
     LEFT JOIN divisions d ON f.device_id = d.id
     LEFT JOIN personnels p ON f.personnel_id = p.id

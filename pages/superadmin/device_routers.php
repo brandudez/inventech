@@ -112,7 +112,7 @@ $totalPages = ceil($totalRouters / $limit);
 $sql = "
     SELECT
         r.*,
-        CONCAT(per.first_name, ' ', per.last_name) AS fullname,
+        CONCAT(per.last_name, ', ', per.first_name, ' ', per.middle_name) AS fullname,
         d.division
     FROM routers r
     LEFT JOIN personnels per ON r.personnel_id = per.id

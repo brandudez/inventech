@@ -708,7 +708,7 @@ ORDER BY id ASC
                                         Edit
                                     </button>
 
-                                    <button type="button" class="btn-edit" data-bs-toggle="modal"
+                                    <button type="button" class="btn-change" data-bs-toggle="modal"
                                         data-bs-target="#changePasswordModal">
                                         Change Password
                                     </button>

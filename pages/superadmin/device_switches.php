@@ -73,7 +73,7 @@ if (!empty($search)) {
         s.firmware_version LIKE ? OR
         s.remote_connection_details LIKE ? OR
         s.remarks LIKE ? OR
-        CONCAT(per.first_name, ' ', per.last_name) LIKE ? OR
+        CONCAT(per.last_name, ' ', per.first_name) LIKE ? OR
         d.division LIKE ?
     )";
 
@@ -127,7 +127,7 @@ $totalPages = ceil($totalSwitches / $limit);
 $sql = "
     SELECT 
         s.*,
-        CONCAT(per.first_name, ' ', per.last_name) AS fullname,
+        CONCAT(per.last_name, ', ', per.first_name, ' ', per.middle_name) AS fullname,
         d.division
     FROM switches s
     LEFT JOIN personnels per ON s.personnel_id = per.id
@@ -290,7 +290,6 @@ $result = $stmt->get_result();
     <th>FIRMWARE</th>
     <th>VLAN SUPPORTED</th>
     <th>LOCATION</th>
-    <th>STATUS</th>
     <th>IS REMOTE ACCESSIBLE?</th>
     <th>REMOTE DETAILS</th>
     <th>REMARKS</th>
@@ -336,12 +335,7 @@ $result = $stmt->get_result();
 
     <td><?= htmlspecialchars($row['location']) ?></td>
 
-    <td>
-        <?= $row['is_status']
-            ? '<span class="text-success fw-bold">ONLINE</span>'
-            : '<span class="text-danger fw-bold">OFFLINE</span>' ?>
-    </td>
-
+   
     <td>
         <?= $row['is_remote_access']
             ? '<span class="text-success fw-bold">YES</span>'

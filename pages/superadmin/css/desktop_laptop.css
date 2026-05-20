@@ -520,6 +520,7 @@ font-weight: 500;
 /* MODAL BODY */
 .modal-body {
     padding: 25px;
+    background: #e2e2e2a6;
 }
 
 /* MODAL FOOTER */

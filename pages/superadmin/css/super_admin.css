@@ -539,7 +539,44 @@ body {
     background: #29b6f6;
     transform: translateY(-2px);
 }
+.btn-edit{
+    padding: 8px 16px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    transition: 0.3s ease;
+    margin-left: 15px;
+    display: inline-block;
+    background: #0d6ea8;
+    box-shadow: 0 4px 10px rgba(13, 110, 168, 0.3);
+}
 
+/* CHANGE BUTTON */
+.btn-change {
+    background: #0d6ea8;
+    box-shadow: 0 4px 10px rgba(79, 195, 247, 0.3);
+    border: none;
+    cursor: pointer;
+}
+.btn-change:hover {
+    background: #f24040;
+    transform: translateY(-2px);
+}
+.btn-change{
+    padding: 8px 16px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    transition: 0.3s ease;
+    margin-left: 15px;
+    display: inline-block;
+    background: #dd1d1d;
+    box-shadow: 0 4px 10px rgba(13, 110, 168, 0.3);
+}
 
 /* FOOTER LAYOUT */
 .table-footer {
