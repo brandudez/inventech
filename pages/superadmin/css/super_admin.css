@@ -141,13 +141,13 @@ body {
    FILTER and SEARCH
 ========================================================= */
 
+/* FILTER FORM */
 .filter-form {
-    width: 100%;
     display: flex;
-    justify-content: space-between;
     align-items: center;
 }
 
+/* TOP BAR */
 .top-bar {
     margin-top: 80px;
     margin-left: 247px;
@@ -163,20 +163,30 @@ body {
     transition: all 0.3s ease;
 }
 
-/* ===== FILTER GROUP ROW ===== */
-
-.filter-groups {
+/* LEFT SIDE SEARCH */
+.search-container {
     display: flex;
-    gap: 10px;
     align-items: center;
 }
 
-/* ===== FILTER BUTTONS ===== */
+/* SEARCH FORM */
+.search-form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
 
+/* RIGHT SIDE */
+.right-side {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* FILTERS */
 .filters {
     display: flex;
-    flex-direction: row;
-    align-items: start-end;
+    align-items: center;
     gap: 12px;
     flex-wrap: wrap;
 }
@@ -276,20 +286,32 @@ body {
     overflow-y: auto;
 }
 
+.btn-primary {
+    background: #37d75f;
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 20px;
+}
+
+.btn-primary:hover {
+    background: #52e076;
+    transform: translateY(-1px);
+}
+/* RIGHT SIDE */
+.right-side {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 /* =========================================================
    FIXED SEARCH INPUT AND BUTTON
 ========================================================= */
 
 .search-container {
-
-    position: fixed;
-
-    top: 80px;
-
-    right: 35px;
-
-    z-index: 999;
-
     display: flex;
     align-items: center;
 }

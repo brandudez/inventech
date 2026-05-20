@@ -496,11 +496,27 @@ ORDER BY id ASC
     <!-- TOP BAR -->
     <div class="top-bar">
 
-        <div class="filters">
+        <!-- LEFT SIDE -->
+        <div class="search-container">
+
+            <form method="GET" class="search-form">
+
+                <input type="text" name="search" class="search-input" placeholder="Search users..."
+                    value="<?= htmlspecialchars($search); ?>">
+
+                <button type="submit" class="search-btn">
+                    Search
+                </button>
+
+            </form>
+
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="right-side">
 
             <form method="GET" class="filter-form" id="filterForm">
 
-                <!-- FILTER GROUPS -->
                 <div class="filter-groups d-flex gap-3">
 
                     <!-- ROLE -->
@@ -508,7 +524,9 @@ ORDER BY id ASC
 
                         <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
                             data-bs-auto-close="outside">
+
                             Roles
+
                         </button>
 
                         <ul class="dropdown-menu p-3">
@@ -517,18 +535,22 @@ ORDER BY id ASC
 
                                 <li>
                                     <label class="dropdown-item">
+
                                         <input type="checkbox" name="roles[]" value="<?= $role['id']; ?>"
                                             <?= in_array($role['id'], $roleFilters) ? 'checked' : ''; ?>>
+
                                         <?= ucfirst(htmlspecialchars($role['role_name'])); ?>
+
                                     </label>
                                 </li>
 
                             <?php endwhile; ?>
 
-                            <!-- APPLY BUTTON (OPTIONAL BUT RECOMMENDED) -->
                             <li class="mt-2">
                                 <button type="submit" class="btn btn-primary btn-sm w-100">
+
                                     Apply
+
                                 </button>
                             </li>
 
@@ -541,7 +563,9 @@ ORDER BY id ASC
 
                         <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
                             data-bs-auto-close="outside">
+
                             Division
+
                         </button>
 
                         <ul class="dropdown-menu p-3 dropdown-scroll">
@@ -550,9 +574,12 @@ ORDER BY id ASC
 
                                 <li>
                                     <label class="dropdown-item">
+
                                         <input type="checkbox" name="divisions[]" value="<?= $division['id']; ?>"
                                             <?= in_array($division['id'], $divisionFilters) ? 'checked' : ''; ?>>
+
                                         <?= htmlspecialchars($division['division']); ?>
+
                                     </label>
                                 </li>
 
@@ -560,7 +587,9 @@ ORDER BY id ASC
 
                             <li class="mt-2">
                                 <button type="submit" class="btn btn-primary btn-sm w-100">
+
                                     Apply
+
                                 </button>
                             </li>
 
@@ -573,7 +602,9 @@ ORDER BY id ASC
 
                         <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
                             data-bs-auto-close="outside">
+
                             Rank
+
                         </button>
 
                         <ul class="dropdown-menu p-3 dropdown-scroll">
@@ -582,9 +613,12 @@ ORDER BY id ASC
 
                                 <li>
                                     <label class="dropdown-item">
+
                                         <input type="checkbox" name="ranks[]" value="<?= $rank['id']; ?>"
                                             <?= in_array($rank['id'], $rankFilters) ? 'checked' : ''; ?>>
+
                                         <?= htmlspecialchars($rank['rank']); ?>
+
                                     </label>
                                 </li>
 
@@ -592,25 +626,15 @@ ORDER BY id ASC
 
                             <li class="mt-2">
                                 <button type="submit" class="btn btn-primary btn-sm w-100">
+
                                     Apply
+
                                 </button>
                             </li>
 
                         </ul>
 
                     </div>
-
-                </div>
-
-                <!-- SEARCH -->
-                <div class="search-container">
-
-                    <input type="text" name="search" class="search-input" placeholder="Search users..."
-                        value="<?= htmlspecialchars($search); ?>">
-
-                    <button type="submit" class="search-btn" style="margin-left: 10px;">
-                        Search
-                    </button>
 
                 </div>
 

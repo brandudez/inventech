@@ -12,7 +12,6 @@
 
     gap: 20px;
     flex-wrap: wrap;
-
     transition: all 0.3s ease;
 }
 
@@ -139,6 +138,12 @@
     color: #ffffff;
     transform: translateY(-2px);
     box-shadow: 0 6px 18px rgba(13,110,168,0.35);
+}
+/* RIGHT SIDE CONTAINER */
+.right-side {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 /* =========================

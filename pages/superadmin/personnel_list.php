@@ -243,110 +243,122 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
     <!-- TOP BAR -->
     <div class="top-bar">
 
-        <div class="filters">
+        <!-- LEFT SIDE -->
+        <div class="search-container">
 
-            <form method="GET" class="filter-form" id="filterForm">
+            <form class="search-form" method="GET">
 
-                <!-- FILTER GROUPS -->
-                <div class="filter-groups d-flex gap-3">
+                <input type="text" name="search" class="search-input" placeholder="Search users..."
+                    value="<?= htmlspecialchars($search); ?>" onkeyup="liveSearch(event)">
 
-                    <!-- DIVISION -->
-                    <div class="dropdown">
-
-                        <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                            data-bs-auto-close="outside">
-
-                            Division
-
-                        </button>
-
-                        <ul class="dropdown-menu p-3 dropdown-scroll">
-
-                            <?php while ($division = $divisionsResult->fetch_assoc()): ?>
-
-                                <li>
-                                    <label class="dropdown-item">
-
-                                        <input type="checkbox" name="divisions[]" value="<?= $division['id']; ?>"
-                                            <?= in_array($division['id'], $divisionFilters) ? 'checked' : ''; ?>>
-
-                                        <?= htmlspecialchars($division['division']); ?>
-
-                                    </label>
-                                </li>
-
-                            <?php endwhile; ?>
-
-                            <!-- APPLY BUTTON -->
-                            <li class="mt-2">
-                                <button type="submit" class="btn btn-primary w-100">
-
-                                    Apply
-
-                                </button>
-                            </li>
-
-                        </ul>
-
-                    </div>
-
-
-                    <!-- RANK -->
-                    <div class="dropdown">
-
-                        <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                            data-bs-auto-close="outside">
-
-                            Rank
-
-                        </button>
-
-                        <ul class="dropdown-menu p-3 dropdown-scroll">
-
-                            <?php while ($rank = $ranksResult->fetch_assoc()): ?>
-
-                                <li>
-                                    <label class="dropdown-item">
-
-                                        <input type="checkbox" name="ranks[]" value="<?= $rank['id']; ?>"
-                                            <?= in_array($rank['id'], $rankFilters) ? 'checked' : ''; ?>>
-
-                                        <?= htmlspecialchars($rank['rank']); ?>
-
-                                    </label>
-                                </li>
-
-                            <?php endwhile; ?>
-
-                            <!-- APPLY BUTTON -->
-                            <li class="mt-2">
-                                <button type="submit" class="btn btn-primary w-100">
-
-                                    Apply
-
-                                </button>
-                            </li>
-
-                        </ul>
-
-                    </div>
-
-                </div>
-                <button type="button" class="btn-edit" data-bs-toggle="modal" data-bs-target="#addPersonnelModal">
-                    Add Personnel
+                <button type="submit" class="search-btn">
+                    Search
                 </button>
-                <!-- SEARCH -->
-                <div class="search-container" style="margin-left: 590px;">
-                    <form class="search-form">
-                        <input type="text" name="search" class="search-input" placeholder="Search users..."
-                            value="<?= htmlspecialchars($search); ?>" onkeyup="liveSearch(event)">
-                        <button type="submit" class="search-btn" style="margin-left:10px;">
-                            Search
-                        </button>
-                    </form>
-                </div>
 
             </form>
+
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="right-side">
+
+            <!-- FILTERS -->
+            <div class="filters">
+
+                <form method="GET" class="filter-form" id="filterForm">
+
+                    <div class="filter-groups d-flex gap-3">
+
+                        <!-- DIVISION -->
+                        <div class="dropdown">
+
+                            <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                                data-bs-auto-close="outside">
+
+                                Division
+
+                            </button>
+
+                            <ul class="dropdown-menu p-3 dropdown-scroll">
+
+                                <?php while ($division = $divisionsResult->fetch_assoc()): ?>
+
+                                    <li>
+                                        <label class="dropdown-item">
+
+                                            <input type="checkbox" name="divisions[]" value="<?= $division['id']; ?>"
+                                                <?= in_array($division['id'], $divisionFilters) ? 'checked' : ''; ?>>
+
+                                            <?= htmlspecialchars($division['division']); ?>
+
+                                        </label>
+                                    </li>
+
+                                <?php endwhile; ?>
+
+                                <li class="mt-2">
+                                    <button type="submit" class="btn btn-primary w-100">
+
+                                        Apply
+
+                                    </button>
+                                </li>
+
+                            </ul>
+
+                        </div>
+
+                        <!-- RANK -->
+                        <div class="dropdown">
+
+                            <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                                data-bs-auto-close="outside">
+
+                                Rank
+
+                            </button>
+
+                            <ul class="dropdown-menu p-3 dropdown-scroll">
+
+                                <?php while ($rank = $ranksResult->fetch_assoc()): ?>
+
+                                    <li>
+                                        <label class="dropdown-item">
+
+                                            <input type="checkbox" name="ranks[]" value="<?= $rank['id']; ?>"
+                                                <?= in_array($rank['id'], $rankFilters) ? 'checked' : ''; ?>>
+
+                                            <?= htmlspecialchars($rank['rank']); ?>
+
+                                        </label>
+                                    </li>
+
+                                <?php endwhile; ?>
+
+                                <li class="mt-2">
+                                    <button type="submit" class="btn btn-primary w-100">
+
+                                        Apply
+
+                                    </button>
+                                </li>
+
+                            </ul>
+
+                        </div>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+            <!-- ADD PERSONNEL BUTTON -->
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPersonnelModal">
+
+                Add Personnel
+
+            </button>
 
         </div>
 
