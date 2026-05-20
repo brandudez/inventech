@@ -21,7 +21,7 @@ $division_id = trim($_GET['division_id'] ?? '');
 $is_active = trim($_GET['is_active'] ?? '');
 
 /* =========================
-   HARD CODED DIVISIONS
+   DIVISIONS
 ========================= */
 $divisions = [
     1 => 'ITSD', 2 => 'SMD', 3 => 'ISSD', 4 => 'ITPMD',
@@ -32,7 +32,7 @@ $divisions = [
 ];
 
 /* =========================
-   FILTER FUNCTION
+   FILTER BUILDER
 ========================= */
 function addFilter(&$where, &$params, &$types, $condition, $value, $type)
 {
@@ -42,16 +42,16 @@ function addFilter(&$where, &$params, &$types, $condition, $value, $type)
 }
 
 /* =========================
-   WHERE CONDITIONS
+   BASE FILTERS (IMPORTANT FIX)
 ========================= */
-$where = [];
-$params = [];
-$types = '';
+$baseWhere = [];
+$baseParams = [];
+$baseTypes  = '';
 
 /* SEARCH */
 if (!empty($search)) {
 
-    $where[] = "(
+    $baseWhere[] = "(
         r.manufacturer LIKE ? OR
         r.model LIKE ? OR
         r.serial_no LIKE ? OR
@@ -66,24 +66,24 @@ if (!empty($search)) {
     $searchValue = "%$search%";
 
     for ($i = 0; $i < 9; $i++) {
-        $params[] = $searchValue;
+        $baseParams[] = $searchValue;
     }
 
-    $types .= 'sssssssss';
+    $baseTypes .= str_repeat('s', 9);
 }
 
-/* DIVISION FILTER (HARD CODED ID) */
+/* DIVISION FILTER */
 if (!empty($division_id) && isset($divisions[$division_id])) {
-    addFilter($where, $params, $types, "d.id = ?", $division_id, "i");
+    addFilter($baseWhere, $baseParams, $baseTypes, "d.id = ?", $division_id, "i");
 }
 
 /* ACTIVE FILTER */
 if ($is_active !== '') {
-    addFilter($where, $params, $types, "r.is_active = ?", $is_active, "i");
+    addFilter($baseWhere, $baseParams, $baseTypes, "r.is_active = ?", $is_active, "i");
 }
 
-/* WHERE SQL */
-$whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+/* FINAL WHERE */
+$whereSQL = !empty($baseWhere) ? "WHERE " . implode(" AND ", $baseWhere) : "";
 
 /* =========================
    COUNT QUERY
@@ -98,17 +98,16 @@ $countSQL = "
 
 $countStmt = $conn->prepare($countSQL);
 
-if (!empty($params)) {
-    $countStmt->bind_param($types, ...$params);
+if (!empty($baseParams)) {
+    $countStmt->bind_param($baseTypes, ...$baseParams);
 }
 
 $countStmt->execute();
 $totalRouters = $countStmt->get_result()->fetch_assoc()['total'];
-
 $totalPages = ceil($totalRouters / $limit);
 
 /* =========================
-   MAIN QUERY
+   MAIN QUERY (FIXED BINDING)
 ========================= */
 $sql = "
     SELECT
@@ -125,20 +124,76 @@ $sql = "
 
 $stmt = $conn->prepare($sql);
 
-if (!empty($params)) {
+/* COPY BASE FILTERS (IMPORTANT FIX) */
+$mainParams = $baseParams;
+$mainTypes  = $baseTypes;
 
-    $bindTypes = $types . 'ii';
-    $params[] = $offset;
-    $params[] = $limit;
+/* ADD LIMIT PARAMS */
+$mainParams[] = $offset;
+$mainParams[] = $limit;
+$mainTypes .= "ii";
 
-    $stmt->bind_param($bindTypes, ...$params);
-
-} else {
-    $stmt->bind_param("ii", $offset, $limit);
-}
+/* SAFE BIND */
+$stmt->bind_param($mainTypes, ...$mainParams);
 
 $stmt->execute();
 $result = $stmt->get_result();
+
+/* =========================
+   ACTIVE COUNT
+========================= */
+$activeWhere = $baseWhere;
+$activeParams = $baseParams;
+$activeTypes = $baseTypes;
+
+$activeWhere[] = "r.is_active = 1";
+
+$activeSQL = "WHERE " . implode(" AND ", $activeWhere);
+
+$activeQuery = "
+    SELECT COUNT(*) AS total
+    FROM routers r
+    LEFT JOIN personnels per ON r.personnel_id = per.id
+    LEFT JOIN divisions d ON per.division_id = d.id
+    $activeSQL
+";
+
+$stmtActive = $conn->prepare($activeQuery);
+
+if (!empty($activeParams)) {
+    $stmtActive->bind_param($activeTypes, ...$activeParams);
+}
+
+$stmtActive->execute();
+$activeRouters = $stmtActive->get_result()->fetch_assoc()['total'] ?? 0;
+
+/* =========================
+   INACTIVE COUNT
+========================= */
+$inactiveWhere = $baseWhere;
+$inactiveParams = $baseParams;
+$inactiveTypes = $baseTypes;
+
+$inactiveWhere[] = "r.is_active = 0";
+
+$inactiveSQL = "WHERE " . implode(" AND ", $inactiveWhere);
+
+$inactiveQuery = "
+    SELECT COUNT(*) AS total
+    FROM routers r
+    LEFT JOIN personnels per ON r.personnel_id = per.id
+    LEFT JOIN divisions d ON per.division_id = d.id
+    $inactiveSQL
+";
+
+$stmtInactive = $conn->prepare($inactiveQuery);
+
+if (!empty($inactiveParams)) {
+    $stmtInactive->bind_param($inactiveTypes, ...$inactiveParams);
+}
+
+$stmtInactive->execute();
+$inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
 ?>
 
 <!DOCTYPE html>
@@ -343,16 +398,51 @@ $result = $stmt->get_result();
         </table>
 
     </div>
-      <!-- PAGINATION -->
+
+    
     <div class="table-footer">
+ <!-- STATS -->
+            <div class="user-stats">
 
-        <div class="user-stats">
-            <div class="stat-box total">
-                <span class="label">Total Devices</span>
-                <span class="value"><?= $totalRouters ?></span>
+                <div class="stat-box total">
+
+                    <span class="label">
+                        Total Devices
+                    </span>
+
+                    <span class="value">
+                        <?= $totalRouters ?>
+                    </span>
+
+                </div>
+
+                <div class="stat-box active">
+
+                    <span class="label">
+                        Active
+                    </span>
+
+                    <span class="value">
+                        <?= $activeRouters ?>
+                    </span>
+
+                </div>
+
+                <div class="stat-box inactive">
+
+                    <span class="label">
+                        Inactive
+                    </span>
+
+                    <span class="value">
+                        <?= $inactiveRouters ?>
+                    </span>
+
+                </div>
+
             </div>
-        </div>
 
+  <!-- PAGINATION -->
         <?php if ($totalPages > 1): ?>
         <div class="pagination">
 
