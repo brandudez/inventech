@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 18, 2026 at 02:44 PM
+-- Generation Time: May 19, 2026 at 10:06 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -99,7 +99,7 @@ CREATE TABLE `desktops` (
 --
 
 INSERT INTO `desktops` (`id`, `personnel_id`, `device_id`, `device_name`, `division_id`, `ip_address`, `os`, `is_os_licensed`, `is_remote_acc`, `endpoint_security_id`, `no_of_installed_anti_virus`, `date_installed`, `guid`, `mac_address`, `cpu_brand`, `cpu_cores`, `gb_ram`, `monitor_brand`, `monitor_size_inches`, `no_of_user_accounts`, `user_account_type`, `authorized_software`, `unauthorized_software`, `office_application`, `is_office_licensed`, `previous_owners_id`, `created_date`, `last_updated_at`, `os_license_key`, `office_license_key`, `par_serial_no`) VALUES
-(3, 1, 1, 'ITMS-ITSD-35', 1, '192.168.43.1', 'Windows 11 Pro', 1, 1, '1', 3, '2026-01-25', 'AAAAA123-OOOO-4567-890C-123DEF456789', '2b:fc:f3:f3:f3:2b', 'Intel', 12, 12, 'Acer', 16, 1, 'Admin', 'Google Chrome, Office and AnyDesk', 'Crack Software', 'Microsoft Office 2021 Professional', 1, '1', '2026-04-14', NULL, '8DNJ37-89SJF8-89HSDF-9DUGHS', '8D3457-89SJF8-8934DF-9D67HS', 'PAR-001-01');
+(3, 4, 1, 'ITMS-ITSD-35', 1, '192.168.43.1', 'Windows 11 Pro', 1, 1, '1', 3, '2026-01-25', 'AAAAA123-OOOO-4567-890C-123DEF456789', '2b:fc:f3:f3:f3:2b', 'Intel', 12, 12, 'Acer', 16, 1, 'Admin', 'Google Chrome, Office and AnyDesk', 'Crack Software', 'Microsoft Office 2021 Professional', 1, '1', '2026-04-14', NULL, '8DNJ37-89SJF8-89HSDF-9DUGHS', '8D3457-89SJF8-8934DF-9D67HS', 'PAR-001-01');
 
 -- --------------------------------------------------------
 
@@ -329,7 +329,7 @@ CREATE TABLE `personnels` (
 --
 
 INSERT INTO `personnels` (`id`, `division_id`, `rank_id`, `first_name`, `middle_name`, `last_name`, `created_by`, `is_active`) VALUES
-(1, 1, 14, 'Brandon', 'Jake', 'Fernandez Diaz', 1, 1),
+(1, 2, 1, 'Brandon', 'Jake', 'Fernandez Diaz', 1, 1),
 (4, 2, 2, 'Mark', 'Naruto', 'Uzumaki', 12, 1);
 
 -- --------------------------------------------------------
@@ -419,7 +419,6 @@ INSERT INTO `roles` (`id`, `role_name`) VALUES
 
 CREATE TABLE `routers` (
   `id` int(11) NOT NULL,
-  `device_code` varchar(255) NOT NULL,
   `personnel_id` int(11) NOT NULL,
   `device_id` int(11) NOT NULL,
   `manufacturer` varchar(255) NOT NULL,
@@ -443,6 +442,15 @@ CREATE TABLE `routers` (
   `last_update_at` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `routers`
+--
+
+INSERT INTO `routers` (`id`, `personnel_id`, `device_id`, `manufacturer`, `model`, `serial_no`, `no_of_ports`, `no_of_active_ports`, `active_port_ip_address_range`, `firmware_version`, `location`, `is_active`, `is_remotely_accessible`, `remote_connection_details`, `remarks`, `pnp_focal_person`, `contact_details`, `acquisition_date`, `acquisition_type`, `previous_owners_id`, `created_date`, `last_update_at`) VALUES
+(4, 1, 101, 'Cisco', 'ISR 4321', 'RTR-001-ABC', 8, 6, '192.168.1.1-192.168.1.254', '16.09.05', 'Server Room A', 1, 1, 'SSH enabled on port 22', 'Main router for ITSD', 'John Doe', 2147483647, '2024-01-10', 'Purchase', '[1,2]', '2026-05-19', NULL),
+(5, 1, 102, 'Huawei', 'AR2220', 'RTR-002-XYZ', 12, 10, '10.0.0.1-10.0.0.254', 'V200R010C00', 'Building B', 1, 1, 'Web UI access enabled', 'Backup router', 'Jane Smith', 2147483647, '2023-11-05', 'Donation', '[3]', '2026-05-19', NULL),
+(6, 4, 103, 'Mikrotik', 'RB3011', 'RTR-003-DEF', 10, 8, '172.16.0.1-172.16.0.254', '6.49.10', 'Data Center', 0, 0, 'Disabled for security upgrade', 'Under maintenance', 'Mark Lee', 2147483647, '2022-08-15', 'Purchase', '[2,4]', '2026-05-19', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -451,7 +459,6 @@ CREATE TABLE `routers` (
 
 CREATE TABLE `switches` (
   `id` int(11) NOT NULL,
-  `device_code` varchar(255) NOT NULL,
   `personnel_id` int(11) NOT NULL,
   `device_id` int(11) NOT NULL,
   `manufacturer` varchar(255) NOT NULL,
@@ -465,6 +472,7 @@ CREATE TABLE `switches` (
   `is_vlan_supported` tinyint(1) NOT NULL,
   `location` varchar(255) NOT NULL,
   `is_status` tinyint(1) NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `is_remote_access` tinyint(1) NOT NULL,
   `remote_connection_details` text NOT NULL,
   `remarks` text NOT NULL,
@@ -477,6 +485,16 @@ CREATE TABLE `switches` (
   `created_date` date NOT NULL DEFAULT current_timestamp(),
   `last_update_at` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `switches`
+--
+
+INSERT INTO `switches` (`id`, `personnel_id`, `device_id`, `manufacturer`, `model`, `serial_no`, `no_of_ports`, `no_of_active_ports`, `no_of_managed`, `no_of_unmanaged`, `firmware_version`, `is_vlan_supported`, `location`, `is_status`, `is_active`, `is_remote_access`, `remote_connection_details`, `remarks`, `pnp_focal_person`, `contact_details`, `acquisition_date`, `acquisition_type`, `acquisition_details`, `previous_owners_id`, `created_date`, `last_update_at`) VALUES
+(1, 1, 1, 'Cisco', 'SG350-28', 'SW-1001', 28, 24, 20, 8, '1.0.0', 1, 'Main Office', 1, 1, 1, 'SSH Enabled', 'Good Condition', 'Juan Dela Cruz', 2147483647, '2025-01-10', 'Purchased', 'Government Procurement', '[1,2]', '2026-05-19', NULL),
+(2, 4, 1, 'TP-Link', 'TL-SG1024', 'SW-1002', 24, 20, 12, 12, '2.5.1', 1, 'Server Room', 1, 1, 0, 'N/A', 'Operational', 'Maria Santos', 2147483647, '2025-02-15', 'Donated', 'LGU Donation', '[3]', '2026-05-19', NULL),
+(3, 1, 1, 'Netgear', 'GS308', 'SW-1003', 8, 5, 0, 8, '3.0.2', 0, 'Training Room', 0, 0, 0, 'N/A', 'Needs Maintenance', 'Pedro Reyes', 2147483647, '2025-03-20', 'Purchased', 'Direct Supplier', '[]', '2026-05-19', NULL),
+(4, 4, 1, 'D-Link', 'DGS-1210', 'SW-1004', 16, 15, 10, 6, '4.1.0', 1, 'Data Center', 1, 1, 1, 'Web GUI Enabled', 'Excellent', 'Ana Cruz', 2147483647, '2025-04-01', 'Purchased', 'IT Procurement', '[2,4]', '2026-05-19', NULL);
 
 -- --------------------------------------------------------
 
@@ -506,7 +524,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `role_id`, `division_id`, `email`, `password`, `rank_id`, `first_name`, `middle_name`, `last_name`, `username`, `is_active`, `creator_user_id`, `created_date`, `last_update_at`) VALUES
-(1, 1, 1, 'itsd.superadmin@itms.com', '$2y$10$81t/AvPPOV5wT2fweoiJPes7QOpyuTekr1i8rz/dSL3QkMXlq3ww.', 14, 'Brandon', 'Jake', 'Fernandez Diaz', 'superadmin', 1, 1, '2026-05-12', NULL),
+(1, 1, 8, 'itsd.superadmin@itms.com', '$2y$10$81t/AvPPOV5wT2fweoiJPes7QOpyuTekr1i8rz/dSL3QkMXlq3ww.', 14, 'Brandon', 'Jake', 'Fernandez Diaz', 'superadmin', 1, 1, '2026-05-12', NULL),
 (10, 2, 1, 'admin.itsd@itms.com', '$2y$10$umcGPtWn6lZn5XbBXm0tSupmRqk.YtNvmJuOFMkI/hdgxj8XUOH3K', 2, 'admin', 'admin', 'admin', 'admin,AA', 1, 0, '2026-05-12', NULL),
 (11, 2, 1, 'itsd.admin@itms.com', '$2y$10$LdO/uqleUh3/p.32f1qePeZJE1G7TKs0pgskhg9bUDPiOSnfxX.Ri', 8, 'Paul', 'Kenneth', 'De Guzman Agripa', 'Agripa,PD', 1, 0, '2026-05-12', NULL),
 (12, 3, 1, 'itsd.encoder@itms.com', '$2y$10$6ou2A0ieaQOIXEfEqRhBH.XXb3zZeKLTqWyfJJstCzWLUdTsX7bLO', 13, 'Brandon', 'Jake', 'Pogi Lang', 'Lang,BP', 1, 0, '2026-05-12', NULL),
@@ -514,8 +532,9 @@ INSERT INTO `users` (`id`, `role_id`, `division_id`, `email`, `password`, `rank_
 (14, 2, 2, 'smd.admin@itms.com', '$2y$10$yiXwHc/gdkZlornq1HUIfu5aEnGjEkIG73c8XXvdZ.TtSKQBhdTiC', 1, 'Princess', 'Cruz', 'Santa Mesa', 'Santa Mesa,PC', 1, 0, '2026-05-12', NULL),
 (15, 2, 9, 'ci.admin@itms.com', '$2y$10$SVfdCN4qRe1BvlVIXObHtegsb8VrnU9QnPUTZrnC8duTzhbVmOg4u', 2, 'Alejandro Jay', 'Fernandez', 'Diaz', 'diazaf', 1, 1, '2026-05-12', NULL),
 (16, 2, 14, 'sao.admin@itms.com', '$2y$10$Ur9ukvl2a9Fme9NU.Vd5ku0.TYxRO3Ya.FVTCGHjZcyFRc0RBVh2a', 13, 'Balmond', 'Valentina', 'Fanny', 'fannybv', 1, 1, '2026-05-12', NULL),
-(17, 2, 6, 'dmd.admin@itms.com', '$2y$10$k.edIMBh1YhoY1OLpLqz2.ZnegDNafM5MVo9PbECOv3L5evPjN8.S', 3, 'ALUCARD', 'SELENA', 'GOMEZ', 'gomezas', 1, 1, '2026-05-12', NULL),
-(18, 2, 8, 'ptdlab.admin@itms.com', '$2y$10$g8FRMAFXTDzK5KZtgbpLFOAruvQlPErL8Jed2qZbS33NJWbRFOAVG', 13, 'LAYLA', 'LESLY', 'VALENTINA', 'valentinall', 1, 1, '2026-05-12', NULL);
+(17, 3, 6, 'dmd.admin@itms.com', '$2y$10$k.edIMBh1YhoY1OLpLqz2.ZnegDNafM5MVo9PbECOv3L5evPjN8.S', 3, 'ALUCARD', 'SELENA', 'GOMEZ', 'gomezas', 1, 1, '2026-05-12', NULL),
+(18, 3, 15, 'ptdlab.admin@itms.com', '$2y$10$g8FRMAFXTDzK5KZtgbpLFOAruvQlPErL8Jed2qZbS33NJWbRFOAVG', 13, 'LAYLA', 'LESLY', 'VALENTINA', 'valentinall', 1, 1, '2026-05-12', NULL),
+(19, 2, 9, 'pems.admin@itms.com', '$2y$10$zJTvR/CuQ.Imk.liQkXg8eASz4cZnM3jEFxefpYipQK907Q/6rFHC', 8, 'JAKE', 'FERNAN', 'DEZ', 'dezjf', 1, 1, '2026-05-19', NULL);
 
 --
 -- Indexes for dumped tables
@@ -605,15 +624,13 @@ ALTER TABLE `roles`
 -- Indexes for table `routers`
 --
 ALTER TABLE `routers`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `device_code` (`device_code`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `switches`
 --
 ALTER TABLE `switches`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `device_code` (`device_code`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `users`
@@ -697,19 +714,19 @@ ALTER TABLE `ranks`
 -- AUTO_INCREMENT for table `routers`
 --
 ALTER TABLE `routers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `switches`
 --
 ALTER TABLE `switches`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
