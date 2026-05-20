@@ -96,7 +96,7 @@ if (!empty($rankFilters)) {
     $placeholders = implode(',', array_fill(0, count($rankFilters), '?'));
     $sql .= " AND p.rank_id IN ($placeholders)";
     foreach ($rankFilters as $rank) {
-        $params[] = (int)$rank;
+        $params[] = (int) $rank;
         $types .= "i";
     }
 }
@@ -108,7 +108,7 @@ if (!empty($divisionFilters)) {
     $placeholders = implode(',', array_fill(0, count($divisionFilters), '?'));
     $sql .= " AND p.division_id IN ($placeholders)";
     foreach ($divisionFilters as $div) {
-        $params[] = (int)$div;
+        $params[] = (int) $div;
         $types .= "i";
     }
 }
@@ -218,7 +218,9 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
     <meta charset="UTF-8">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <link rel="stylesheet" href="../superadmin/css/super_admin.css">
 
@@ -245,108 +247,94 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
 
             <form method="GET" class="filter-form" id="filterForm">
 
-              <!-- FILTER GROUPS -->
-<div class="filter-groups d-flex gap-3">
+                <!-- FILTER GROUPS -->
+                <div class="filter-groups d-flex gap-3">
 
-    <!-- DIVISION -->
-    <div class="dropdown">
+                    <!-- DIVISION -->
+                    <div class="dropdown">
 
-        <button
-            class="btn filter-btn dropdown-toggle"
-            type="button"
-            data-bs-toggle="dropdown"
-            data-bs-auto-close="outside">
+                        <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside">
 
-            Division
+                            Division
 
-        </button>
+                        </button>
 
-        <ul class="dropdown-menu p-3 dropdown-scroll">
+                        <ul class="dropdown-menu p-3 dropdown-scroll">
 
-            <?php while ($division = $divisionsResult->fetch_assoc()): ?>
+                            <?php while ($division = $divisionsResult->fetch_assoc()): ?>
 
-                <li>
-                    <label class="dropdown-item">
+                                <li>
+                                    <label class="dropdown-item">
 
-                        <input
-                            type="checkbox"
-                            name="divisions[]"
-                            value="<?= $division['id']; ?>"
-                            <?= in_array($division['id'], $divisionFilters) ? 'checked' : ''; ?>
-                        >
+                                        <input type="checkbox" name="divisions[]" value="<?= $division['id']; ?>"
+                                            <?= in_array($division['id'], $divisionFilters) ? 'checked' : ''; ?>>
 
-                        <?= htmlspecialchars($division['division']); ?>
+                                        <?= htmlspecialchars($division['division']); ?>
 
-                    </label>
-                </li>
+                                    </label>
+                                </li>
 
-            <?php endwhile; ?>
+                            <?php endwhile; ?>
 
-            <!-- APPLY BUTTON -->
-            <li class="mt-2">
-                <button
-                    type="submit"
-                    class="btn btn-primary w-100">
+                            <!-- APPLY BUTTON -->
+                            <li class="mt-2">
+                                <button type="submit" class="btn btn-primary w-100">
 
-                    Apply
+                                    Apply
 
+                                </button>
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+
+                    <!-- RANK -->
+                    <div class="dropdown">
+
+                        <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside">
+
+                            Rank
+
+                        </button>
+
+                        <ul class="dropdown-menu p-3 dropdown-scroll">
+
+                            <?php while ($rank = $ranksResult->fetch_assoc()): ?>
+
+                                <li>
+                                    <label class="dropdown-item">
+
+                                        <input type="checkbox" name="ranks[]" value="<?= $rank['id']; ?>"
+                                            <?= in_array($rank['id'], $rankFilters) ? 'checked' : ''; ?>>
+
+                                        <?= htmlspecialchars($rank['rank']); ?>
+
+                                    </label>
+                                </li>
+
+                            <?php endwhile; ?>
+
+                            <!-- APPLY BUTTON -->
+                            <li class="mt-2">
+                                <button type="submit" class="btn btn-primary w-100">
+
+                                    Apply
+
+                                </button>
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+                </div>
+                <button type="button" class="btn-edit" data-bs-toggle="modal" data-bs-target="#addPersonnelModal">
+                    Add Personnel
                 </button>
-            </li>
-
-        </ul>
-
-    </div>
-
-    <!-- RANK -->
-    <div class="dropdown">
-
-        <button
-            class="btn filter-btn dropdown-toggle"
-            type="button"
-            data-bs-toggle="dropdown"
-            data-bs-auto-close="outside">
-
-            Rank
-
-        </button>
-
-        <ul class="dropdown-menu p-3 dropdown-scroll">
-
-            <?php while ($rank = $ranksResult->fetch_assoc()): ?>
-
-                <li>
-                    <label class="dropdown-item">
-
-                        <input
-                            type="checkbox"
-                            name="ranks[]"
-                            value="<?= $rank['id']; ?>"
-                            <?= in_array($rank['id'], $rankFilters) ? 'checked' : ''; ?>
-                        >
-
-                        <?= htmlspecialchars($rank['rank']); ?>
-
-                    </label>
-                </li>
-
-            <?php endwhile; ?>
-
-            <!-- APPLY BUTTON -->
-            <li class="mt-2">
-                <button
-                    type="submit"
-                    class="btn btn-primary w-100">
-
-                    Apply
-
-                </button>
-            </li>
-
-        </ul>
-
-    </div>
-
-</div>
                 <!-- SEARCH -->
                 <div class="search-container" style="margin-left: 590px;">
                     <form class="search-form">
@@ -374,7 +362,7 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
 
                     <tr>
                         <th>RANK</th>
-                        <th>NAME</th>                
+                        <th>NAME</th>
                         <th>DIVISION</th>
                         <th>CREATED BY</th>
                         <th>ACTIVE?</th>
@@ -390,7 +378,7 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
 
                         <?php while ($row = $result->fetch_assoc()) { ?>
 
-                            <tr>                             
+                            <tr>
 
                                 <td>
                                     <?= htmlspecialchars($row['rank_name'] ?? 'N/A'); ?>
@@ -398,14 +386,14 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
 
                                 <td>
                                     <?= htmlspecialchars($row['full_name']); ?>
-                                </td>                           
+                                </td>
                                 <td>
                                     <?= htmlspecialchars($row['division_name'] ?? 'N/A'); ?>
                                 </td>
 
-                             <td>
-    <?= htmlspecialchars($row['created_by'] ?? 'SYSTEM'); ?>
-</td>
+                                <td>
+                                    <?= htmlspecialchars($row['created_by'] ?? 'SYSTEM'); ?>
+                                </td>
 
                                 <td>
 
@@ -427,24 +415,21 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
 
                                 <td class="action-buttons">
 
-                                <button
-                                    type="button"
-                                    class="btn-edit"
+                                    <button type="button" class="btn-edit" onclick="openEditModal(
+                                            '<?= $row['id']; ?>',
+                                            '<?= htmlspecialchars($row['full_name'] ?? '', ENT_QUOTES); ?>',
+                                            '<?= $row['rank_id']; ?>',
+                                            '<?= $row['division_id']; ?>',
+                                            '<?= htmlspecialchars($row['created_by'] ?? 'SYSTEM', ENT_QUOTES); ?>',
+                                            '<?= $row['is_active']; ?>'
+                                        )">
 
-                                 onclick="openEditModal(
-    '<?= $row['id']; ?>',
-    '<?= htmlspecialchars($row['full_name'] ?? '', ENT_QUOTES); ?>',
-    '<?= $row['rank_id']; ?>',
-    '<?= $row['division_id']; ?>',
-    '<?= htmlspecialchars($row['created_by'] ?? 'SYSTEM', ENT_QUOTES); ?>',
-    '<?= $row['is_active']; ?>'
-)">
+                                        Edit
 
-                                    Edit
+                                    </button>
 
-                                </button>
 
-                            </td>   
+                                </td>
 
                             </tr>
 
@@ -467,6 +452,7 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
                 </tbody>
 
             </table>
+
 
         </div>
 
@@ -560,127 +546,208 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
         </div>
 
     </div>
-   <!-- =========================
+    <!-- Add Personnel Modal -->
+    <div class="modal fade" id="addPersonnelModal" tabindex="-1" aria-labelledby="addPersonnelModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addPersonnelModalLabel">Add Personnel</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addPersonnelForm">
+                        <!-- Rank -->
+                        <div class="mb-3">
+                            <label for="rank" class="form-label">Rank</label>
+                            <select class="form-select" id="rank" name="rank" required>
+                                <option value="" selected disabled>Select rank</option>
+                                <option value="NUP">NUP</option>
+                                <option value="PAT">PAT</option>
+                                <option value="PCPL">PCPL</option>
+                                <option value="PSSG">PSSG</option>
+                                <option value="PMSG">PMSG</option>
+                                <option value="PSMS">PSMS</option>
+                                <option value="PCMS">PCMS</option>
+                                <option value="PEMS">PEMS</option>
+                                <option value="PLT">PLT</option>
+                                <option value="PCPT">PCPT</option>
+                                <option value="PMAJ">PMAJ</option>
+                                <option value="PLTCOL">PLTCOL</option>
+                                <option value="PCOL">PCOL</option>
+                                <option value="PBGEN">PBGEN</option>
+                            </select>
+                        </div>
+
+                        <!-- Name -->
+                        <div class="mb-3 row">
+                            <div>
+                                <label for="firstName" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="firstName" name="firstName" required>
+                            </div>
+                        </div>
+                        <div class="mb-3 row">
+                            <div>
+                                <label for="middleName" class="form-label">Middle Name</label>
+                                <input type="text" class="form-control" id="middleName" name="middleName">
+                            </div>
+                        </div>
+                        <div class="mb-3 row">
+                            <div>
+                                <label for="lastName" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="lastName" name="lastName" required>
+                            </div>
+                        </div>
+
+                        <!-- Division -->
+                        <div class="mb-3">
+                            <label for="division" class="form-label">Division</label>
+                            <select class="form-select" id="division" name="division" required>
+                                <option value="" selected disabled>Select division</option>
+                                <option value="ITSD">ITSD</option>
+                                <option value="SMD">SMD</option>
+                                <option value="ISSD">ISSD</option>
+                                <option value="ITPMD">ITPMD</option>
+                                <option value="PTD">PTD</option>
+                                <option value="DMD">DMD</option>
+                                <option value="ARMD">ARMD</option>
+                                <option value="PTDLAB">PTDLAB</option>
+                                <option value="CI">CI</option>
+                                <option value="PCR">PCR</option>
+                                <option value="LS">LS</option>
+                                <option value="IHSS">IHSS</option>
+                                <option value="BFS">BFS</option>
+                                <option value="SAO">SAO</option>
+                                <option value="SF">SF</option>
+                                <option value="PCC-SF">PCC-SF</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="addPersonnelForm" class="btn btn-primary">Add
+                        Personnel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- =========================
      EDIT USER MODAL
 ========================= -->
-<div id="editModal" class="edit-modal">
+    <div id="editModal" class="edit-modal">
 
-    <div class="edit-modal-content">
+        <div class="edit-modal-content">
 
-        <!-- CLOSE -->
-        <span class="close-modal" onclick="closeEditModal()">
-            &times;
-        </span>
+            <!-- CLOSE -->
+            <span class="close-modal" onclick="closeEditModal()">
+                &times;
+            </span>
 
-        <h2>Edit Personnel</h2>
+            <h2>Edit Personnel</h2>
 
-        <!-- IMPORTANT -->
-        <form method="POST" action="update_personnel.php">
+            <!-- IMPORTANT -->
+            <form method="POST" action="update_personnel.php">
 
-            <!-- USER ID -->
-            <input type="hidden" name="user_id" id="edit_id">
+                <!-- USER ID -->
+                <input type="hidden" name="user_id" id="edit_id">
 
-            <!-- RANK -->
-            <div class="form-group">
+                <!-- RANK -->
+                <div class="form-group">
 
-                <label>Rank</label>
+                    <label>Rank</label>
 
-                <select id="edit_rank" name="rank">
+                    <select id="edit_rank" name="rank">
 
-                    <option value="1">NUP</option>
-                    <option value="2">PAT</option>
-                    <option value="3">PCPL</option>
-                    <option value="4">PSSG</option>
-                    <option value="5">PMSG</option>
-                    <option value="6">PSMS</option>
-                    <option value="7">PCMS</option>
-                    <option value="8">PEMS</option>
-                    <option value="9">PLT</option>
-                    <option value="10">PCPT</option>
-                    <option value="11">PMAJ</option>
-                    <option value="12">PLTCOL</option>
-                    <option value="13">PCOL</option>
-                    <option value="14">PBGEN</option>
+                        <option value="1">NUP</option>
+                        <option value="2">PAT</option>
+                        <option value="3">PCPL</option>
+                        <option value="4">PSSG</option>
+                        <option value="5">PMSG</option>
+                        <option value="6">PSMS</option>
+                        <option value="7">PCMS</option>
+                        <option value="8">PEMS</option>
+                        <option value="9">PLT</option>
+                        <option value="10">PCPT</option>
+                        <option value="11">PMAJ</option>
+                        <option value="12">PLTCOL</option>
+                        <option value="13">PCOL</option>
+                        <option value="14">PBGEN</option>
 
-                </select>
+                    </select>
 
-            </div>
+                </div>
 
-            <!-- NAME -->
-            <div class="form-group">
+                <!-- NAME -->
+                <div class="form-group">
 
-                <label>Name</label>
+                    <label>Name</label>
 
-                <input type="text" id="edit_name" name="name">
+                    <input type="text" id="edit_name" name="name">
 
-            </div>
+                </div>
 
-            <!-- DIVISION -->
-            <div class="form-group">
+                <!-- DIVISION -->
+                <div class="form-group">
 
-                <label>Division</label>
+                    <label>Division</label>
 
-                <select id="edit_division" name="division">
+                    <select id="edit_division" name="division">
 
-                    <option value="1">ITSD</option>
-                    <option value="2">SMD</option>
-                    <option value="3">ISSD</option>
-                    <option value="4">ITPMD</option>
-                    <option value="5">PTD</option>
-                    <option value="6">DMD</option>
-                    <option value="7">ARMD</option>
-                    <option value="8">PTDLAB</option>
-                    <option value="9">CI</option>
-                    <option value="10">PCR</option>
-                    <option value="11">LS</option>
-                    <option value="12">IHSS</option>
-                    <option value="13">BFS</option>
-                    <option value="14">SAO</option>
-                    <option value="15">SF</option>
-                    <option value="16">PCC-SF</option>
+                        <option value="1">ITSD</option>
+                        <option value="2">SMD</option>
+                        <option value="3">ISSD</option>
+                        <option value="4">ITPMD</option>
+                        <option value="5">PTD</option>
+                        <option value="6">DMD</option>
+                        <option value="7">ARMD</option>
+                        <option value="8">PTDLAB</option>
+                        <option value="9">CI</option>
+                        <option value="10">PCR</option>
+                        <option value="11">LS</option>
+                        <option value="12">IHSS</option>
+                        <option value="13">BFS</option>
+                        <option value="14">SAO</option>
+                        <option value="15">SF</option>
+                        <option value="16">PCC-SF</option>
 
-                </select>
+                    </select>
 
-            </div>
+                </div>
 
-            <!-- CREATED BY -->
-            <div class="form-group">
+                <!-- CREATED BY -->
+                <div class="form-group">
 
-                <label>Created By</label>
+                    <label>Created By</label>
 
-                <input 
-                    type="text" 
-                    id="edit_created_by" 
-                    readonly 
-                    class="readonly-input"
-                >
+                    <input type="text" id="edit_created_by" readonly class="readonly-input">
 
-            </div>
+                </div>
 
-            <!-- STATUS -->
-            <div class="form-group">
+                <!-- STATUS -->
+                <div class="form-group">
 
-                <label>Active?</label>
+                    <label>Active?</label>
 
-                <select id="edit_status" name="status">
+                    <select id="edit_status" name="status">
 
-                    <option value="1">Yes</option>
-                    <option value="0">No</option>
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
 
-                </select>
+                    </select>
 
-            </div>
+                </div>
 
-            <!-- SAVE -->
-            <button type="submit" class="save-btn">
-                Save Changes
-            </button>
+                <!-- SAVE -->
+                <button type="submit" class="save-btn">
+                    Save Changes
+                </button>
 
-        </form>
+            </form>
+
+        </div>
 
     </div>
-
-</div>
 
     <!-- JAVASCRIPT -->
     <script>
@@ -735,57 +802,68 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
 
     </script>
     <!-- EDIT MODAL SCRIPT -->
-<script>
+    <script>
 
-function openEditModal(
-    id,
-    name,
-    rank,
-    division,
-    created_by,
-    status
-) {
+        function openEditModal(
+            id,
+            name,
+            rank,
+            division,
+            created_by,
+            status
+        ) {
 
-    // SHOW MODAL
-    document.getElementById("editModal").style.display = "flex";
+            // SHOW MODAL
+            document.getElementById("editModal").style.display = "flex";
 
-    // LOCK SCROLL
-    document.body.classList.add("modal-open");
+            // LOCK SCROLL
+            document.body.classList.add("modal-open");
 
-    // SET VALUES
-    document.getElementById("edit_id").value = id;
+            // SET VALUES
+            document.getElementById("edit_id").value = id;
 
-    document.getElementById("edit_name").value = name;
+            document.getElementById("edit_name").value = name;
 
-    document.getElementById("edit_rank").value = rank;
+            document.getElementById("edit_rank").value = rank;
 
-    document.getElementById("edit_division").value = division;
+            document.getElementById("edit_division").value = division;
 
-    document.getElementById("edit_created_by").value = created_by;
+            document.getElementById("edit_created_by").value = created_by;
 
-    document.getElementById("edit_status").value = status;
-}
+            document.getElementById("edit_status").value = status;
+        }
 
-function closeEditModal() {
+        function closeEditModal() {
 
-    document.getElementById("editModal").style.display = "none";
+            document.getElementById("editModal").style.display = "none";
 
-    document.body.classList.remove("modal-open");
-}
+            document.body.classList.remove("modal-open");
+        }
 
-// CLOSE OUTSIDE CLICK
-window.onclick = function(event) {
+        // CLOSE OUTSIDE CLICK
+        window.onclick = function (event) {
 
-    const modal = document.getElementById("editModal");
+            const modal = document.getElementById("editModal");
 
-    if (event.target == modal) {
+            if (event.target == modal) {
 
-        closeEditModal();
-    }
-};
+                closeEditModal();
+            }
+        };
 
-</script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>    
+    </script>
+
+    <script>
+        document.getElementById('addPersonnelForm').addEventListener('submit', function (e) {
+            e.preventDefault(); // stops page refresh
+            const data = new FormData(this);
+            console.log(Object.fromEntries(data.entries())); // logs form data
+            // You can add AJAX here to save the data without page reload
+        });
+    </script>
+
+    <!-- Bootstrap JS Bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 

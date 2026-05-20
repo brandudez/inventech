@@ -135,187 +135,183 @@ $result = $stmt->get_result();
 
 <body>
 
-<?php include 'superadmin_sidebar.php'; ?>
-<?php include 'superadmin_navbar.php'; ?>
+    <?php include 'superadmin_sidebar.php'; ?>
+    <?php include 'superadmin_navbar.php'; ?>
 
-<!-- TOP BAR (CAMERAS STYLE) -->
-<div class="top-bar">
+    <!-- TOP BAR (CAMERAS STYLE) -->
+    <div class="top-bar">
 
-    <!-- FILTER LEFT SIDE -->
-    <div class="filters">
+        <!-- FILTER LEFT SIDE -->
+        <div class="filters">
 
-        <div class="dropdown">
+            <div class="dropdown">
 
-            <button class="btn filter-btn dropdown-toggle"
-                type="button"
-                data-bs-toggle="dropdown"
-                data-bs-auto-close="outside">
+                <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside">
 
-                <?= !empty($division) ? htmlspecialchars($division) : 'Division' ?>
+                    <?= !empty($division) ? htmlspecialchars($division) : 'Division' ?>
 
-            </button>
+                </button>
 
-            <ul class="dropdown-menu p-3 dropdown-scroll">
+                <ul class="dropdown-menu p-3 dropdown-scroll">
 
-                <li>
-                    <a class="dropdown-item" href="?search=<?= urlencode($search) ?>">
-                        All
-                    </a>
-                </li>
-
-                <?php
-                $divisionQuery = mysqli_query($conn, "SELECT * FROM divisions ORDER BY division ASC");
-
-                while ($div = mysqli_fetch_assoc($divisionQuery)) :
-                ?>
                     <li>
-                        <a class="dropdown-item"
-                            href="?division=<?= urlencode($div['division']) ?>&search=<?= urlencode($search) ?>">
-                            <?= htmlspecialchars($div['division']) ?>
+                        <a class="dropdown-item" href="?search=<?= urlencode($search) ?>">
+                            All
                         </a>
                     </li>
-                <?php endwhile; ?>
 
-            </ul>
+                    <?php
+                    $divisionQuery = mysqli_query($conn, "SELECT * FROM divisions ORDER BY division ASC");
+
+                    while ($div = mysqli_fetch_assoc($divisionQuery)):
+                        ?>
+                        <li>
+                            <a class="dropdown-item"
+                                href="?division=<?= urlencode($div['division']) ?>&search=<?= urlencode($search) ?>">
+                                <?= htmlspecialchars($div['division']) ?>
+                            </a>
+                        </li>
+                    <?php endwhile; ?>
+
+                </ul>
+
+            </div>
+
+        </div>
+
+        <!-- SEARCH RIGHT SIDE -->
+        <div class="search-container">
+
+            <form class="search-form" method="GET">
+
+                <input type="hidden" name="division" value="<?= htmlspecialchars($division) ?>">
+
+                <input type="text" name="search" class="search-input" placeholder="Search headsets..."
+                    value="<?= htmlspecialchars($search) ?>">
+
+                <button type="submit" class="search-btn">
+                    Search
+                </button>
+
+            </form>
 
         </div>
 
     </div>
 
-    <!-- SEARCH RIGHT SIDE -->
-    <div class="search-container">
+    <!-- TABLE -->
+    <div class="contenttable">
 
-        <form class="search-form" method="GET">
+        <div class="table-container">
 
-            <input type="hidden" name="division" value="<?= htmlspecialchars($division) ?>">
+            <table class="users-table">
 
-            <input type="text"
-                name="search"
-                class="search-input"
-                placeholder="Search headsets..."
-                value="<?= htmlspecialchars($search) ?>">
-
-            <button type="submit" class="search-btn">
-                Search
-            </button>
-
-        </form>
-
-    </div>
-
-</div>
-
-<!-- TABLE -->
-<div class="contenttable">
-
-    <div class="table-container">
-
-        <table class="users-table">
-
-            <thead>
-                <tr>
-                    <th>PERSONNEL</th>
-                    <th>DIVISION</th>
-                    <th>BRAND</th>
-                    <th>MODEL</th>
-                    <th>SERIAL NO</th>
-                    <th>ACQUISITION DETAILS</th>
-                    <th>ACQUISITION DATE</th>
-                    <th>PREVIOUS OWNERS</th>
-                    <th>CREATED DATE</th>
-                    <th>ACTION</th>
-                </tr>
-            </thead>
-
-            <tbody>
-
-            <?php if ($result->num_rows > 0): ?>
-
-                <?php while ($row = $result->fetch_assoc()): ?>
-
+                <thead>
                     <tr>
-                        <td><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></td>
-                        <td><?= htmlspecialchars($row['division'] ?? 'N/A') ?></td>
-                        <td><?= htmlspecialchars($row['brand']) ?></td>
-                        <td><?= htmlspecialchars($row['model']) ?></td>
-                        <td><?= htmlspecialchars($row['serial_no'] ?? 'N/A') ?></td>
-                        <td><?= htmlspecialchars($row['acquisition_details']) ?></td>
-                        <td><?= htmlspecialchars($row['acquisition_date']) ?></td>
-                        <td><?= htmlspecialchars($row['previous_owners_id'] ?? 'N/A') ?></td>
-                        <td><?= htmlspecialchars($row['created_date']) ?></td>
-
-                        <td>
-                            <button class="btn btn-primary btn-sm">
-                                View Details
-                            </button>
-                        </td>
+                        <th>PERSONNEL</th>
+                        <th>DIVISION</th>
+                        <th>BRAND</th>
+                        <th>MODEL</th>
+                        <th>SERIAL NO</th>
+                        <th>ACQUISITION DETAILS</th>
+                        <th>ACQUISITION DATE</th>
+                        <th>PREVIOUS OWNERS</th>
+                        <th>CREATED DATE</th>
+                        <th>ACTION</th>
                     </tr>
+                </thead>
 
-                <?php endwhile; ?>
+                <tbody>
 
-            <?php else: ?>
+                    <?php if ($result->num_rows > 0): ?>
 
-                <tr>
-                    <td colspan="10" class="text-center">
-                        No headsets found.
-                    </td>
-                </tr>
+                        <?php while ($row = $result->fetch_assoc()): ?>
+
+                            <tr>
+                                <td><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></td>
+                                <td><?= htmlspecialchars($row['division'] ?? 'N/A') ?></td>
+                                <td><?= htmlspecialchars($row['brand']) ?></td>
+                                <td><?= htmlspecialchars($row['model']) ?></td>
+                                <td><?= htmlspecialchars($row['serial_no'] ?? 'N/A') ?></td>
+                                <td><?= htmlspecialchars($row['acquisition_details']) ?></td>
+                                <td><?= htmlspecialchars($row['acquisition_date']) ?></td>
+                                <td><?= htmlspecialchars($row['previous_owners_id'] ?? 'N/A') ?></td>
+                                <td><?= htmlspecialchars($row['created_date']) ?></td>
+
+                                <td>
+                                    <button class="btn btn-primary btn-sm">
+                                        View Details
+                                    </button>
+                                </td>
+                            </tr>
+
+                        <?php endwhile; ?>
+
+                    <?php else: ?>
+
+                        <tr>
+                            <td colspan="10" class="text-center">
+                                No headsets found.
+                            </td>
+                        </tr>
+
+                    <?php endif; ?>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="table-footer">
+
+            <div class="user-stats">
+                <div class="stat-box total">
+                    <span class="label">Total Devices</span>
+                    <span class="value"><?= $totalDevices ?></span>
+                </div>
+            </div>
+
+            <!-- PAGINATION -->
+            <?php if ($totalPages > 1): ?>
+
+                <div class="pagination">
+
+                    <?php if ($page > 1): ?>
+                        <a href="?page=<?= $page - 1 ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division) ?>">
+                            Prev
+                        </a>
+                    <?php endif; ?>
+
+                    <?php
+                    $start = max(1, $page - 1);
+                    $end = min($totalPages, $start + 2);
+
+                    for ($i = $start; $i <= $end; $i++):
+                        ?>
+                        <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division) ?>"
+                            class="<?= ($i == $page) ? 'active-page' : '' ?>">
+                            <?= $i ?>
+                        </a>
+                    <?php endfor; ?>
+
+                    <?php if ($page < $totalPages): ?>
+                        <a href="?page=<?= $page + 1 ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division) ?>">
+                            Next
+                        </a>
+                    <?php endif; ?>
+
+                </div>
 
             <?php endif; ?>
 
-            </tbody>
-
-        </table>
-
-    </div>
-
-    <!-- FOOTER -->
-    <div class="table-footer">
-
-        <div class="user-stats">
-            <div class="stat-box total">
-                <span class="label">Total Devices</span>
-                <span class="value"><?= $totalDevices ?></span>
-            </div>
         </div>
 
-        <!-- PAGINATION -->
-        <?php if ($totalPages > 1): ?>
-
-            <div class="pagination">
-
-                <?php if ($page > 1): ?>
-                    <a href="?page=<?= $page - 1 ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division) ?>">
-                        Prev
-                    </a>
-                <?php endif; ?>
-
-                <?php
-                $start = max(1, $page - 1);
-                $end = min($totalPages, $start + 2);
-
-                for ($i = $start; $i <= $end; $i++):
-                ?>
-                    <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division) ?>"
-                       class="<?= ($i == $page) ? 'active-page' : '' ?>">
-                        <?= $i ?>
-                    </a>
-                <?php endfor; ?>
-
-                <?php if ($page < $totalPages): ?>
-                    <a href="?page=<?= $page + 1 ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division) ?>">
-                        Next
-                    </a>
-                <?php endif; ?>
-
-            </div>
-
-        <?php endif; ?>
-
     </div>
 
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

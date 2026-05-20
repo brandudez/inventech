@@ -270,7 +270,7 @@ if (!empty($roleFilters)) {
 
     foreach ($roleFilters as $role) {
 
-        $activeParams[] = (int)$role;
+        $activeParams[] = (int) $role;
         $activeTypes .= "i";
     }
 }
@@ -284,7 +284,7 @@ if (!empty($rankFilters)) {
 
     foreach ($rankFilters as $rank) {
 
-        $activeParams[] = (int)$rank;
+        $activeParams[] = (int) $rank;
         $activeTypes .= "i";
     }
 }
@@ -298,7 +298,7 @@ if (!empty($divisionFilters)) {
 
     foreach ($divisionFilters as $div) {
 
-        $activeParams[] = (int)$div;
+        $activeParams[] = (int) $div;
         $activeTypes .= "i";
     }
 }
@@ -381,7 +381,7 @@ if (!empty($roleFilters)) {
 
     foreach ($roleFilters as $role) {
 
-        $inactiveParams[] = (int)$role;
+        $inactiveParams[] = (int) $role;
         $inactiveTypes .= "i";
     }
 }
@@ -395,7 +395,7 @@ if (!empty($rankFilters)) {
 
     foreach ($rankFilters as $rank) {
 
-        $inactiveParams[] = (int)$rank;
+        $inactiveParams[] = (int) $rank;
         $inactiveTypes .= "i";
     }
 }
@@ -409,7 +409,7 @@ if (!empty($divisionFilters)) {
 
     foreach ($divisionFilters as $div) {
 
-        $inactiveParams[] = (int)$div;
+        $inactiveParams[] = (int) $div;
         $inactiveTypes .= "i";
     }
 }
@@ -494,157 +494,131 @@ ORDER BY id ASC
     <?php include 'superadmin_navbar.php'; ?>
 
     <!-- TOP BAR -->
-<div class="top-bar">
+    <div class="top-bar">
 
-    <div class="filters">
+        <div class="filters">
 
-        <form method="GET" class="filter-form" id="filterForm">
+            <form method="GET" class="filter-form" id="filterForm">
 
-            <!-- FILTER GROUPS -->
-            <div class="filter-groups d-flex gap-3">
+                <!-- FILTER GROUPS -->
+                <div class="filter-groups d-flex gap-3">
 
-                <!-- ROLE -->
-                <div class="dropdown">
+                    <!-- ROLE -->
+                    <div class="dropdown">
 
-                    <button 
-                        class="btn filter-btn dropdown-toggle" 
-                        type="button" 
-                        data-bs-toggle="dropdown"
-                        data-bs-auto-close="outside">
-                        Roles
-                    </button>
+                        <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside">
+                            Roles
+                        </button>
 
-                    <ul class="dropdown-menu p-3">
+                        <ul class="dropdown-menu p-3">
 
-                        <?php while ($role = $rolesResult->fetch_assoc()): ?>
+                            <?php while ($role = $rolesResult->fetch_assoc()): ?>
 
-                            <li>
-                                <label class="dropdown-item">
-                                    <input
-                                        type="checkbox"
-                                        name="roles[]"
-                                        value="<?= $role['id']; ?>"
-                                        <?= in_array($role['id'], $roleFilters) ? 'checked' : ''; ?>
-                                    >
-                                  <?= ucfirst(htmlspecialchars($role['role_name'])); ?>
-                                </label>
+                                <li>
+                                    <label class="dropdown-item">
+                                        <input type="checkbox" name="roles[]" value="<?= $role['id']; ?>"
+                                            <?= in_array($role['id'], $roleFilters) ? 'checked' : ''; ?>>
+                                        <?= ucfirst(htmlspecialchars($role['role_name'])); ?>
+                                    </label>
+                                </li>
+
+                            <?php endwhile; ?>
+
+                            <!-- APPLY BUTTON (OPTIONAL BUT RECOMMENDED) -->
+                            <li class="mt-2">
+                                <button type="submit" class="btn btn-primary btn-sm w-100">
+                                    Apply
+                                </button>
                             </li>
 
-                        <?php endwhile; ?>
+                        </ul>
 
-                        <!-- APPLY BUTTON (OPTIONAL BUT RECOMMENDED) -->
-                        <li class="mt-2">
-                            <button type="submit" class="btn btn-primary btn-sm w-100">
-                                Apply
-                            </button>
-                        </li>
+                    </div>
 
-                    </ul>
+                    <!-- DIVISION -->
+                    <div class="dropdown">
+
+                        <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside">
+                            Division
+                        </button>
+
+                        <ul class="dropdown-menu p-3 dropdown-scroll">
+
+                            <?php while ($division = $divisionsResult->fetch_assoc()): ?>
+
+                                <li>
+                                    <label class="dropdown-item">
+                                        <input type="checkbox" name="divisions[]" value="<?= $division['id']; ?>"
+                                            <?= in_array($division['id'], $divisionFilters) ? 'checked' : ''; ?>>
+                                        <?= htmlspecialchars($division['division']); ?>
+                                    </label>
+                                </li>
+
+                            <?php endwhile; ?>
+
+                            <li class="mt-2">
+                                <button type="submit" class="btn btn-primary btn-sm w-100">
+                                    Apply
+                                </button>
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+                    <!-- RANK -->
+                    <div class="dropdown">
+
+                        <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside">
+                            Rank
+                        </button>
+
+                        <ul class="dropdown-menu p-3 dropdown-scroll">
+
+                            <?php while ($rank = $ranksResult->fetch_assoc()): ?>
+
+                                <li>
+                                    <label class="dropdown-item">
+                                        <input type="checkbox" name="ranks[]" value="<?= $rank['id']; ?>"
+                                            <?= in_array($rank['id'], $rankFilters) ? 'checked' : ''; ?>>
+                                        <?= htmlspecialchars($rank['rank']); ?>
+                                    </label>
+                                </li>
+
+                            <?php endwhile; ?>
+
+                            <li class="mt-2">
+                                <button type="submit" class="btn btn-primary btn-sm w-100">
+                                    Apply
+                                </button>
+                            </li>
+
+                        </ul>
+
+                    </div>
 
                 </div>
 
-                <!-- DIVISION -->
-                <div class="dropdown">
+                <!-- SEARCH -->
+                <div class="search-container">
 
-                    <button 
-                        class="btn filter-btn dropdown-toggle" 
-                        type="button" 
-                        data-bs-toggle="dropdown"
-                        data-bs-auto-close="outside">
-                        Division
+                    <input type="text" name="search" class="search-input" placeholder="Search users..."
+                        value="<?= htmlspecialchars($search); ?>">
+
+                    <button type="submit" class="search-btn" style="margin-left: 10px;">
+                        Search
                     </button>
-
-                    <ul class="dropdown-menu p-3 dropdown-scroll">
-
-                        <?php while ($division = $divisionsResult->fetch_assoc()): ?>
-
-                            <li>
-                                <label class="dropdown-item">
-                                    <input
-                                        type="checkbox"
-                                        name="divisions[]"
-                                        value="<?= $division['id']; ?>"
-                                        <?= in_array($division['id'], $divisionFilters) ? 'checked' : ''; ?>
-                                    >
-                                    <?= htmlspecialchars($division['division']); ?>
-                                </label>
-                            </li>
-
-                        <?php endwhile; ?>
-
-                        <li class="mt-2">
-                            <button type="submit" class="btn btn-primary btn-sm w-100">
-                                Apply
-                            </button>
-                        </li>
-
-                    </ul>
 
                 </div>
 
-                <!-- RANK -->
-                <div class="dropdown">
+            </form>
 
-                    <button 
-                        class="btn filter-btn dropdown-toggle" 
-                        type="button" 
-                        data-bs-toggle="dropdown"
-                        data-bs-auto-close="outside">
-                        Rank
-                    </button>
-
-                    <ul class="dropdown-menu p-3 dropdown-scroll">
-
-                        <?php while ($rank = $ranksResult->fetch_assoc()): ?>
-
-                            <li>
-                                <label class="dropdown-item">
-                                    <input
-                                        type="checkbox"
-                                        name="ranks[]"
-                                        value="<?= $rank['id']; ?>"
-                                        <?= in_array($rank['id'], $rankFilters) ? 'checked' : ''; ?>
-                                    >
-                                    <?= htmlspecialchars($rank['rank']); ?>
-                                </label>
-                            </li>
-
-                        <?php endwhile; ?>
-
-                        <li class="mt-2">
-                            <button type="submit" class="btn btn-primary btn-sm w-100">
-                                Apply
-                            </button>
-                        </li>
-
-                    </ul>
-
-                </div>
-
-            </div>
-
-            <!-- SEARCH -->
-            <div class="search-container">
-
-                <input 
-                    type="text" 
-                    name="search" 
-                    class="search-input" 
-                    placeholder="Search users..."
-                    value="<?= htmlspecialchars($search); ?>"
-                >
-
-                <button type="submit" class="search-btn" style="margin-left: 10px;">
-                    Search
-                </button>
-
-            </div>
-
-        </form>
+        </div>
 
     </div>
-
-</div>
     <!-- TABLE -->
     <div class="contenttable">
 
@@ -721,10 +695,7 @@ ORDER BY id ASC
 
                                 <td class="action-buttons">
 
-                             <button
-    type="button"
-    class="btn-edit"
-    onclick="openEditModal(
+                                    <button type="button" class="btn-edit" onclick="openEditModal(
         '<?= $row['id']; ?>',
         '<?= htmlspecialchars($row['full_name'] ?? '', ENT_QUOTES); ?>',
         '<?= htmlspecialchars($row['email'] ?? '', ENT_QUOTES); ?>',
@@ -734,10 +705,15 @@ ORDER BY id ASC
         '<?= htmlspecialchars($row['created_by'] ?? 'SYSTEM', ENT_QUOTES); ?>',
         '<?= $row['is_active']; ?>'
     )">
-    Edit
-</button>
+                                        Edit
+                                    </button>
 
-                            </td>   
+                                    <button type="button" class="btn-edit" data-bs-toggle="modal"
+                                        data-bs-target="#changePasswordModal">
+                                        Change Password
+                                    </button>
+
+                                </td>
 
                             </tr>
 
@@ -853,124 +829,172 @@ ORDER BY id ASC
         </div>
 
     </div>
-<!-- =========================
+
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Header -->
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changePasswordLabel">Change Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <!-- Body -->
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+
+                        <!-- Current Password -->
+                        <div class="mb-3">
+                            <label class="form-label">Current Password</label>
+                            <input type="password" class="form-control" name="current_password" required>
+                        </div>
+
+                        <!-- New Password -->
+                        <div class="mb-3">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-control" name="new_password" required>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="mb-3">
+                            <label class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" name="confirm_password" required>
+                        </div>
+
+                    </form>
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="changePasswordForm" class="btn btn-primary">
+                        Update Password
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- =========================
      EDIT USER MODAL
      (UPDATED: ADDED FORM ACTION + HIDDEN ID + FIXED INPUT NAMES)
 ========================= -->
-<div id="editModal" class="edit-modal">
+    <div id="editModal" class="edit-modal">
 
-    <div class="edit-modal-content">
+        <div class="edit-modal-content">
 
-        <span class="close-modal" onclick="closeEditModal()">&times;</span>
+            <span class="close-modal" onclick="closeEditModal()">&times;</span>
 
-        <h2>Edit User</h2>
+            <h2>Edit User</h2>
 
-        <!-- 🔥 ADDED: form action for backend update -->
-        <form method="POST" action="update_user.php">
+            <!-- 🔥 ADDED: form action for backend update -->
+            <form method="POST" action="update_user.php">
 
-            <!-- 🔥 ADDED: hidden user id -->
-            <input type="hidden" name="user_id" id="edit_id">
+                <!-- 🔥 ADDED: hidden user id -->
+                <input type="hidden" name="user_id" id="edit_id">
 
-            <!-- ROLE -->
-            <div class="form-group">
-                <label>Role</label>
+                <!-- ROLE -->
+                <div class="form-group">
+                    <label>Role</label>
 
-                <!-- 🔥 ADDED: name attribute -->
-                <select id="edit_role" name="role">
-                    <option value="1">Superadmin</option>
-                    <option value="2">Admin</option>
-                    <option value="3">Encoder</option>
-                </select>
-            </div>
+                    <!-- 🔥 ADDED: name attribute -->
+                    <select id="edit_role" name="role">
+                        <option value="1">Superadmin</option>
+                        <option value="2">Admin</option>
+                        <option value="3">Encoder</option>
+                    </select>
+                </div>
 
-            <!-- RANK -->
-            <div class="form-group">
-                <label>Rank</label>
+                <!-- RANK -->
+                <div class="form-group">
+                    <label>Rank</label>
 
-                <!-- 🔥 ADDED: name attribute -->
-                <select id="edit_rank" name="rank">
-                    <option value="1">NUP</option>
-                    <option value="2">PAT</option>
-                    <option value="3">PCPL</option>
-                    <option value="4">PSSG</option>
-                    <option value="5">PMSG</option>
-                    <option value="6">PSMS</option>
-                    <option value="7">PCMS</option>
-                    <option value="8">PEMS</option>
-                    <option value="9">PLT</option>
-                    <option value="10">PCPT</option>
-                    <option value="11">PMAJ</option>
-                    <option value="12">PLTCOL</option>
-                    <option value="13">PCOL</option>
-                    <option value="14">PBGEN</option>
-                </select>
-            </div>
+                    <!-- 🔥 ADDED: name attribute -->
+                    <select id="edit_rank" name="rank">
+                        <option value="1">NUP</option>
+                        <option value="2">PAT</option>
+                        <option value="3">PCPL</option>
+                        <option value="4">PSSG</option>
+                        <option value="5">PMSG</option>
+                        <option value="6">PSMS</option>
+                        <option value="7">PCMS</option>
+                        <option value="8">PEMS</option>
+                        <option value="9">PLT</option>
+                        <option value="10">PCPT</option>
+                        <option value="11">PMAJ</option>
+                        <option value="12">PLTCOL</option>
+                        <option value="13">PCOL</option>
+                        <option value="14">PBGEN</option>
+                    </select>
+                </div>
 
-            <!-- NAME -->
-            <div class="form-group">
-                <label>Name</label>
-                <input type="text" id="edit_name" name="name">
-            </div>
+                <!-- NAME -->
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="edit_name" name="name">
+                </div>
 
-            <!-- EMAIL (READONLY) -->
-            <div class="form-group">
-                <label>Email</label>
+                <!-- EMAIL (READONLY) -->
+                <div class="form-group">
+                    <label>Email</label>
 
-                <!-- 🔥 CHANGED: readonly (cannot edit email) -->
-                <input type="email" id="edit_email" name="email" readonly>
-            </div>
+                    <!-- 🔥 CHANGED: readonly (cannot edit email) -->
+                    <input type="email" id="edit_email" name="email" readonly>
+                </div>
 
-            <!-- DIVISION -->
-            <div class="form-group">
-                <label>Division</label>
+                <!-- DIVISION -->
+                <div class="form-group">
+                    <label>Division</label>
 
-                <!-- 🔥 ADDED: name attribute -->
-                <select id="edit_division" name="division">
-                    <option value="1">ITSD</option>
-                    <option value="2">SMD</option>
-                    <option value="3">ISSD</option>
-                    <option value="4">ITPMD</option>
-                    <option value="5">PTD</option>
-                    <option value="6">DMD</option>
-                    <option value="7">ARMD</option>
-                    <option value="8">PTDLAB</option>
-                    <option value="9">CI</option>
-                    <option value="10">PCR</option>
-                    <option value="11">LS</option>
-                    <option value="12">IHSS</option>
-                    <option value="13">BFS</option>
-                    <option value="14">SAO</option>
-                    <option value="15">SF</option>
-                    <option value="16">PCC-SF</option>
-                </select>
-            </div>
+                    <!-- 🔥 ADDED: name attribute -->
+                    <select id="edit_division" name="division">
+                        <option value="1">ITSD</option>
+                        <option value="2">SMD</option>
+                        <option value="3">ISSD</option>
+                        <option value="4">ITPMD</option>
+                        <option value="5">PTD</option>
+                        <option value="6">DMD</option>
+                        <option value="7">ARMD</option>
+                        <option value="8">PTDLAB</option>
+                        <option value="9">CI</option>
+                        <option value="10">PCR</option>
+                        <option value="11">LS</option>
+                        <option value="12">IHSS</option>
+                        <option value="13">BFS</option>
+                        <option value="14">SAO</option>
+                        <option value="15">SF</option>
+                        <option value="16">PCC-SF</option>
+                    </select>
+                </div>
 
-            <!-- CREATED BY -->
-            <div class="form-group">
-                <label>Created By</label>
-                <input type="text" id="edit_created_by" readonly>
-            </div>
+                <!-- CREATED BY -->
+                <div class="form-group">
+                    <label>Created By</label>
+                    <input type="text" id="edit_created_by" readonly>
+                </div>
 
-            <!-- STATUS -->
-            <div class="form-group">
-                <label>Active</label>
+                <!-- STATUS -->
+                <div class="form-group">
+                    <label>Active</label>
 
-                <!-- 🔥 ADDED: name attribute -->
-                <select id="edit_status" name="status">
-                    <option value="1">Yes</option>
-                    <option value="0">No</option>
-                </select>
-            </div>
+                    <!-- 🔥 ADDED: name attribute -->
+                    <select id="edit_status" name="status">
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+                    </select>
+                </div>
 
-            <!-- SAVE -->
-            <button type="submit" class="save-btn">
-                Save Changes
-            </button>
+                <!-- SAVE -->
+                <button type="submit" class="save-btn">
+                    Save Changes
+                </button>
 
-        </form>
+            </form>
 
+        </div>
     </div>
-</div>
 
     <!-- JAVASCRIPT -->
     <script>
@@ -1024,49 +1048,64 @@ ORDER BY id ASC
         };
 
     </script>
-        <!-- EDIT MODAL SCRIPT -->
-<script>
+    <!-- EDIT MODAL SCRIPT -->
+    <script>
 
-function openEditModal(
-    id,
-    name,
-    email,
-    role,
-    rank,
-    division,
-    created_by,
-    status
-) {
+        function openEditModal(
+            id,
+            name,
+            email,
+            role,
+            rank,
+            division,
+            created_by,
+            status
+        ) {
 
-    document.getElementById("editModal").style.display = "flex";
-    document.body.classList.add("modal-open");
+            document.getElementById("editModal").style.display = "flex";
+            document.body.classList.add("modal-open");
 
-    document.getElementById("edit_id").value = id;
+            document.getElementById("edit_id").value = id;
 
-    document.getElementById("edit_name").value = name;
-    document.getElementById("edit_email").value = email;
-    document.getElementById("edit_created_by").value = created_by;
+            document.getElementById("edit_name").value = name;
+            document.getElementById("edit_email").value = email;
+            document.getElementById("edit_created_by").value = created_by;
 
-    document.getElementById("edit_role").value = role;
-    document.getElementById("edit_rank").value = rank;
-    document.getElementById("edit_division").value = division;
-    document.getElementById("edit_status").value = status;
-}
+            document.getElementById("edit_role").value = role;
+            document.getElementById("edit_rank").value = rank;
+            document.getElementById("edit_division").value = division;
+            document.getElementById("edit_status").value = status;
+        }
 
-function closeEditModal() {
-    document.getElementById("editModal").style.display = "none";
-    document.body.classList.remove("modal-open");
-}
+        function closeEditModal() {
+            document.getElementById("editModal").style.display = "none";
+            document.body.classList.remove("modal-open");
+        }
 
-window.onclick = function(event) {
-    const modal = document.getElementById("editModal");
+        window.onclick = function (event) {
+            const modal = document.getElementById("editModal");
 
-    if (event.target == modal) {
-        closeEditModal();
-    }
-};
-</script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>    
+            if (event.target == modal) {
+                closeEditModal();
+            }
+        };
+    </script>
+    <script>
+        document.getElementById("changePasswordForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const newPass = this.new_password.value;
+            const confirmPass = this.confirm_password.value;
+
+            if (newPass !== confirmPass) {
+                alert("New password and confirm password do not match!");
+                return;
+            }
+
+            alert("Password updated successfully (demo only)");
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 

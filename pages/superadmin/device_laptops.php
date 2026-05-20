@@ -172,9 +172,11 @@ $result = $stmt->get_result();
 
     <link rel="stylesheet" href="./css/superadmin_sidebar.css">
 
-    <title>Desktop Devices</title>
+    <title>Laptop Devices</title>
 
 </head>
+<!-- TOAST CONTAINER-->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 99999;"></div>
 
 <body>
 
@@ -187,137 +189,366 @@ $result = $stmt->get_result();
     <!-- TOP BAR -->
     <div class="top-bar">
 
-       <!-- FILTERS -->
-<div class="filters">
+        <!-- FILTERS -->
+        <div class="filters">
 
-    <form method="GET" id="filterForm">
+            <form method="GET" id="filterForm">
 
-        <!-- =========================
+                <!-- =========================
              DIVISION DROPDOWN
         ========================== -->
-        <div class="dropdown">
+                <div class="dropdown">
 
-            <button class="btn filter-btn dropdown-toggle" type="button"
-                data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                    <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                        data-bs-auto-close="outside">
 
-                <?= !empty($division_filter) ? $division_filter : 'Division' ?>
+                        <?= !empty($division_filter) ? $division_filter : 'Division' ?>
 
-            </button>
+                    </button>
 
-            <ul class="dropdown-menu dropdown-scroll">
+                    <ul class="dropdown-menu dropdown-scroll">
 
-                <?php
-                $divisions = [
-                    "ITSD","SMD","ISSD","ITPMD","PTD","DMD","ARMD",
-                    "PTDLAB","CI","PCR","LS","IHSS","BFS","SAO","SF","PCC-SF"
-                ];
+                        <?php
+                        $divisions = [
+                            "ITSD",
+                            "SMD",
+                            "ISSD",
+                            "ITPMD",
+                            "PTD",
+                            "DMD",
+                            "ARMD",
+                            "PTDLAB",
+                            "CI",
+                            "PCR",
+                            "LS",
+                            "IHSS",
+                            "BFS",
+                            "SAO",
+                            "SF",
+                            "PCC-SF"
+                        ];
 
-                foreach ($divisions as $division):
-                ?>
-                    <li>
-                        <label class="dropdown-item">
-                            <input type="radio" name="division"
-                                value="<?= $division ?>"
-                                onchange="document.getElementById('filterForm').submit();"
-                                <?= $division_filter == $division ? 'checked' : '' ?>>
+                        foreach ($divisions as $division):
+                            ?>
+                            <li>
+                                <label class="dropdown-item">
+                                    <input type="radio" name="division" value="<?= $division ?>"
+                                        onchange="document.getElementById('filterForm').submit();"
+                                        <?= $division_filter == $division ? 'checked' : '' ?>>
 
-                            <?= $division ?>
-                        </label>
-                    </li>
-                <?php endforeach; ?>
+                                    <?= $division ?>
+                                </label>
+                            </li>
+                        <?php endforeach; ?>
 
-            </ul>
+                    </ul>
 
-        </div>
+                </div>
 
-        <!-- =========================
+                <!-- =========================
              OPERATING SYSTEM DROPDOWN
         ========================== -->
-        <div class="dropdown">
+                <div class="dropdown">
 
-            <button class="btn filter-btn dropdown-toggle" type="button"
-                data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                    <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                        data-bs-auto-close="outside">
 
-                <?= !empty($os_filter) ? $os_filter : 'Operating System' ?>
+                        <?= !empty($os_filter) ? $os_filter : 'Operating System' ?>
 
-            </button>
+                    </button>
 
-            <ul class="dropdown-menu dropdown-scroll">
+                    <ul class="dropdown-menu dropdown-scroll">
 
-                <?php
-                $operatingSystems = [
-                    "Windows 10",
-                    "Windows 10 Pro",
-                    "Windows 11",
-                    "Windows 11 Pro"
-                ];
+                        <?php
+                        $operatingSystems = [
+                            "Windows 10",
+                            "Windows 10 Pro",
+                            "Windows 11",
+                            "Windows 11 Pro"
+                        ];
 
-                foreach ($operatingSystems as $os):
-                ?>
-                    <li>
-                        <label class="dropdown-item">
-                            <input type="radio" name="os"
-                                value="<?= $os ?>"
-                                onchange="document.getElementById('filterForm').submit();"
-                                <?= $os_filter == $os ? 'checked' : '' ?>>
+                        foreach ($operatingSystems as $os):
+                            ?>
+                            <li>
+                                <label class="dropdown-item">
+                                    <input type="radio" name="os" value="<?= $os ?>"
+                                        onchange="document.getElementById('filterForm').submit();" <?= $os_filter == $os ? 'checked' : '' ?>>
 
-                            <?= $os ?>
-                        </label>
-                    </li>
-                <?php endforeach; ?>
+                                    <?= $os ?>
+                                </label>
+                            </li>
+                        <?php endforeach; ?>
 
-            </ul>
+                    </ul>
 
-        </div>
+                </div>
 
-        <!-- =========================
+                <!-- =========================
              OFFICE APPLICATION DROPDOWN
         ========================== -->
-        <div class="dropdown">
+                <div class="dropdown">
 
-            <button class="btn filter-btn dropdown-toggle" type="button"
-                data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                    <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                        data-bs-auto-close="outside">
 
-                <?= !empty($office_filter) ? $office_filter : 'Office Application' ?>
+                        <?= !empty($office_filter) ? $office_filter : 'Office Application' ?>
 
-            </button>
+                    </button>
 
-            <ul class="dropdown-menu dropdown-scroll">
+                    <ul class="dropdown-menu dropdown-scroll">
 
-                <?php
-                $officeApps = [
-                    "Microsoft 365 (M365)",
-                    "Microsoft Office 2021 Professional",
-                    "WPS Office",
-                    "Microsoft Word",
-                    "Google Docs",
-                    "Microsoft Excel",
-                    "Google Sheets",
-                    "Microsoft PowerPoint"
-                ];
+                        <?php
+                        $officeApps = [
+                            "Microsoft 365 (M365)",
+                            "Microsoft Office 2021 Professional",
+                            "WPS Office",
+                            "Microsoft Word",
+                            "Google Docs",
+                            "Microsoft Excel",
+                            "Google Sheets",
+                            "Microsoft PowerPoint"
+                        ];
 
-                foreach ($officeApps as $office):
-                ?>
-                    <li>
-                        <label class="dropdown-item">
-                            <input type="radio" name="office_application"
-                                value="<?= $office ?>"
-                                onchange="document.getElementById('filterForm').submit();"
-                                <?= $office_filter == $office ? 'checked' : '' ?>>
+                        foreach ($officeApps as $office):
+                            ?>
+                            <li>
+                                <label class="dropdown-item">
+                                    <input type="radio" name="office_application" value="<?= $office ?>"
+                                        onchange="document.getElementById('filterForm').submit();"
+                                        <?= $office_filter == $office ? 'checked' : '' ?>>
 
-                            <?= $office ?>
-                        </label>
-                    </li>
-                <?php endforeach; ?>
+                                    <?= $office ?>
+                                </label>
+                            </li>
+                        <?php endforeach; ?>
 
-            </ul>
+                    </ul>
 
-        </div>
+                </div>
 
-    </form>
+            </form>
 
-</div>
+         </div>
 
+
+                <!-- ADD LAPTOP BUTTON -->
+                        <button type="button" class="btn add-laptop-btn"
+                            data-bs-toggle="modal"
+                            data-bs-target="#addLaptopModal">
+                            Add Laptop
+                        </button>
+
+                    <!-- ADD LAPTOP MODAL -->
+                    <div class="modal fade" id="addLaptopModal" tabindex="-1" aria-labelledby="addLaptopModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                            <div class="modal-content">
+                                
+                                <!-- Modal Header -->
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="addLaptopModalLabel">Add Laptop</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                
+                                <!-- Modal Body -->
+                                <div class="modal-body">
+                                    <form action="add_laptop.php" method="POST">
+                                        <div class="row g-3">
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">Device Name</label>
+                                                <input type="text" class="form-control" name="device_name" required>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">Personnel</label>
+                                                <input type="text" class="form-control" name="personnel" required>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">Division</label>
+                                                <input type="text" class="form-control" name="division" required>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">IP Address</label>
+                                                <input type="text" class="form-control" name="ip_address">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">Operating System</label>
+                                                <input type="text" class="form-control" name="operating_system">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">Is OS Licensed?</label>
+                                                <select class="form-select boolean-select" name="is_os_licensed">
+                                                    <option value="" selected disabled>▼ Select Option</option>
+                                                    <option value="1" <?= (isset($row['is_os_licensed']) && $row['is_os_licensed'] == 1) ? 'selected' : '' ?>>Yes</option>
+                                                    <option value="0" <?= (isset($row['is_os_licensed']) && $row['is_os_licensed'] == 0) ? 'selected' : '' ?>>No</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">OS License Key</label>
+                                                <input type="text" class="form-control" name="os_license_key">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">Office Application</label>
+                                                <input type="text" class="form-control" name="office_application">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">Office License Key</label>
+                                                <input type="text" class="form-control" name="office_license_key">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">Is Office Licensed?</label>
+                                                <select class="form-select boolean-select" name="is_office_licensed">
+                                                    <option value="" selected disabled>▼ Select Option</option>
+                                                    <option value="1" <?= (isset($row['is_office_licensed']) && $row['is_office_licensed'] == 1) ? 'selected' : '' ?>>Yes</option>
+                                                    <option value="0" <?= (isset($row['is_office_licensed']) && $row['is_office_licensed'] == 0) ? 'selected' : '' ?>>No</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">Endpoint Security</label>
+                                                <input type="text" class="form-control" name="endpoint_security">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">No of Installed Endpoint Security</label>
+                                                <input type="number" class="form-control" name="no_of_installed_endpoint_security">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">Date Installed</label>
+                                                <input type="date" class="form-control" name="date_installed">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">GUID</label>
+                                                <input type="text" class="form-control" name="guid">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">MAC Address</label>
+                                                <input type="text" class="form-control" name="mac_address">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">CPU Brand</label>
+                                                <input type="text" class="form-control" name="cpu_brand">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">CPU Cores</label>
+                                                <input type="number" class="form-control" name="cpu_cores">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">GB of RAM</label>
+                                                <input type="number" class="form-control" name="gb_ram">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">Monitor Brand</label>
+                                                <input type="text" class="form-control" name="monitor_brand">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">Monitor Size</label>
+                                                <input type="number" class="form-control" name="monitor_size_inches">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">No of User Accounts</label>
+                                                <input type="number" class="form-control" name="no_of_user_accounts">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">User Account Type</label>
+                                                <select class="form-select" name="user_account_type">
+                                                    <option value="" selected disabled>▼ Select Option</option>
+                                                    <option value="admin">Admin</option>
+                                                    <option value="user">User</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label class="form-label">Authorized Software</label>
+                                                <input type="text" class="form-control" name="authorized_software">
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label class="form-label">Unauthorized Software</label>
+                                                <input type="text" class="form-control" name="unauthorized_software">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">Acquisition Date</label>
+                                                <input type="date" class="form-control" name="acquisition_date">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">PAR Serial Number</label>
+                                                <input type="text" class="form-control" name="par_serial_number">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">Previous Handlers</label>
+                                                <input type="text" class="form-control" name="previous_owners_id">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label">Is Remotely Accessible?</label>
+                                                <select class="form-select boolean-select" name="is_remote_acc">
+                                                    <option value="" selected disabled>▼ Select Option</option>
+                                                    <option value="1" <?= (isset($row['is_remote_acc']) && $row['is_remote_acc'] == 1) ? 'selected' : '' ?>>Yes</option>
+                                                    <option value="0" <?= (isset($row['is_remote_acc']) && $row['is_remote_acc'] == 0) ? 'selected' : '' ?>>No</option>
+                                                </select>
+                                            </div>
+
+                                        </div>
+
+                                        <!-- Modal Footer -->
+                                        <div class="modal-footer mt-3">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">Add Laptop</button>
+                                        </div>
+
+                                    </form>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Optional JS for coloring Yes/No dynamically -->
+                    <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const booleanSelects = document.querySelectorAll('.boolean-select');
+
+                        booleanSelects.forEach(function(select) {
+                            function updateColor() {
+                                if (select.value === '1') {
+                                    select.style.color = 'green';
+                                    select.style.fontWeight = '600';
+                                } else if (select.value === '0') {
+                                    select.style.color = 'red';
+                                    select.style.fontWeight = '600';
+                                } else {
+                                    select.style.color = 'black';
+                                    select.style.fontWeight = '400';
+                                }
+                            }
+
+                            updateColor();
+                            select.addEventListener('change', updateColor);
+                        });
+                    });
+                    </script>
         <!-- SEARCH -->
         <div class="search-container">
 
@@ -329,7 +560,7 @@ $result = $stmt->get_result();
 
                 <input type="hidden" name="office_application" value="<?= htmlspecialchars($office_filter) ?>">
 
-                <input type="text" name="search" class="search-input" placeholder="Search desktops..."
+                <input type="text" name="search" class="search-input" placeholder="Search laptops..."
                     value="<?= htmlspecialchars($search) ?>">
 
                 <button type="submit" class="search-btn">
@@ -456,6 +687,7 @@ $result = $stmt->get_result();
 
                                 <td><?= htmlspecialchars($row['unauthorized_software'] ?? '') ?></td>
 
+
                                 <td><?= htmlspecialchars($row['created_date'] ?? '') ?></td>
 
                                 <td><?= htmlspecialchars($row['par_serial_no'] ?? '') ?></td>
@@ -468,20 +700,394 @@ $result = $stmt->get_result();
 
                                 <td>
 
-                                    <a href="edit_device.php?id=<?= $row['id'] ?>" class="btn btn-primary btn-sm">
+                                    <!-- EDIT BUTTON -->
+                                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                        data-bs-target="#editModal<?= $row['id'] ?>">
 
                                         Edit
 
-                                    </a>
+                                    </button>
 
-                                    <a href="delete_device.php?id=<?= $row['id'] ?>" class="btn btn-danger btn-sm"
-                                        onclick="return confirm('Delete this device?')">
+                                    <!-- DELETE BUTTON -->
+                                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal"
+                                        data-bs-target="#deleteModal<?= $row['id'] ?>">
 
                                         Delete
 
-                                    </a>
+                                    </button>
 
                                 </td>
+
+
+                                <!--EDIT MODAL-->
+
+                                <div class="modal fade" id="editModal<?= $row['id'] ?>" tabindex="-1">
+
+                                    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
+
+                                        <div class="modal-content">
+
+                                            <form action="edit_laptop.php" method="POST">
+
+                                                <div class="modal-header">
+
+                                                    <h5 class="modal-title">
+                                                        Edit Laptop Device
+                                                    </h5>
+
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+                                                </div>
+
+                                                <div class="modal-body">
+
+                                                    <input type="hidden" name="id" value="<?= $row['id'] ?>">
+
+                                                    <div class="row">
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">Device Name</label>
+
+                                                            <input type="text" class="form-control" name="device_name"
+                                                                value="<?= htmlspecialchars($row['device_name']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">Personnel</label>
+
+                                                            <input type="text" class="form-control" name="personnel_name"
+                                                                value="<?= htmlspecialchars($row['personnel_name']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">Division</label>
+
+                                                            <input type="text" class="form-control" name="division_name"
+                                                                value="<?= htmlspecialchars($row['division_name']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">IP Address</label>
+
+                                                            <input type="text" class="form-control" name="ip_address"
+                                                                value="<?= htmlspecialchars($row['ip_address']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">Operating System</label>
+
+                                                            <input type="text" class="form-control" name="os"
+                                                                value="<?= htmlspecialchars($row['os']) ?>">
+                                                        </div>
+
+                                                       <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                Is OS Licensed?
+                                                            </label>
+
+                                                            <select class="form-select boolean-select" name="is_os_licensed">                 
+                                                                <option value="1" <?= (isset($row['is_os_licensed']) && $row['is_os_licensed'] == 1) ? 'selected' : '' ?>>
+                                                                    Yes
+                                                                </option>
+                                                                <option value="0" <?= (isset($row['is_os_licensed']) && $row['is_os_licensed'] == 0) ? 'selected' : '' ?>>
+                                                                    No
+                                                                </option>
+                                                            </select>
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                OS License Key
+                                                            </label>
+
+                                                            <input type="text" class="form-control" name="os_license_key"
+                                                                value="<?= htmlspecialchars($row['os_license_key']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                Office Application
+                                                            </label>
+
+                                                            <input type="text" class="form-control" name="office_application"
+                                                                value="<?= htmlspecialchars($row['office_application']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                Office License Key
+                                                            </label>
+
+                                                            <input type="text" class="form-control" name="office_license_key"
+                                                                value="<?= htmlspecialchars($row['office_license_key']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                Is Office Licensed?
+                                                            </label>
+
+                                                            <select class="form-select" name="is_office_licensed">
+
+                                                                <option value="1" <?= $row['is_office_licensed'] == 1 ? 'selected' : '' ?>>
+                                                                    Yes
+                                                                </option>
+
+                                                                <option value="0" <?= $row['is_office_licensed'] == 0 ? 'selected' : '' ?>>
+                                                                    No
+                                                                </option>
+
+                                                            </select>
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                Endpoint Security
+                                                            </label>
+
+                                                            <input type="text" class="form-control" name="endpoint_security"
+                                                                value="<?= htmlspecialchars($row['endpoint_security_name']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                Installed Antivirus
+                                                            </label>
+
+                                                            <input type="text" class="form-control"
+                                                                name="no_of_installed_anti_virus"
+                                                                value="<?= htmlspecialchars($row['no_of_installed_anti_virus']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                Date Installed
+                                                            </label>
+
+                                                            <input type="date" class="form-control" name="date_installed"
+                                                                value="<?= htmlspecialchars($row['date_installed']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                GUID
+                                                            </label>
+
+                                                            <input type="text" class="form-control" name="guid"
+                                                                value="<?= htmlspecialchars($row['guid']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                MAC Address
+                                                            </label>
+
+                                                            <input type="text" class="form-control" name="mac_address"
+                                                                value="<?= htmlspecialchars($row['mac_address']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                CPU Brand
+                                                            </label>
+
+                                                            <input type="text" class="form-control" name="cpu_brand"
+                                                                value="<?= htmlspecialchars($row['cpu_brand']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                CPU Cores
+                                                            </label>
+
+                                                            <input type="text" class="form-control" name="cpu_cores"
+                                                                value="<?= htmlspecialchars($row['cpu_cores']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                GB RAM
+                                                            </label>
+
+                                                            <input type="text" class="form-control" name="gb_ram"
+                                                                value="<?= htmlspecialchars($row['gb_ram']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                Monitor Brand
+                                                            </label>
+
+                                                            <input type="text" class="form-control" name="monitor_brand"
+                                                                value="<?= htmlspecialchars($row['monitor_brand']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                Monitor Size
+                                                            </label>
+
+                                                            <input type="text" class="form-control" name="monitor_size_inches"
+                                                                value="<?= htmlspecialchars($row['monitor_size_inches']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                No of User Accounts
+                                                            </label>
+
+                                                            <input type="text" class="form-control" name="no_of_user_accounts"
+                                                                value="<?= htmlspecialchars($row['no_of_user_accounts']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                User Account Type
+                                                            </label>
+
+                                                            <input type="text" class="form-control" name="user_account_type"
+                                                                value="<?= htmlspecialchars($row['user_account_type']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-6 mb-3">
+                                                            <label class="form-label">
+                                                                Authorized Software
+                                                            </label>
+
+                                                            <textarea class="form-control"
+                                                                name="authorized_software"><?= htmlspecialchars($row['authorized_software']) ?></textarea>
+                                                        </div>
+
+                                                        <div class="col-md-6 mb-3">
+                                                            <label class="form-label">
+                                                                Unauthorized Software
+                                                            </label>
+
+                                                            <textarea class="form-control"
+                                                                name="unauthorized_software"><?= htmlspecialchars($row['unauthorized_software']) ?></textarea>
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                Acquisition Date
+                                                            </label>
+
+                                                            <input type="date" class="form-control" name="created_date"
+                                                                value="<?= htmlspecialchars($row['created_date']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                PAR Serial Number
+                                                            </label>
+
+                                                            <input type="text" class="form-control" name="par_serial_no"
+                                                                value="<?= htmlspecialchars($row['par_serial_no']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                Previous Handlers
+                                                            </label>
+
+                                                            <input type="text" class="form-control" name="previous_owners_id"
+                                                                value="<?= htmlspecialchars($row['previous_owners_id']) ?>">
+                                                        </div>
+
+                                                        <div class="col-md-4 mb-3">
+                                                            <label class="form-label">
+                                                                Is Remotely Accessible?
+                                                            </label>
+
+                                                            <select class="form-select" name="is_remote_acc">
+
+                                                                <option value="1" <?= $row['is_remote_acc'] == 1 ? 'selected' : '' ?>>
+                                                                    Yes
+                                                                </option>
+
+                                                                <option value="0" <?= $row['is_remote_acc'] == 0 ? 'selected' : '' ?>>
+                                                                    No
+                                                                </option>
+
+                                                            </select>
+                                                        </div>
+
+                                                    </div>
+
+                                                </div>
+
+                                                <div class="modal-footer">
+
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+
+                                                        Cancel
+
+                                                    </button>
+
+                                                    <button type="submit" class="btn btn-primary">
+
+                                                        Save Changes
+
+                                                    </button>
+
+                                                </div>
+
+                                            </form>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <!-- =========================
+     DELETE MODAL
+========================= -->
+                                <div class="modal fade" id="deleteModal<?= $row['id'] ?>" tabindex="-1">
+
+                                    <div class="modal-dialog modal-dialog-centered">
+
+                                        <div class="modal-content">
+
+                                            <div class="modal-header">
+
+                                                <h5 class="modal-title">
+                                                    Delete Laptop
+                                                </h5>
+
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+                                            </div>
+
+                                            <div class="modal-body text-center">
+
+                                                <p>
+                                                    Are you sure you want to delete this?
+                                                </p>
+
+                                            </div>
+
+                                            <div class="modal-footer">
+
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+
+                                                    Cancel
+
+                                                </button>
+
+                                                <a href="delete_laptop.php?id=<?= $row['id'] ?>" class="btn btn-danger">
+
+                                                    Delete
+
+                                                </a>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
 
                             </tr>
 
