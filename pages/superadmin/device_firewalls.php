@@ -36,7 +36,7 @@ if (!empty($search)) {
         f.location LIKE ? OR
         f.firmware_version LIKE ? OR
         d.division LIKE ? OR
-        CONCAT(p.first_name,p.middle_name, p.last_name) LIKE ?
+        CONCAT(p.first_name, p.middle_name, p.last_name) LIKE ?
     )";
 
     $searchParam = "%{$search}%";
@@ -64,7 +64,7 @@ if ($is_active !== '') {
 $whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
 
 /* =========================
-   BASE JOIN (USED EVERYWHERE)
+   BASE JOIN
 ========================= */
 $baseJoin = "
     FROM firewalls f
@@ -140,7 +140,7 @@ $inactiveDevices = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
 $totalPages = ceil($totalDevices / $limit);
 
 /* =========================
-   MAIN QUERY (DATA)
+   MAIN DATA
 ========================= */
 $query = "
     SELECT
@@ -154,6 +154,7 @@ $query = "
     ORDER BY f.id DESC
     LIMIT ?, ?
 ";
+
 $stmt = $conn->prepare($query);
 
 $mainParams = $params;
@@ -167,80 +168,73 @@ $stmt->bind_param($mainTypes, ...$mainParams);
 
 $stmt->execute();
 $result = $stmt->get_result();
-
-/* =========================
-   DIVISIONS DROPDOWN
-========================= */
-$divisionQuery = "SELECT id, division FROM divisions ORDER BY division ASC";
-$divisionResult = mysqli_query($conn, $divisionQuery);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Firewall Devices</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <link rel="stylesheet" href="../superadmin/css/devices.css">
-
     <link rel="stylesheet" href="css/superadmin_navbar.css">
-
     <link rel="stylesheet" href="./css/superadmin_sidebar.css">
-
-    <title>Firewall Devices</title>
-
 </head>
 
 <body>
 
-    <!-- SIDEBAR -->
-    <?php include 'superadmin_sidebar.php'; ?>
+<?php include 'superadmin_sidebar.php'; ?>
+<?php include 'superadmin_navbar.php'; ?>
 
-    <!-- NAVBAR -->
-    <?php include 'superadmin_navbar.php'; ?>
+<div class="top-bar">
 
-    <!-- TOP BAR -->
-    <div class="top-bar">
+    <!-- FILTERS -->
+    <div class="filters">
 
-        <!-- FILTERS -->
-        <div class="filters">
+        <!-- DIVISION DROPDOWN -->
+        <div class="dropdown">
 
-            <!-- DIVISION -->
-          <div class="dropdown">
+            <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
+                <?= !empty($division) ? htmlspecialchars($division) : 'Division' ?>
+            </button>
 
-    <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
-        <?= (!empty($division_id) && isset($divisions[$division_id]))
-            ? $divisions[$division_id]
-            : 'Division' ?>
-    </button>
+            <ul class="dropdown-menu p-3 dropdown-scroll">
 
-    <ul class="dropdown-menu p-3 dropdown-scroll">
+                <li>
+                    <a class="dropdown-item"
+                       href="?search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
+                        All
+                    </a>
+                </li>
 
-        <!-- ALL -->
-        <li>
-            <a class="dropdown-item"
-               href="?search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
-                All
-            </a>
-        </li>
+                <?php
+                $divisionQuery = mysqli_query($conn, "
+                    SELECT division
+                    FROM divisions
+                    ORDER BY id ASC
+                ");
 
-        <?php foreach ($divisions as $id => $name): ?>
-            <li>
-                <a class="dropdown-item"
-                   href="?division_id=<?= $id ?>&search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
-                    <?= $name ?>
-                </a>
-            </li>
-        <?php endforeach; ?>
+                while ($div = mysqli_fetch_assoc($divisionQuery)):
+                    $divName = $div['division'];
+                ?>
 
-    </ul>
+                    <li>
+                        <a class="dropdown-item"
+                           href="?division=<?= urlencode($divName) ?>&search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
+                            <?= htmlspecialchars($divName) ?>
+                        </a>
+                    </li>
 
-</div>
+                <?php endwhile; ?>
+
+            </ul>
+
+        </div>
 
         <!-- ACTIVE FILTER -->
         <div class="dropdown">
@@ -253,21 +247,21 @@ $divisionResult = mysqli_query($conn, $divisionQuery);
 
                 <li>
                     <a class="dropdown-item"
-                       href="?division_id=<?= urlencode($division_id) ?>&search=<?= urlencode($search) ?>">
+                       href="?division=<?= urlencode($division) ?>&search=<?= urlencode($search) ?>">
                         All
                     </a>
                 </li>
 
                 <li>
                     <a class="dropdown-item"
-                       href="?is_active=1&division_id=<?= urlencode($division_id) ?>&search=<?= urlencode($search) ?>">
+                       href="?is_active=1&division=<?= urlencode($division) ?>&search=<?= urlencode($search) ?>">
                         YES
                     </a>
                 </li>
 
                 <li>
                     <a class="dropdown-item"
-                       href="?is_active=0&division_id=<?= urlencode($division_id) ?>&search=<?= urlencode($search) ?>">
+                       href="?is_active=0&division=<?= urlencode($division) ?>&search=<?= urlencode($search) ?>">
                         NO
                     </a>
                 </li>
@@ -278,160 +272,100 @@ $divisionResult = mysqli_query($conn, $divisionQuery);
 
     </div>
 
-        <!-- SEARCH -->
-        <div class="search-container">
+    <!-- SEARCH -->
+    <div class="search-container">
 
-            <form class="search-form" method="GET">
+        <form class="search-form" method="GET">
 
-                <input
-                    type="text"
-                    name="search"
-                    class="search-input"
-                    placeholder="Search firewalls..."
-                    value="<?= htmlspecialchars($search) ?>">
+            <input type="text"
+                   name="search"
+                   class="search-input"
+                   placeholder="Search firewalls..."
+                   value="<?= htmlspecialchars($search) ?>">
 
-                <input type="hidden" name="division" value="<?= htmlspecialchars($division) ?>">
+            <input type="hidden" name="division" value="<?= htmlspecialchars($division) ?>">
+            <input type="hidden" name="is_active" value="<?= htmlspecialchars($is_active) ?>">
 
-                <input type="hidden" name="is_active" value="<?= htmlspecialchars($is_active) ?>">
+            <button type="submit" class="search-btn">
+                Search
+            </button>
 
-                <button type="submit" class="search-btn">
-                    Search
-                </button>
-
-            </form>
-
-        </div>
+        </form>
 
     </div>
 
-    <!-- TABLE -->
-    <div class="contenttable">
+</div>
 
-        <div class="table-container">
+<!-- TABLE -->
+<div class="contenttable">
 
-            <table class="users-table">
+    <div class="table-container">
 
-                <thead>
+        <table class="users-table">
+
+            <thead>
+                <tr>
+                    <th>PERSONNEL</th>
+                    <th>DIVISION</th>
+                    <th>MANUFACTURER</th>
+                    <th>MODEL</th>
+                    <th>SERIAL NO</th>
+                    <th>NO OF PORTS</th>
+                    <th>ACTIVE PORTS</th>
+                    <th>FIRMWARE</th>
+                    <th>LOCATION</th>
+                    <th>IS ACTIVE</th>
+                    <th>ACTION</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+            <?php if ($result->num_rows > 0): ?>
+                <?php while ($row = $result->fetch_assoc()): ?>
 
                     <tr>
+                        <td><?= htmlspecialchars($row['personnel_name'] ?? 'N/A') ?></td>
+                        <td><?= htmlspecialchars($row['division'] ?? 'N/A') ?></td>
+                        <td><?= htmlspecialchars($row['manufacturer']) ?></td>
+                        <td><?= htmlspecialchars($row['model']) ?></td>
+                        <td><?= htmlspecialchars($row['serial_no']) ?></td>
+                        <td><?= htmlspecialchars($row['no_of_ports']) ?></td>
+                        <td><?= htmlspecialchars($row['no_of_active_ports']) ?></td>
+                        <td><?= htmlspecialchars($row['firmware_version']) ?></td>
+                        <td><?= htmlspecialchars($row['location']) ?></td>
 
-                        <th>PERSONNEL</th>
-                        <th>DIVISION</th>
-                        <th>MANUFACTURER</th>
-                        <th>MODEL</th>
-                        <th>SERIAL NO</th>
-                        <th>NO OF PORTS</th>
-                        <th>ACTIVE PORTS</th>
-                        <th>FIRMWARE VERSION</th>
-                        <th>MANAGEMENT TYPE</th>
-                        <th>LOCATION</th>
-                        <th>IS ACTIVE</th>
-                        <th>REMOTE ACCESS</th>
-                        <th>REMOTE DETAILS</th>
-                        <th>REMARKS</th>
-                        <th>PNP FOCAL PERSON</th>
-                        <th>CONTACT DETAILS</th>
-                        <th>ACQUISITION DATE</th>
-                        <th>ACQUISITION TYPE</th>
-                        <th>ACQUISITION DETAILS</th>
-                        <th>PREVIOUS OWNERS</th>
-                        <th>ACTION</th>
+                        <td>
+                            <?= $row['is_active']
+                                ? '<span class="text-success fw-bold">YES</span>'
+                                : '<span class="text-danger fw-bold">NO</span>' ?>
+                        </td>
 
+                        <td>
+                            <button class="btn btn-sm btn-primary">Edit</button>
+                        </td>
                     </tr>
 
-                </thead>
+                <?php endwhile; ?>
+            <?php else: ?>
 
-                <tbody>
+                <tr>
+                    <td colspan="11" class="text-center">No firewall devices found.</td>
+                </tr>
 
-                    <?php if ($result->num_rows > 0): ?>
+            <?php endif; ?>
 
-                        <?php while ($row = $result->fetch_assoc()): ?>
+            </tbody>
 
-                            <tr>
+        </table>
 
-                                <td><?= htmlspecialchars($row['personnel_name'] ?? 'N/A') ?></td>
-                                <td><?= htmlspecialchars($row['division'] ?? 'N/A') ?></td>
+    </div>
 
-                                <td><?= htmlspecialchars($row['manufacturer']) ?></td>
+    <!-- FOOTER -->
+    <div class="table-footer">
 
-                                <td><?= htmlspecialchars($row['model']) ?></td>
-
-                                <td><?= htmlspecialchars($row['serial_no']) ?></td>
-
-                                <td><?= htmlspecialchars($row['no_of_ports']) ?></td>
-
-                                <td><?= htmlspecialchars($row['no_of_active_ports']) ?></td>
-
-                                <td><?= htmlspecialchars($row['firmware_version']) ?></td>
-
-                                <td><?= htmlspecialchars($row['management_interface_type']) ?></td>
-
-                                <td><?= htmlspecialchars($row['location']) ?></td>
-
-                                <td>
-                                    <?= $row['is_active']
-                                      ? '<span class="text-success fw-bold">YES</span>'
-            : '<span class="text-danger fw-bold">NO</span>' ?>
-                                </td>
-
-                                <td>
-                                    <?= $row['is_remotely_accessible'] 
-                                      ? '<span class="text-success fw-bold">YES</span>'
-            : '<span class="text-danger fw-bold">NO</span>' ?>
-                                </td>
-
-                                <td><?= htmlspecialchars($row['remote_connection_details']) ?></td>
-
-                                <td><?= htmlspecialchars($row['remarks']) ?></td>
-
-                                <td><?= htmlspecialchars($row['pnp_focal_person']) ?></td>
-
-                                <td><?= htmlspecialchars($row['contact_details']) ?></td>
-
-                                <td><?= htmlspecialchars($row['acquisition_date']) ?></td>
-
-                                <td><?= htmlspecialchars($row['acquisition_type']) ?></td>
-
-                                <td><?= htmlspecialchars($row['acquisition_details']) ?></td>
-
-                                <td><?= htmlspecialchars($row['previous_owners_id']) ?></td>
-
-                                <td>
-
-                                    <button class="btn btn-sm btn-primary">
-                                        Edit
-                                    </button>
-
-                                </td>
-
-                            </tr>
-
-                        <?php endwhile; ?>
-
-                    <?php else: ?>
-
-                        <tr>
-
-                            <td colspan="21" class="text-center">
-
-                                No firewall devices found.
-
-                            </td>
-
-                        </tr>
-
-                    <?php endif; ?>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        <!-- FOOTER -->
         <div class="table-footer">
-
-            <!-- STATS -->
+ <!-- STATS -->
             <div class="user-stats">
 
                 <div class="stat-box total">
@@ -472,51 +406,23 @@ $divisionResult = mysqli_query($conn, $divisionQuery);
 
             </div>
 
-            <!-- PAGINATION -->
-            <?php if ($totalPages > 1): ?>
 
-                <div class="pagination">
+        <div class="pagination">
 
-                    <!-- PREV -->
-                    <?php if ($page > 1): ?>
-
-                        <a href="?page=<?= $page - 1 ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division) ?>&is_active=<?= urlencode($is_active) ?>">
-                            Prev
-                        </a>
-
-                    <?php endif; ?>
-
-                    <!-- PAGE NUMBERS -->
-                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-
-                        <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division) ?>&is_active=<?= urlencode($is_active) ?>"
-                            class="<?= ($i == $page) ? 'active-page' : '' ?>">
-
-                            <?= $i ?>
-
-                        </a>
-
-                    <?php endfor; ?>
-
-                    <!-- NEXT -->
-                    <?php if ($page < $totalPages): ?>
-
-                        <a href="?page=<?= $page + 1 ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division) ?>&is_active=<?= urlencode($is_active) ?>">
-                            Next
-                        </a>
-
-                    <?php endif; ?>
-
-                </div>
-
-            <?php endif; ?>
+            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division) ?>&is_active=<?= urlencode($is_active) ?>"
+                   class="<?= ($i == $page) ? 'active-page' : '' ?>">
+                    <?= $i ?>
+                </a>
+            <?php endfor; ?>
 
         </div>
 
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
-
 </html>

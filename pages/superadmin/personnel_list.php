@@ -46,21 +46,14 @@ SELECT
 
     d.division AS division_name,
     r.rank AS rank_name,
-    rl.role_name AS created_by
+    rl.role_name AS created_by_name
 
 FROM personnels p
 
-LEFT JOIN divisions d 
-    ON p.division_id = d.id
-
-LEFT JOIN ranks r 
-    ON p.rank_id = r.id
-
-LEFT JOIN users u 
-    ON p.created_by = u.id
-
-LEFT JOIN roles rl 
-    ON u.role_id = rl.id
+LEFT JOIN divisions d ON p.division_id = d.id
+LEFT JOIN ranks r ON p.rank_id = r.id
+LEFT JOIN users u ON p.created_by = u.id
+LEFT JOIN roles rl ON u.role_id = rl.id
 
 WHERE 1=1
 ";
@@ -82,6 +75,7 @@ if (!empty($search)) {
         OR rl.role_name LIKE ?
     )
     ";
+
     $searchValue = "%$search%";
     for ($i = 0; $i < 6; $i++) {
         $params[] = $searchValue;
@@ -96,7 +90,7 @@ if (!empty($rankFilters)) {
     $placeholders = implode(',', array_fill(0, count($rankFilters), '?'));
     $sql .= " AND p.rank_id IN ($placeholders)";
     foreach ($rankFilters as $rank) {
-        $params[] = (int) $rank;
+        $params[] = (int)$rank;
         $types .= "i";
     }
 }
@@ -108,7 +102,7 @@ if (!empty($divisionFilters)) {
     $placeholders = implode(',', array_fill(0, count($divisionFilters), '?'));
     $sql .= " AND p.division_id IN ($placeholders)";
     foreach ($divisionFilters as $div) {
-        $params[] = (int) $div;
+        $params[] = (int)$div;
         $types .= "i";
     }
 }
@@ -129,7 +123,6 @@ WHERE 1=1
 $countParams = $params;
 $countTypes = $types;
 
-/* rebuild same filters in count */
 if (!empty($search)) {
     $countSql .= "
     AND (
@@ -161,27 +154,11 @@ $totalUsers = $countStmt->get_result()->fetch_assoc()['total'];
 $totalPages = ceil($totalUsers / $limit);
 
 /* =========================
-   FINAL QUERY
+   FINAL QUERY (FIXED SORTING)
 ========================= */
 $sql .= "
 ORDER BY 
-    CASE r.rank
-        WHEN 'PBGEN' THEN 1
-        WHEN 'PCOL' THEN 2
-        WHEN 'PLTCOL' THEN 3
-        WHEN 'PMAJ' THEN 4
-        WHEN 'PCPT' THEN 5
-        WHEN 'PLT' THEN 6
-        WHEN 'PEMS' THEN 7
-        WHEN 'PCMS' THEN 8
-        WHEN 'PSMS' THEN 9
-        WHEN 'PMSG' THEN 10
-        WHEN 'PSSG' THEN 11
-        WHEN 'PCPL' THEN 12
-        WHEN 'PAT' THEN 13
-        WHEN 'NUP' THEN 14
-        ELSE 15
-    END ASC,
+    r.id ASC,
     p.id DESC
 LIMIT ? OFFSET ?
 ";
@@ -191,22 +168,20 @@ $params[] = $offset;
 $types .= "ii";
 
 $stmt = $conn->prepare($sql);
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
+$stmt->bind_param($types, ...$params);
 $stmt->execute();
 $result = $stmt->get_result();
 
 /* =========================
-   ACTIVE / INACTIVE
+   STATS
 ========================= */
 $activeCount = $conn->query("SELECT COUNT(*) as total FROM personnels WHERE is_active = 1")->fetch_assoc()['total'];
 $inactiveCount = $conn->query("SELECT COUNT(*) as total FROM personnels WHERE is_active = 0")->fetch_assoc()['total'];
 
 /* =========================
-   FILTER OPTIONS
+   FILTER OPTIONS (DYNAMIC)
 ========================= */
-$ranksResult = $conn->query("SELECT id, rank FROM ranks ORDER BY id ASC");
+$ranksResult = $conn->query("SELECT id, rank FROM ranks ORDER BY sort_order ASC");
 $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id ASC");
 ?>
 
@@ -572,23 +547,18 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
                         <!-- Rank -->
                         <div class="mb-3">
                             <label for="rank" class="form-label">Rank</label>
-                            <select class="form-select" id="rank" name="rank" required>
-                                <option value="" selected disabled>Select rank</option>
-                                <option value="NUP">NUP</option>
-                                <option value="PAT">PAT</option>
-                                <option value="PCPL">PCPL</option>
-                                <option value="PSSG">PSSG</option>
-                                <option value="PMSG">PMSG</option>
-                                <option value="PSMS">PSMS</option>
-                                <option value="PCMS">PCMS</option>
-                                <option value="PEMS">PEMS</option>
-                                <option value="PLT">PLT</option>
-                                <option value="PCPT">PCPT</option>
-                                <option value="PMAJ">PMAJ</option>
-                                <option value="PLTCOL">PLTCOL</option>
-                                <option value="PCOL">PCOL</option>
-                                <option value="PBGEN">PBGEN</option>
-                            </select>
+                         <select class="form-select" id="rank" name="rank" required>
+                            <option value="" disabled selected>Select rank</option>
+
+                            <?php
+                            $ranksAdd = $conn->query("SELECT id, rank FROM ranks ORDER BY id ASC");
+                            while ($r = $ranksAdd->fetch_assoc()):
+                            ?>
+                                <option value="<?= $r['id'] ?>">
+                                    <?= htmlspecialchars($r['rank']) ?>
+                                </option>
+                            <?php endwhile; ?>
+                        </select>
                         </div>
 
                         <!-- Name -->
@@ -614,26 +584,19 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
                         <!-- Division -->
                         <div class="mb-3">
                             <label for="division" class="form-label">Division</label>
-                            <select class="form-select" id="division" name="division" required>
-                                <option value="" selected disabled>Select division</option>
-                                <option value="ITSD">ITSD</option>
-                                <option value="SMD">SMD</option>
-                                <option value="ISSD">ISSD</option>
-                                <option value="ITPMD">ITPMD</option>
-                                <option value="PTD">PTD</option>
-                                <option value="DMD">DMD</option>
-                                <option value="ARMD">ARMD</option>
-                                <option value="PTDLAB">PTDLAB</option>
-                                <option value="CI">CI</option>
-                                <option value="PCR">PCR</option>
-                                <option value="LS">LS</option>
-                                <option value="IHSS">IHSS</option>
-                                <option value="BFS">BFS</option>
-                                <option value="SAO">SAO</option>
-                                <option value="SF">SF</option>
-                                <option value="PCC-SF">PCC-SF</option>
-                            </select>
-                        </div>
+                           <select class="form-select" id="division" name="division" required>
+                            <option value="" disabled selected>Select division</option>
+
+                            <?php
+                            $divAdd = $conn->query("SELECT id, division FROM divisions ORDER BY id ASC");
+                            while ($d = $divAdd->fetch_assoc()):
+                            ?>
+                                <option value="<?= $d['id'] ?>">
+                                    <?= htmlspecialchars($d['division']) ?>
+                                </option>
+                            <?php endwhile; ?>
+                        </select>
+                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -669,25 +632,16 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
 
                     <label>Rank</label>
 
-                    <select id="edit_rank" name="rank">
-
-                        <option value="1">NUP</option>
-                        <option value="2">PAT</option>
-                        <option value="3">PCPL</option>
-                        <option value="4">PSSG</option>
-                        <option value="5">PMSG</option>
-                        <option value="6">PSMS</option>
-                        <option value="7">PCMS</option>
-                        <option value="8">PEMS</option>
-                        <option value="9">PLT</option>
-                        <option value="10">PCPT</option>
-                        <option value="11">PMAJ</option>
-                        <option value="12">PLTCOL</option>
-                        <option value="13">PCOL</option>
-                        <option value="14">PBGEN</option>
-
-                    </select>
-
+              <select id="edit_rank" name="rank">
+                <?php
+                $ranksEdit = $conn->query("SELECT id, rank FROM ranks ORDER BY id ASC");
+                while ($r = $ranksEdit->fetch_assoc()):
+                ?>
+                    <option value="<?= $r['id'] ?>">
+                        <?= htmlspecialchars($r['rank']) ?>
+                    </option>
+                <?php endwhile; ?>
+            </select>
                 </div>
 
                 <!-- NAME -->
@@ -704,27 +658,16 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
 
                     <label>Division</label>
 
-                    <select id="edit_division" name="division">
-
-                        <option value="1">ITSD</option>
-                        <option value="2">SMD</option>
-                        <option value="3">ISSD</option>
-                        <option value="4">ITPMD</option>
-                        <option value="5">PTD</option>
-                        <option value="6">DMD</option>
-                        <option value="7">ARMD</option>
-                        <option value="8">PTDLAB</option>
-                        <option value="9">CI</option>
-                        <option value="10">PCR</option>
-                        <option value="11">LS</option>
-                        <option value="12">IHSS</option>
-                        <option value="13">BFS</option>
-                        <option value="14">SAO</option>
-                        <option value="15">SF</option>
-                        <option value="16">PCC-SF</option>
-
+                   <select id="edit_division" name="division">
+                        <?php
+                        $divEdit = $conn->query("SELECT id, division FROM divisions ORDER BY id ASC");
+                        while ($d = $divEdit->fetch_assoc()):
+                        ?>
+                            <option value="<?= $d['id'] ?>">
+                                <?= htmlspecialchars($d['division']) ?>
+                            </option>
+                        <?php endwhile; ?>
                     </select>
-
                 </div>
 
                 <!-- CREATED BY -->

@@ -35,18 +35,15 @@ if (!empty($search)) {
         h.model LIKE ? OR
         h.serial_no LIKE ? OR
         h.acquisition_details LIKE ? OR
-        CONCAT(per.first_name, ' ', per.last_name) LIKE ?
+        CONCAT(per.first_name, ' ', per.middle_name, ' ', per.last_name) LIKE ?
     )";
 
-    $searchValue = "%$search%";
+     $searchValue = "%$search%";
 
-    $params[] = $searchValue;
-    $params[] = $searchValue;
-    $params[] = $searchValue;
-    $params[] = $searchValue;
-    $params[] = $searchValue;
-
-    $types .= 'sssss';
+    for ($i = 0; $i < 5; $i++) {
+        $params[] = $searchValue;
+        $types .= 's';
+    }
 }
 
 if (!empty($division)) {
@@ -87,7 +84,7 @@ $totalPages = ceil($totalDevices / $limit);
 $sql = "
     SELECT 
         h.*,
-        CONCAT(per.first_name, ' ', per.last_name) AS fullname,
+        CONCAT(per.first_name, ' ', per.middle_name, ' ', per.last_name) AS fullname,
         d.division
     FROM headsets h
     LEFT JOIN personnels per ON h.personnel_id = per.id

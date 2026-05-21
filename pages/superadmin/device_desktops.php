@@ -223,28 +223,16 @@ $result = $stmt->get_result();
 
                         <ul class="dropdown-menu dropdown-scroll">
 
-                            <?php
-                            $divisions = [
-                                "ITSD",
-                                "SMD",
-                                "ISSD",
-                                "ITPMD",
-                                "PTD",
-                                "DMD",
-                                "ARMD",
-                                "PTDLAB",
-                                "CI",
-                                "PCR",
-                                "LS",
-                                "IHSS",
-                                "BFS",
-                                "SAO",
-                                "SF",
-                                "PCC-SF"
-                            ];
+                          <?php
+                                $divisions = [];
 
-                            foreach ($divisions as $division):
-                                ?>
+                                $divisionQuery = mysqli_query($conn, "
+                                    SELECT division
+                                    FROM divisions
+                                    ORDER BY id ASC");
+                                while ($row = mysqli_fetch_assoc($divisionQuery)) {$divisions[] = $row['division'];}
+                                foreach ($divisions as $division):
+                            ?>
                                 <li>
                                     <label class="dropdown-item">
                                         <input type="radio" name="division" value="<?= $division ?>"

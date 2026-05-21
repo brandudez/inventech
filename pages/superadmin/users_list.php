@@ -25,6 +25,7 @@ $divisionFilters = $_GET['divisions'] ?? [];
 $roleFilters = is_array($roleFilters) ? $roleFilters : [];
 $rankFilters = is_array($rankFilters) ? $rankFilters : [];
 $divisionFilters = is_array($divisionFilters) ? $divisionFilters : [];
+
 /* =========================
    BASE QUERY
 ========================= */
@@ -50,19 +51,10 @@ SELECT
     c.username AS created_by
 
 FROM users u
-
-LEFT JOIN divisions d 
-    ON u.division_id = d.id
-
-LEFT JOIN ranks r 
-    ON u.rank_id = r.id
-
-LEFT JOIN roles rl 
-    ON u.role_id = rl.id
-
-LEFT JOIN users c 
-    ON u.creator_user_id = c.id
-
+LEFT JOIN divisions d ON u.division_id = d.id
+LEFT JOIN ranks r ON u.rank_id = r.id
+LEFT JOIN roles rl ON u.role_id = rl.id
+LEFT JOIN users c ON u.creator_user_id = c.id
 WHERE 1=1
 ";
 
@@ -70,12 +62,11 @@ $params = [];
 $types = "";
 
 /* =========================
-   SEARCH CONDITION
+   SEARCH
 ========================= */
 if (!empty($search)) {
 
-    $sql .= "
-    AND (
+    $sql .= " AND (
         u.first_name LIKE ?
         OR u.middle_name LIKE ?
         OR u.last_name LIKE ?
@@ -83,37 +74,25 @@ if (!empty($search)) {
         OR d.division LIKE ?
         OR r.rank LIKE ?
         OR rl.role_name LIKE ?
-    )
-    ";
+    )";
 
     $searchValue = "%$search%";
 
-    array_push(
-        $params,
-        $searchValue,
-        $searchValue,
-        $searchValue,
-        $searchValue,
-        $searchValue,
-        $searchValue,
-        $searchValue
-    );
-
-    $types .= "sssssss";
+    for ($i = 0; $i < 7; $i++) {
+        $params[] = $searchValue;
+        $types .= "s";
+    }
 }
 
 /* =========================
    ROLE FILTER
 ========================= */
 if (!empty($roleFilters)) {
-
     $placeholders = implode(',', array_fill(0, count($roleFilters), '?'));
-
     $sql .= " AND u.role_id IN ($placeholders)";
 
     foreach ($roleFilters as $role) {
-
-        $params[] = (int) $role;
+        $params[] = (int)$role;
         $types .= "i";
     }
 }
@@ -122,80 +101,59 @@ if (!empty($roleFilters)) {
    RANK FILTER
 ========================= */
 if (!empty($rankFilters)) {
-
     $placeholders = implode(',', array_fill(0, count($rankFilters), '?'));
-
     $sql .= " AND u.rank_id IN ($placeholders)";
 
     foreach ($rankFilters as $rank) {
-
-        $params[] = (int) $rank;
+        $params[] = (int)$rank;
         $types .= "i";
     }
 }
+
 /* =========================
-   DIVISION FILTER (NEW)
+   DIVISION FILTER
 ========================= */
 if (!empty($divisionFilters)) {
-
     $placeholders = implode(',', array_fill(0, count($divisionFilters), '?'));
-
     $sql .= " AND u.division_id IN ($placeholders)";
 
     foreach ($divisionFilters as $div) {
-        $params[] = (int) $div;
+        $params[] = (int)$div;
         $types .= "i";
     }
 }
 
 /* =========================
-   COUNT TOTAL USERS
+   COUNT QUERY
 ========================= */
-$countSql = "
-SELECT COUNT(*) as total
-FROM (
-    $sql
-) AS filteredUsers
-";
-
+$countSql = "SELECT COUNT(*) as total FROM ($sql) as t";
 $countStmt = $conn->prepare($countSql);
 
 if (!empty($params)) {
-
     $countStmt->bind_param($types, ...$params);
 }
 
 $countStmt->execute();
-
-$totalResult = $countStmt->get_result();
-$totalRow = $totalResult->fetch_assoc();
-
-$totalUsers = $totalRow['total'];
+$totalUsers = $countStmt->get_result()->fetch_assoc()['total'];
 $totalPages = ceil($totalUsers / $limit);
 
 /* =========================
-   FINAL QUERY
+   FINAL QUERY (SORT BY ROLE)
 ========================= */
 $sql .= "
 ORDER BY 
-    CASE rl.role_name
-        WHEN 'Superadmin' THEN 1
-        WHEN 'Admin' THEN 2
-        WHEN 'Encoder' THEN 3
-        ELSE 4
-    END ASC,
+    FIELD(rl.role_name, 'Superadmin', 'Admin', 'Encoder', 'User') ASC,
     u.id DESC
-LIMIT ? OFFSET ?";
+LIMIT ? OFFSET ?
+";
 
 $params[] = $limit;
 $params[] = $offset;
-
 $types .= "ii";
 
 $stmt = $conn->prepare($sql);
 
 if (!empty($params)) {
-
     $stmt->bind_param($types, ...$params);
 }
 
@@ -203,38 +161,23 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 /* =========================
-   FILTERED USER STATS
-========================= */
-
-/* =========================
    ACTIVE COUNT
 ========================= */
-
 $activeSql = "
 SELECT COUNT(*) as total
-
 FROM users u
-
-LEFT JOIN divisions d 
-    ON u.division_id = d.id
-
-LEFT JOIN ranks r 
-    ON u.rank_id = r.id
-
-LEFT JOIN roles rl 
-    ON u.role_id = rl.id
-
+LEFT JOIN divisions d ON u.division_id = d.id
+LEFT JOIN ranks r ON u.rank_id = r.id
+LEFT JOIN roles rl ON u.role_id = rl.id
 WHERE u.is_active = 1
 ";
 
 $activeParams = [];
 $activeTypes = "";
 
-/* SEARCH */
 if (!empty($search)) {
 
-    $activeSql .= "
-    AND (
+    $activeSql .= " AND (
         u.first_name LIKE ?
         OR u.middle_name LIKE ?
         OR u.last_name LIKE ?
@@ -242,110 +185,43 @@ if (!empty($search)) {
         OR d.division LIKE ?
         OR r.rank LIKE ?
         OR rl.role_name LIKE ?
-    )
-    ";
+    )";
 
     $searchValue = "%$search%";
 
-    array_push(
-        $activeParams,
-        $searchValue,
-        $searchValue,
-        $searchValue,
-        $searchValue,
-        $searchValue,
-        $searchValue,
-        $searchValue
-    );
-
-    $activeTypes .= "sssssss";
-}
-
-/* ROLE FILTER */
-if (!empty($roleFilters)) {
-
-    $placeholders = implode(',', array_fill(0, count($roleFilters), '?'));
-
-    $activeSql .= " AND u.role_id IN ($placeholders)";
-
-    foreach ($roleFilters as $role) {
-
-        $activeParams[] = (int) $role;
-        $activeTypes .= "i";
-    }
-}
-
-/* RANK FILTER */
-if (!empty($rankFilters)) {
-
-    $placeholders = implode(',', array_fill(0, count($rankFilters), '?'));
-
-    $activeSql .= " AND u.rank_id IN ($placeholders)";
-
-    foreach ($rankFilters as $rank) {
-
-        $activeParams[] = (int) $rank;
-        $activeTypes .= "i";
-    }
-}
-
-/* DIVISION FILTER */
-if (!empty($divisionFilters)) {
-
-    $placeholders = implode(',', array_fill(0, count($divisionFilters), '?'));
-
-    $activeSql .= " AND u.division_id IN ($placeholders)";
-
-    foreach ($divisionFilters as $div) {
-
-        $activeParams[] = (int) $div;
-        $activeTypes .= "i";
+    for ($i = 0; $i < 7; $i++) {
+        $activeParams[] = $searchValue;
+        $activeTypes .= "s";
     }
 }
 
 $activeStmt = $conn->prepare($activeSql);
 
 if (!empty($activeParams)) {
-
     $activeStmt->bind_param($activeTypes, ...$activeParams);
 }
 
 $activeStmt->execute();
-
-$activeResult = $activeStmt->get_result();
-
-$activeCount = $activeResult->fetch_assoc()['total'];
-
+$activeCount = $activeStmt->get_result()->fetch_assoc()['total'];
 
 /* =========================
    INACTIVE COUNT
 ========================= */
-
 $inactiveSql = "
 SELECT COUNT(*) as total
-
 FROM users u
-
-LEFT JOIN divisions d 
-    ON u.division_id = d.id
-
-LEFT JOIN ranks r 
-    ON u.rank_id = r.id
-
-LEFT JOIN roles rl 
-    ON u.role_id = rl.id
-
+LEFT JOIN divisions d ON u.division_id = d.id
+LEFT JOIN ranks r ON u.rank_id = r.id
+LEFT JOIN roles rl ON u.role_id = rl.id
 WHERE u.is_active = 0
 ";
 
 $inactiveParams = [];
 $inactiveTypes = "";
 
-/* SEARCH */
 if (!empty($search)) {
 
-    $inactiveSql .= "
-    AND (
+    $inactiveSql .= " AND (
         u.first_name LIKE ?
         OR u.middle_name LIKE ?
         OR u.last_name LIKE ?
@@ -353,118 +229,32 @@ if (!empty($search)) {
         OR d.division LIKE ?
         OR r.rank LIKE ?
         OR rl.role_name LIKE ?
-    )
-    ";
+    )";
 
     $searchValue = "%$search%";
 
-    array_push(
-        $inactiveParams,
-        $searchValue,
-        $searchValue,
-        $searchValue,
-        $searchValue,
-        $searchValue,
-        $searchValue,
-        $searchValue
-    );
-
-    $inactiveTypes .= "sssssss";
-}
-
-/* ROLE FILTER */
-if (!empty($roleFilters)) {
-
-    $placeholders = implode(',', array_fill(0, count($roleFilters), '?'));
-
-    $inactiveSql .= " AND u.role_id IN ($placeholders)";
-
-    foreach ($roleFilters as $role) {
-
-        $inactiveParams[] = (int) $role;
-        $inactiveTypes .= "i";
-    }
-}
-
-/* RANK FILTER */
-if (!empty($rankFilters)) {
-
-    $placeholders = implode(',', array_fill(0, count($rankFilters), '?'));
-
-    $inactiveSql .= " AND u.rank_id IN ($placeholders)";
-
-    foreach ($rankFilters as $rank) {
-
-        $inactiveParams[] = (int) $rank;
-        $inactiveTypes .= "i";
-    }
-}
-
-/* DIVISION FILTER */
-if (!empty($divisionFilters)) {
-
-    $placeholders = implode(',', array_fill(0, count($divisionFilters), '?'));
-
-    $inactiveSql .= " AND u.division_id IN ($placeholders)";
-
-    foreach ($divisionFilters as $div) {
-
-        $inactiveParams[] = (int) $div;
-        $inactiveTypes .= "i";
+    for ($i = 0; $i < 7; $i++) {
+        $inactiveParams[] = $searchValue;
+        $inactiveTypes .= "s";
     }
 }
 
 $inactiveStmt = $conn->prepare($inactiveSql);
 
 if (!empty($inactiveParams)) {
-
     $inactiveStmt->bind_param($inactiveTypes, ...$inactiveParams);
 }
 
 $inactiveStmt->execute();
-
-$inactiveResult = $inactiveStmt->get_result();
-
-$inactiveCount = $inactiveResult->fetch_assoc()['total'];
-/* =========================
-   FETCH ROLE FILTERS
-========================= */
-$rolesResult = $conn->query("
-SELECT 
-    id,
-    role_name
-FROM roles
-ORDER BY 
-    CASE role_name
-        WHEN 'Superadmin' THEN 1
-        WHEN 'Admin' THEN 2
-        WHEN 'Encoder' THEN 3
-        ELSE 4
-    END ASC
-");
+$inactiveCount = $inactiveStmt->get_result()->fetch_assoc()['total'];
 
 /* =========================
-   FETCH RANK FILTERS
+   FILTER OPTIONS
 ========================= */
-$ranksResult = $conn->query("
-SELECT 
-    id,
-    rank
-FROM ranks
-ORDER BY id ASC
-");
-/* =========================
-   FETCH DIVISION FILTERS
-========================= */
-$divisionsResult = $conn->query("
-SELECT 
-    id,
-    division
-FROM divisions
-ORDER BY id ASC
-");
+$rolesResult = $conn->query("SELECT id, role_name FROM roles ORDER BY id ASC");
+$ranksResult = $conn->query("SELECT id, rank FROM ranks ORDER BY id ASC");
+$divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id ASC");
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -935,22 +725,15 @@ ORDER BY id ASC
                 <div class="form-group">
                     <label>Rank</label>
 
-                    <!-- 🔥 ADDED: name attribute -->
-                    <select id="edit_rank" name="rank">
-                        <option value="1">NUP</option>
-                        <option value="2">PAT</option>
-                        <option value="3">PCPL</option>
-                        <option value="4">PSSG</option>
-                        <option value="5">PMSG</option>
-                        <option value="6">PSMS</option>
-                        <option value="7">PCMS</option>
-                        <option value="8">PEMS</option>
-                        <option value="9">PLT</option>
-                        <option value="10">PCPT</option>
-                        <option value="11">PMAJ</option>
-                        <option value="12">PLTCOL</option>
-                        <option value="13">PCOL</option>
-                        <option value="14">PBGEN</option>
+                 <select id="edit_rank" name="rank">
+                        <?php
+                        $ranksEdit = $conn->query("SELECT id, rank FROM ranks ORDER BY id ASC");
+                        while ($r = $ranksEdit->fetch_assoc()):
+                        ?>
+                            <option value="<?= $r['id'] ?>">
+                                <?= htmlspecialchars($r['rank']) ?>
+                            </option>
+                        <?php endwhile; ?>
                     </select>
                 </div>
 
@@ -971,26 +754,16 @@ ORDER BY id ASC
                 <!-- DIVISION -->
                 <div class="form-group">
                     <label>Division</label>
-
-                    <!-- 🔥 ADDED: name attribute -->
-                    <select id="edit_division" name="division">
-                        <option value="1">ITSD</option>
-                        <option value="2">SMD</option>
-                        <option value="3">ISSD</option>
-                        <option value="4">ITPMD</option>
-                        <option value="5">PTD</option>
-                        <option value="6">DMD</option>
-                        <option value="7">ARMD</option>
-                        <option value="8">PTDLAB</option>
-                        <option value="9">CI</option>
-                        <option value="10">PCR</option>
-                        <option value="11">LS</option>
-                        <option value="12">IHSS</option>
-                        <option value="13">BFS</option>
-                        <option value="14">SAO</option>
-                        <option value="15">SF</option>
-                        <option value="16">PCC-SF</option>
-                    </select>
+                <select id="edit_division" name="division">
+                    <?php
+                    $divEdit = $conn->query("SELECT id, division FROM divisions ORDER BY id ASC");
+                    while ($d = $divEdit->fetch_assoc()):
+                    ?>
+                        <option value="<?= $d['id'] ?>">
+                            <?= htmlspecialchars($d['division']) ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
                 </div>
 
                 <!-- CREATED BY -->

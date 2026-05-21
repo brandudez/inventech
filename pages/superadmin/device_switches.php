@@ -77,13 +77,12 @@ if (!empty($search)) {
         d.division LIKE ?
     )";
 
-    $searchValue = "%$search%";
+      $searchValue = "%$search%";
 
     for ($i = 0; $i < 9; $i++) {
         $params[] = $searchValue;
+        $types .= 's';
     }
-
-    $types .= 'sssssssss';
 }
 
 /* DIVISION FILTER (HARD CODED ID) */

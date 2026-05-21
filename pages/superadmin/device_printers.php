@@ -38,15 +38,12 @@ if (!empty($search)) {
         CONCAT(per.first_name, ' ', per.last_name) LIKE ?
     )";
 
-    $searchValue = "%$search%";
+       $searchValue = "%$search%";
 
-    $params[] = $searchValue;
-    $params[] = $searchValue;
-    $params[] = $searchValue;
-    $params[] = $searchValue;
-    $params[] = $searchValue;
-
-    $types .= 'sssss';
+    for ($i = 0; $i < 5; $i++) {
+        $params[] = $searchValue;
+        $types .= 's';
+    }
 }
 
 if (!empty($division)) {

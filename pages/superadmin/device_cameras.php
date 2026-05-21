@@ -36,19 +36,15 @@ if (!empty($search)) {
         c.model LIKE ? OR
         c.serial_no LIKE ? OR
         c.acquisition_details LIKE ? OR
-        CONCAT(per.first_name, ' ', per.last_name) LIKE ?
+        CONCAT(per.first_name, ' ', per.middle_name, ' ', per.last_name) LIKE ?
     )";
 
     $searchValue = "%$search%";
 
-    $params[] = $searchValue;
-    $params[] = $searchValue;
-    $params[] = $searchValue;
-    $params[] = $searchValue;
-    $params[] = $searchValue;
-    $params[] = $searchValue;
-
-    $types .= 'ssssss';
+    for ($i = 0; $i < 6; $i++) {
+        $params[] = $searchValue;
+        $types .= 's';
+    }
 }
 
 if (!empty($division)) {
@@ -95,7 +91,7 @@ $totalPages = ceil($totalDevices / $limit);
 $sql = "
     SELECT 
         c.*,
-        CONCAT(per.first_name, ' ', per.last_name) AS fullname,
+        CONCAT(per.first_name, ' ', per.middle_name, ' ', per.last_name) AS fullname,
         d.division
     FROM cameras c
     LEFT JOIN personnels per ON c.personnel_id = per.id
@@ -176,11 +172,15 @@ $result = $stmt->get_result();
                     </a>
                 </li>
 
-                <?php
-                $divisionQuery = mysqli_query($conn, "SELECT * FROM divisions ORDER BY division ASC");
+                    <?php
+                    $divisionQuery = mysqli_query($conn, "
+                        SELECT id, division
+                        FROM divisions
+                        ORDER BY id ASC
+                    ");
 
-                while ($div = mysqli_fetch_assoc($divisionQuery)) :
-                ?>
+                    while ($div = mysqli_fetch_assoc($divisionQuery)) :
+                    ?>
                     <li>
                         <a class="dropdown-item"
                             href="?division=<?php echo urlencode($div['division']); ?>&search=<?php echo urlencode($search); ?>">

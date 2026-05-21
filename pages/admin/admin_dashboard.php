@@ -268,9 +268,10 @@ $result = $data_stmt->get_result();
 
                 <div class="dropdown-menu" id="dropdownMenu">
 
-                    <a href="../auth/logout.php">
-                        Logout
-                    </a>
+                    <a href="../../auth/logout.php">
+                    Logout
+                </a>
+
 
                 </div>
 

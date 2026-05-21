@@ -23,13 +23,17 @@ $is_active = trim($_GET['is_active'] ?? '');
 /* =========================
    DIVISIONS
 ========================= */
-$divisions = [
-    1 => 'ITSD', 2 => 'SMD', 3 => 'ISSD', 4 => 'ITPMD',
-    5 => 'PTD', 6 => 'DMD', 7 => 'ARMD', 8 => 'PTDLAB',
-    9 => 'CI', 10 => 'PCR', 11 => 'LS', 12 => 'IHSS',
-    13 => 'BFS', 14 => 'SAO', 15 => 'SF', 16 => 'PCC-SF',
-    17 => 'TECHSUPP'
-];
+$divisions = [];
+
+$divisionQuery = mysqli_query($conn, "
+    SELECT id, division
+    FROM divisions
+    ORDER BY id ASC
+");
+
+while ($row = mysqli_fetch_assoc($divisionQuery)) {
+    $divisions[$row['id']] = $row['division'];
+}
 
 /* =========================
    FILTER BUILDER
