@@ -1,6 +1,16 @@
 <?php
 session_start();
-include("../../config/db.php");
+
+if (!isset($_SESSION['user'])) {
+    header("Location: ../../index.php");
+    exit();
+}
+
+if ($_SESSION['user']['role_id'] != 1) {
+    header("Location: ../../index.php");
+    exit();
+}
+
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     header("Location: users_list.php");

@@ -1,7 +1,17 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+
+session_start();
+
+if (!isset($_SESSION['user'])) {
+    header("Location: ../../index.php");
+    exit();
 }
+
+if ($_SESSION['user']['role_id'] != 1) {
+    header("Location: ../../index.php");
+    exit();
+}
+
 
 include("../../config/db.php");
 

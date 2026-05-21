@@ -1,10 +1,8 @@
 <?php
+
 session_start();
 include("../config/db.php");
 
-/* =========================
-   SAFETY CHECK (IMPORTANT)
-========================= */
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     header("Location: ../index.php");
     exit();
@@ -16,7 +14,7 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 $email = trim($_POST['email'] ?? '');
 $password = $_POST['password'] ?? '';
 
-if (empty($email) || empty($password)) {
+if ($email === '' || $password === '') {
     header("Location: ../index.php?error=empty_fields");
     exit();
 }
@@ -40,35 +38,21 @@ $stmt = $conn->prepare("
     LIMIT 1
 ");
 
-if (!$stmt) {
-    die("SQL Prepare Failed: " . $conn->error);
-}
-
 $stmt->bind_param("s", $email);
+$stmt->execute();
 
-if (!$stmt->execute()) {
-    die("SQL Execute Failed: " . $stmt->error);
-}
-
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
+$user = $stmt->get_result()->fetch_assoc();
 
 /* =========================
    VALIDATION
 ========================= */
-
 if (!$user) {
     header("Location: ../index.php?error=user_not_found");
     exit();
 }
 
-if ((int) $user['is_active'] !== 1) {
+if ((int)$user['is_active'] !== 1) {
     header("Location: ../index.php?error=account_disabled");
-    exit();
-}
-
-if (empty($user['password'])) {
-    header("Location: ../index.php?error=invalid_account");
     exit();
 }
 
@@ -78,15 +62,26 @@ if (!password_verify($password, $user['password'])) {
 }
 
 /* =========================
-   SESSION
+   FIX SESSION CLEANLY
 ========================= */
+
+/*
+IMPORTANT:
+- Prevent session mix issues
+- Reset session properly before assigning new user
+*/
+
+session_unset();
 session_regenerate_id(true);
 
+/* =========================
+   STORE USER SESSION
+========================= */
 $_SESSION['user'] = [
-    'id' => $user['id'],
+    'id' => (int)$user['id'],
     'email' => $user['email'],
-    'role_id' => $user['role_id'],
-    'division_id' => $user['division_id'],
+    'role_id' => (int)$user['role_id'],
+    'division_id' => (int)$user['division_id'],
     'username' => $user['username'],
     'name' => $user['first_name'] . ' ' . $user['last_name']
 ];
@@ -94,29 +89,22 @@ $_SESSION['user'] = [
 /* =========================
    REDIRECT BY ROLE
 ========================= */
-if (!isset($user['role_id'])) {
-    header("Location: ../index.php?error=invalid_role");
+$role = (int)$user['role_id'];
+
+if ($role === 1) {
+    header("Location: ../pages/superadmin/superadmin_dashboard.php");
     exit();
 }
 
-switch ((int) $user['role_id']) {
-
-    case 1:
-        header("Location: ../pages/superadmin/superadmin_dashboard.php");
-        break;
-
-    case 2:
-        header("Location: ../pages/admin/admin_dashboard.php");
-        break;
-
-    case 3:
-        header("Location: ../pages/encoder/encoder_dashboard.php");
-        break;
-
-    default:
-        header("Location: ../index.php?error=invalid_role");
-        break;
+if ($role === 2) {
+    header("Location: ../pages/admin/admin_dashboard.php");
+    exit();
 }
 
+if ($role === 3) {
+    header("Location: ../pages/encoder/encoder_dashboard.php");
+    exit();
+}
+
+header("Location: ../index.php?error=invalid_role");
 exit();
-?>

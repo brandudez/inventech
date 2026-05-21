@@ -1,5 +1,17 @@
 <?php
 session_start();
+
+if (!isset($_SESSION['user'])) {
+    header("Location: ../../index.php");
+    exit();
+}
+
+if ($_SESSION['user']['role_id'] != 1) {
+    header("Location: ../../index.php");
+    exit();
+}
+
+
 include("../../config/db.php");
 
 /* =========================
@@ -14,7 +26,8 @@ $offset = ($page - 1) * $limit;
    SEARCH
 ========================= */
 $search = trim($_GET['search'] ?? '');
-
+$msg = $_GET['msg'] ?? '';
+$error = $_GET['error'] ?? '';
 /* =========================
    FILTERS
 ========================= */
@@ -510,23 +523,22 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
                                 <td class="action-buttons">
 
                                     <button type="button" class="btn-edit" onclick="openEditModal(
-        '<?= $row['id']; ?>',
-        '<?= htmlspecialchars($row['full_name'] ?? '', ENT_QUOTES); ?>',
-        '<?= htmlspecialchars($row['email'] ?? '', ENT_QUOTES); ?>',
-        '<?= $row['role_id']; ?>',
-        '<?= $row['rank_id']; ?>',
-        '<?= $row['division_id']; ?>',
-        '<?= htmlspecialchars($row['created_by'] ?? 'SYSTEM', ENT_QUOTES); ?>',
-        '<?= $row['is_active']; ?>'
-    )">
+                                    '<?= $row['id']; ?>',
+                                    '<?= htmlspecialchars($row['full_name'] ?? '', ENT_QUOTES); ?>',
+                                    '<?= htmlspecialchars($row['email'] ?? '', ENT_QUOTES); ?>',
+                                    '<?= $row['role_id']; ?>',
+                                    '<?= $row['rank_id']; ?>',
+                                    '<?= $row['division_id']; ?>',
+                                    '<?= htmlspecialchars($row['created_by'] ?? 'SYSTEM', ENT_QUOTES); ?>',
+                                    '<?= $row['is_active']; ?>'
+                                )">
                                         Edit
                                     </button>
 
-                                    <button type="button" class="btn-change" data-bs-toggle="modal"
-                                        data-bs-target="#changePasswordModal">
-                                        Change Password
-                                    </button>
-
+                                    <button type="button" class="btn-change"
+                                    onclick="openPasswordModal(<?= $row['id']; ?>)">
+                                    Change Password
+                                </button>
                                 </td>
 
                             </tr>
@@ -644,57 +656,74 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
 
     </div>
 
-    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordLabel"
-        aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
+   <div class="modal fade" id="changePasswordModal" tabindex="-1">
 
-                <!-- Header -->
-                <div class="modal-header">
-                    <h5 class="modal-title" id="changePasswordLabel">Change Password</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+    <div class="modal-dialog">
+        <div class="modal-content">
 
-                <!-- Body -->
-                <div class="modal-body">
-                    <form id="changePasswordForm">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
 
-                        <!-- Current Password -->
-                        <div class="mb-3">
-                            <label class="form-label">Current Password</label>
-                            <input type="password" class="form-control" name="current_password" required>
+            <div class="modal-body">
+
+                <form id="changePasswordForm"
+                      method="POST"
+                      action="../superadmin/change_password.php">
+
+                    <!-- USER ID (IMPORTANT) -->
+                    <input type="hidden" name="user_id" id="password_user_id">
+                    <!-- NEW PASSWORD -->
+                    <div class="mb-3">
+                        <label>New Password</label>
+
+                        <div class="input-group">
+                            <input type="password"
+                                   class="form-control"
+                                   name="new_password"
+                                   id="new_password"
+                                   required>
+
                         </div>
+                    </div>
 
-                        <!-- New Password -->
-                        <div class="mb-3">
-                            <label class="form-label">New Password</label>
-                            <input type="password" class="form-control" name="new_password" required>
+                    <!-- CONFIRM -->
+                    <div class="mb-3">
+                        <label>Confirm Password</label>
+
+                        <div class="input-group">
+                            <input type="password"
+                                   class="form-control"
+                                   name="confirm_password"
+                                   id="confirm_password"
+                                   required>
+
                         </div>
+                    </div>
 
-                        <!-- Confirm Password -->
-                        <div class="mb-3">
-                            <label class="form-label">Confirm Password</label>
-                            <input type="password" class="form-control" name="confirm_password" required>
-                        </div>
+                </form>
 
-                    </form>
-                </div>
+            </div>
 
-                <!-- Footer -->
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" form="changePasswordForm" class="btn btn-primary">
-                        Update Password
-                    </button>
-                </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="changePasswordForm" class="btn btn-success">
+                    Update Password
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+            
 
             </div>
         </div>
     </div>
-    <!-- =========================
-     EDIT USER MODAL
-     (UPDATED: ADDED FORM ACTION + HIDDEN ID + FIXED INPUT NAMES)
-========================= -->
+
+   <!-- ========================= EDIT USER MODAL  ========================= -->
+                     
     <div id="editModal" class="edit-modal">
 
         <div class="edit-modal-content">
@@ -793,6 +822,30 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
         </div>
     </div>
 
+                    <!-- TOAST CONTAINER -->
+                <div class="toast-container position-fixed top-0 end-0 p-3">
+
+                    <!-- SUCCESS TOAST -->
+                    <div id="successToast" class="toast align-items-center text-bg-success border-0" role="alert">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                Password updated successfully.
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                        </div>
+                    </div>
+
+                    <!-- ERROR TOAST -->
+                    <div id="errorToast" class="toast align-items-center text-bg-danger border-0" role="alert">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                Something went wrong.
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                        </div>
+                    </div>
+
+                </div>
     <!-- JAVASCRIPT -->
     <script>
 
@@ -887,21 +940,67 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
             }
         };
     </script>
-    <script>
-        document.getElementById("changePasswordForm").addEventListener("submit", function (e) {
-            e.preventDefault();
+   <script>
+document.getElementById("changePasswordForm").addEventListener("submit", function (e) {
 
-            const newPass = this.new_password.value;
-            const confirmPass = this.confirm_password.value;
+    const newPass = this.new_password.value;
+    const confirmPass = this.confirm_password.value;
 
-            if (newPass !== confirmPass) {
-                alert("New password and confirm password do not match!");
-                return;
-            }
+    if (newPass !== confirmPass) {
 
-            alert("Password updated successfully (demo only)");
-        });
-    </script>
+        e.preventDefault();
+
+        alert("New password and confirm password do not match!");
+    }
+});
+</script>
+<script>
+function openPasswordModal(userId) {
+
+    document.getElementById("password_user_id").value = userId;
+
+    const modal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+    modal.show();
+}
+function togglePassword(inputId, button) {
+
+    const input = document.getElementById(inputId);
+
+    if (input.type === "password") {
+
+        input.type = "text";
+        button.textContent = "Hide";
+
+    } else {
+
+        input.type = "password";
+        button.textContent = "Show";
+    }
+}
+
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const msg = "<?= $msg ?>";
+    const error = "<?= $error ?>";
+
+    if (msg === "PasswordUpdated") {
+
+        const toast = new bootstrap.Toast(document.getElementById('successToast'));
+        toast.show();
+
+    }
+
+    if (error === "PasswordFailed") {
+
+        const toast = new bootstrap.Toast(document.getElementById('errorToast'));
+        toast.show();
+
+    }
+
+});
+</script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>

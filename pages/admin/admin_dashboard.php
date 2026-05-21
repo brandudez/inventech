@@ -1,10 +1,18 @@
 <?php
+
 session_start();
 
 if (!isset($_SESSION['user'])) {
-    header("Location: ../index.php");
+    header("Location: ../../index.php");
     exit();
 }
+
+/* ROLE CHECK */
+if ($_SESSION['user']['role_id'] != 2) {
+    header("Location: ../../index.php");
+    exit();
+}
+
 
 include("../../config/db.php");
 
@@ -13,11 +21,9 @@ include("../../config/db.php");
 ========================= */
 $user = $_SESSION['user'];
 
-/* FORCE INTEGER */
-$division_id = isset($user['division_id'])
-    ? (int) $user['division_id']
-    : 0;
 
+/* FORCE INTEGER */
+$division_id = (int)($user['division_id'] ?? 0);
 /* =========================
    GET DIVISION NAME
 ========================= */

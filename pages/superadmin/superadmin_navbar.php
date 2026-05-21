@@ -1,20 +1,7 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+$user = $_SESSION['user'] ?? [];
+$username = $user['username'] ?? 'User';
 
-/* CHECK IF USER SESSION EXISTS */
-if (!isset($_SESSION['user'])) {
-
-    header("Location: ../../index.php");
-    exit();
-
-}
-
-$user = $_SESSION['user'];
-
-/* SAFE DEFAULT */
-$username = $user['username'] ?? 'Super Admin';
 ?>
 
 <!-- SUPER ADMIN NAVBAR -->

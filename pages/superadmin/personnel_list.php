@@ -1,5 +1,17 @@
 <?php
+
 session_start();
+
+if (!isset($_SESSION['user'])) {
+    header("Location: ../../index.php");
+    exit();
+}
+
+if ($_SESSION['user']['role_id'] != 1) {
+    header("Location: ../../index.php");
+    exit();
+}
+
 include("../../config/db.php");
 
 /* =========================
@@ -36,7 +48,7 @@ SELECT
     p.middle_name,
     p.last_name,
     p.is_active,
-    p.created_by,
+    u.username AS created_by_username,
 
     TRIM(CONCAT(
         p.first_name, ' ',
@@ -72,7 +84,7 @@ if (!empty($search)) {
         OR p.last_name LIKE ?
         OR d.division LIKE ?
         OR r.rank LIKE ?
-        OR rl.role_name LIKE ?
+        OR u.username LIKE ?
     )
     ";
 
@@ -379,7 +391,7 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
                                 </td>
 
                                 <td>
-                                    <?= htmlspecialchars($row['created_by'] ?? 'SYSTEM'); ?>
+                                    <?= htmlspecialchars($row['created_by_username'] ?? 'SYSTEM'); ?>
                                 </td>
 
                                 <td>
@@ -407,7 +419,7 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
                                             '<?= htmlspecialchars($row['full_name'] ?? '', ENT_QUOTES); ?>',
                                             '<?= $row['rank_id']; ?>',
                                             '<?= $row['division_id']; ?>',
-                                            '<?= htmlspecialchars($row['created_by'] ?? 'SYSTEM', ENT_QUOTES); ?>',
+                                            '<?= htmlspecialchars($row['created_by_username'] ?? 'SYSTEM', ENT_QUOTES); ?>',
                                             '<?= $row['is_active']; ?>'
                                         )">
 
@@ -809,12 +821,32 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
     </script>
 
     <script>
-        document.getElementById('addPersonnelForm').addEventListener('submit', function (e) {
-            e.preventDefault(); // stops page refresh
-            const data = new FormData(this);
-            console.log(Object.fromEntries(data.entries())); // logs form data
-            // You can add AJAX here to save the data without page reload
-        });
+      document.getElementById('addPersonnelForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const form = this;
+    const data = new FormData(form);
+
+    fetch("../superadmin/add_personnel.php", {
+        method: "POST",
+        body: data
+    })
+    .then(res => res.json())
+    .then(res => {
+
+        if (res.status === "success") {
+            alert(res.message);
+            location.reload(); // refresh table
+        } else {
+            alert(res.message);
+        }
+
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Something went wrong");
+    });
+});
     </script>
 
     <!-- Bootstrap JS Bundle (includes Popper) -->
