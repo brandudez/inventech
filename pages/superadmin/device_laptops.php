@@ -520,12 +520,10 @@ $result = $stmt->get_result();
 
             </div>
 
-            <!-- ADD LAPTOP BUTTON -->
-            <button type="button" class="btn add-laptop-btn" data-bs-toggle="modal" data-bs-target="#addLaptopModal">
-
-                Add Laptop
-
-            </button>
+<!-- ADD LAPTOP BUTTON -->
+<button type="button" class="btn add-laptop-btn" data-bs-toggle="modal" data-bs-target="#addLaptopModal">
+    Add Laptop
+</button>
 
         </div>
 
@@ -689,6 +687,217 @@ $result = $stmt->get_result();
 
                                 </td>
 
+                                <!-- ADD LAPTOP MODAL -->
+<div class="modal fade" id="addLaptopModal" tabindex="-1" aria-labelledby="addLaptopModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+
+        <div class="modal-content custom-modal">
+
+            <!-- MODAL HEADER -->
+            <div class="modal-header">
+                <h5 class="modal-title text-white" id="addLaptopModalLabel">
+                    Add Laptop Information
+                </h5>
+
+                <button 
+                    type="button" 
+                    class="btn-close" 
+                    data-bs-dismiss="modal" 
+                    aria-label="Close">
+                </button>
+            </div>
+
+            <!-- MODAL BODY -->
+            <div class="modal-body">
+
+                <form>
+
+                    <div class="row g-3">
+
+                        <div class="col-md-4">
+                            <label class="form-label">Device Name</label>
+                            <input type="text" class="form-control">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Personnel</label>
+                            <input type="text" class="form-control">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Division</label>
+                            <input type="text" class="form-control">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">IP Address</label>
+                            <input type="text" class="form-control">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Operating System</label>
+                            <input type="text" class="form-control">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Is OS Licensed?</label>
+                            <select class="form-select">
+                                <option>Select</option>
+                                <option>Yes</option>
+                                <option>No</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">OS License Key</label>
+                            <input type="text" class="form-control">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Office Application</label>
+                            <input type="text" class="form-control">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Office License Key</label>
+                            <input type="text" class="form-control">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Is Office Licensed?</label>
+                            <select class="form-select">
+                                <option>Select</option>
+                                <option>Yes</option>
+                                <option>No</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Endpoint Security</label>
+                            <input type="text" class="form-control">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label"># of Installed Antivirus</label>
+                            <input type="number" class="form-control">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Date Installed</label>
+                            <input type="date" class="form-control">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">GUID</label>
+                            <input type="text" class="form-control">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">MAC Address</label>
+                            <input type="text" class="form-control">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">CPU Brand</label>
+                            <input type="text" class="form-control">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label"># of CPU Cores</label>
+                            <input type="number" class="form-control">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">GBs of RAM</label>
+                            <input type="number" class="form-control">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Monitor Brand</label>
+                            <input type="text" class="form-control">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Monitor Size</label>
+                            <input type="text" class="form-control">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label"># of User Accounts</label>
+                            <input type="number" class="form-control">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">User Account Type</label>
+                            <input type="text" class="form-control">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Authorized Software</label>
+                            <textarea class="form-control" rows="2"></textarea>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Unauthorized Software</label>
+                            <textarea class="form-control" rows="2"></textarea>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Acquisition Date</label>
+                            <input type="date" class="form-control">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">PAR Serial Number</label>
+                            <input type="text" class="form-control">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Previous Handler/s</label>
+                            <input type="text" class="form-control">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Is Remotely Accessible?</label>
+                            <select class="form-select">
+                                <option>Select</option>
+                                <option>Yes</option>
+                                <option>No</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Is Active?</label>
+                            <select class="form-select">
+                                <option>Select</option>
+                                <option>Yes</option>
+                                <option>No</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+            <!-- MODAL FOOTER -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Close
+                </button>
+
+                <button type="submit" class="btn btn-primary">
+                    Save Laptop
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 
                                 <!--EDIT MODAL-->
 
