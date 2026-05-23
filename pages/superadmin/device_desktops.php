@@ -13,6 +13,31 @@ if ($_SESSION['user']['role_id'] != 1) {
 
 include("../../config/db.php");
 
+function getAntivirusNames($conn, $json)
+{
+    if (empty($json)) return '';
+
+    $ids = json_decode($json, true);
+
+    if (!is_array($ids) || empty($ids)) return '';
+
+    $ids = array_map('intval', $ids);
+    $ids = implode(',', $ids);
+
+    $result = $conn->query("
+        SELECT antivirus 
+        FROM endpoint_security 
+        WHERE id IN ($ids)
+    ");
+
+    $names = [];
+
+    while ($row = $result->fetch_assoc()) {
+        $names[] = $row['antivirus'];
+    }
+
+    return implode(', ', $names);
+}
 /* =========================
    PAGINATION
 ========================= */
@@ -34,6 +59,7 @@ $search = trim($_GET['search'] ?? '');
 $division_filter = trim($_GET['division'] ?? '');
 $os_filter = trim($_GET['os'] ?? '');
 $office_filter = trim($_GET['office_application'] ?? '');
+$active_filter = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
 
 /* =========================
    WHERE CONDITIONS
@@ -47,13 +73,7 @@ if (!empty($search)) {
 
     $where[] = "(
         d.device_name LIKE ? OR
-
-        CONCAT(
-            p.first_name, ' ',
-            p.middle_name, ' ',
-            p.last_name
-        ) LIKE ? OR
-
+        CONCAT(p.first_name,' ',p.middle_name,' ',p.last_name) LIKE ? OR
         d.ip_address LIKE ? OR
         d.guid LIKE ? OR
         d.mac_address LIKE ?
@@ -67,25 +87,32 @@ if (!empty($search)) {
     }
 }
 
-/* DIVISION FILTER */
+/* DIVISION */
 if (!empty($division_filter)) {
     $where[] = "dv.division = ?";
     $params[] = $division_filter;
     $types .= 's';
 }
 
-/* OS FILTER */
+/* OS */
 if (!empty($os_filter)) {
     $where[] = "d.os = ?";
     $params[] = $os_filter;
     $types .= 's';
 }
 
-/* OFFICE FILTER */
+/* OFFICE */
 if (!empty($office_filter)) {
     $where[] = "d.office_application = ?";
     $params[] = $office_filter;
     $types .= 's';
+}
+
+/* ACTIVE */
+if ($active_filter !== '') {
+    $where[] = "d.is_active = ?";
+    $params[] = $active_filter;
+    $types .= 'i';
 }
 
 $whereSQL = '';
@@ -94,16 +121,13 @@ if (!empty($where)) {
 }
 
 /* =========================
-   TOTAL DEVICES
+   TOTAL
 ========================= */
 $totalQuery = "
     SELECT COUNT(*) as total
     FROM desktops d
-
     LEFT JOIN personnels p ON d.personnel_id = p.id
     LEFT JOIN divisions dv ON d.division_id = dv.id
-    LEFT JOIN endpoint_security es ON d.endpoint_security_id = es.id
-
     $whereSQL
 ";
 
@@ -120,7 +144,7 @@ $totalDevices = $totalResult->fetch_assoc()['total'];
 $totalPages = ceil($totalDevices / $limit);
 
 /* =========================
-   GET TABLE DATA
+   DATA QUERY
 ========================= */
 $query = "
     SELECT 
@@ -132,15 +156,12 @@ $query = "
             p.last_name
         ) AS personnel_name,
 
-        dv.division AS division_name,
-
-        es.antivirus AS endpoint_security_name
+        dv.division AS division_name
 
     FROM desktops d
 
     LEFT JOIN personnels p ON d.personnel_id = p.id
     LEFT JOIN divisions dv ON d.division_id = dv.id
-    LEFT JOIN endpoint_security es ON d.endpoint_security_id = es.id
 
     $whereSQL
 
@@ -158,6 +179,82 @@ $finalParams[] = $offset;
 $finalParams[] = $limit;
 
 $stmt->bind_param($finalTypes, ...$finalParams);
+/* =========================
+   BASE FILTERS
+========================= */
+$baseWhere = $where;
+$baseParams = $params;
+$baseTypes = $types;
+
+/* =========================
+   ACTIVE COUNT
+========================= */
+$activeWhere = $baseWhere;
+$activeParams = $baseParams;
+$activeTypes = $baseTypes;
+
+$activeWhere[] = "d.is_active = 1";
+
+$activeSQL = '';
+
+if (!empty($activeWhere)) {
+    $activeSQL = "WHERE " . implode(" AND ", $activeWhere);
+}
+
+$activeQuery = "
+    SELECT COUNT(*) AS total
+    FROM desktops d
+    LEFT JOIN personnels p ON d.personnel_id = p.id
+    LEFT JOIN divisions dv ON d.division_id = dv.id
+    $activeSQL
+";
+
+$stmtActive = $conn->prepare($activeQuery);
+
+if (!empty($activeParams)) {
+    $stmtActive->bind_param($activeTypes, ...$activeParams);
+}
+
+$stmtActive->execute();
+
+$activeDevices = $stmtActive
+    ->get_result()
+    ->fetch_assoc()['total'] ?? 0;
+
+/* =========================
+   INACTIVE COUNT
+========================= */
+$inactiveWhere = $baseWhere;
+$inactiveParams = $baseParams;
+$inactiveTypes = $baseTypes;
+
+$inactiveWhere[] = "d.is_active = 0";
+
+$inactiveSQL = '';
+
+if (!empty($inactiveWhere)) {
+    $inactiveSQL = "WHERE " . implode(" AND ", $inactiveWhere);
+}
+
+$inactiveQuery = "
+    SELECT COUNT(*) AS total
+    FROM desktops d
+    LEFT JOIN personnels p ON d.personnel_id = p.id
+    LEFT JOIN divisions dv ON d.division_id = dv.id
+    $inactiveSQL
+";
+
+$stmtInactive = $conn->prepare($inactiveQuery);
+
+if (!empty($inactiveParams)) {
+    $stmtInactive->bind_param($inactiveTypes, ...$inactiveParams);
+}
+
+$stmtInactive->execute();
+
+$inactiveDevices = $stmtInactive
+    ->get_result()
+    ->fetch_assoc()['total'] ?? 0;
 
 $stmt->execute();
 $result = $stmt->get_result();
@@ -200,7 +297,6 @@ $result = $stmt->get_result();
                 <input type="hidden" name="division" value="<?= htmlspecialchars($division_filter) ?>">
                 <input type="hidden" name="os" value="<?= htmlspecialchars($os_filter) ?>">
                 <input type="hidden" name="office_application" value="<?= htmlspecialchars($office_filter) ?>">
-
                 <input type="text" name="search" class="search-input" placeholder="Search desktops..."
                     value="<?= htmlspecialchars($search) ?>">
 
@@ -218,6 +314,8 @@ $result = $stmt->get_result();
             <div class="filters">
 
                 <form method="GET" id="filterForm">
+                        <input type="hidden" name="search" value="<?= htmlspecialchars($search) ?>">
+                        <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
 
                     <!-- DIVISION DROPDOWN -->
                     <div class="dropdown">
@@ -332,10 +430,83 @@ $result = $stmt->get_result();
                         </ul>
 
                     </div>
+                      <!-- STATUS DROPDOWN -->
+                <div class="dropdown">
+
+                    <button class="btn filter-btn dropdown-toggle"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside">
+
+                        <?=
+                            ($active_filter !== '')
+                                ? (($active_filter == 1) ? 'Active' : 'Inactive')
+                                : 'Status'
+                        ?>
+
+                    </button>
+
+                    <ul class="dropdown-menu dropdown-scroll">
+
+                        <!-- ACTIVE -->
+                        <li>
+                            <label class="dropdown-item">
+
+                                <input type="radio"
+                                    name="is_active"
+                                    value="1"
+
+                                    onchange="document.getElementById('filterForm').submit();"
+
+                                    <?= ($active_filter === '1') ? 'checked' : '' ?>>
+
+                                Active
+
+                            </label>
+                        </li>
+
+                        <!-- INACTIVE -->
+                        <li>
+                            <label class="dropdown-item">
+
+                                <input type="radio"
+                                    name="is_active"
+                                    value="0"
+
+                                    onchange="document.getElementById('filterForm').submit();"
+
+                                    <?= ($active_filter === '0') ? 'checked' : '' ?>>
+
+                                Inactive
+
+                            </label>
+                        </li>
+
+                        <!-- ALL -->
+                        <li>
+                            <label class="dropdown-item">
+
+                                <input type="radio"
+                                    name="is_active"
+                                    value=""
+
+                                    onchange="document.getElementById('filterForm').submit();"
+
+                                    <?= ($active_filter === '') ? 'checked' : '' ?>>
+
+                                All
+
+                            </label>
+                        </li>
+
+                    </ul>
+
+                </div>
                 </form>
 
             </div>
 
+              
             <!-- ADD DESKTOP BUTTON -->
             <button type="button" class="btn add-desktop-btn" data-bs-toggle="modal" data-bs-target="#addDesktopModal">
 
@@ -386,6 +557,7 @@ $result = $stmt->get_result();
                         <th>PAR SERIAL NUMBER</th>
                         <th>PREVIOUS HANDLER/S</th>
                         <th>IS REMOTELY ACCESSIBLE?</th>
+                        <th>IS ACTIVE?</th>
                         <th>ACTION</th>
 
                     </tr>
@@ -399,87 +571,50 @@ $result = $stmt->get_result();
                         <?php while ($row = $result->fetch_assoc()): ?>
 
                             <tr>
-
                                 <td><?= htmlspecialchars($row['device_name'] ?? '') ?></td>
-
-                                <td>
-                                    <?= htmlspecialchars($row['personnel_name'] ?? '') ?>
-                                </td>
-
-                                <!-- FIXED DIVISION -->
-                                <td>
-                                    <?= htmlspecialchars($row['division_name'] ?? '') ?>
-                                </td>
-
+                                <td><?= htmlspecialchars($row['personnel_name'] ?? '') ?></td>                   
+                                <td><?= htmlspecialchars($row['division_name'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($row['ip_address'] ?? '') ?></td>
-
                                 <td><?= htmlspecialchars($row['os'] ?? '') ?></td>
-
-                                <td>
-                                    <?= ($row['is_os_licensed'] == 1) ? 'Yes' : 'No' ?>
-                                </td>
-
+                                <td><?= ($row['is_os_licensed'] == 1) ? 'Yes' : 'No' ?> </td>
                                 <td><?= htmlspecialchars($row['os_license_key'] ?? '') ?></td>
-
                                 <td><?= htmlspecialchars($row['office_application'] ?? '') ?></td>
-
                                 <td><?= htmlspecialchars($row['office_license_key'] ?? '') ?></td>
-
-                                <td>
-                                    <?= ($row['is_office_licensed'] == 1) ? 'Yes' : 'No' ?>
-                                </td>
-
-                                <td>
-                                    <?= htmlspecialchars($row['endpoint_security_name'] ?? '') ?>
-                                </td>
-
-                                <td>
-                                    <?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?>
-                                </td>
-
+                                <td><?= ($row['is_office_licensed'] == 1) ? 'Yes' : 'No' ?></td>
+                                <td><?= nl2br(htmlspecialchars( getAntivirusNames($conn, $row['endpoint_security_id']))) ?></td>
+                                <td><?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?> </td>
                                 <td><?= htmlspecialchars($row['date_installed'] ?? '') ?></td>
-
                                 <td><?= htmlspecialchars($row['guid'] ?? '') ?></td>
-
                                 <td><?= htmlspecialchars($row['mac_address'] ?? '') ?></td>
-
                                 <td><?= htmlspecialchars($row['cpu_brand'] ?? '') ?></td>
-
                                 <td><?= htmlspecialchars($row['cpu_cores'] ?? '') ?></td>
-
                                 <td><?= htmlspecialchars($row['gb_ram'] ?? '') ?></td>
-
                                 <td><?= htmlspecialchars($row['monitor_brand'] ?? '') ?></td>
-
                                 <td><?= htmlspecialchars($row['monitor_size_inches'] ?? '') ?></td>
-
                                 <td><?= htmlspecialchars($row['no_of_user_accounts'] ?? '') ?></td>
-
                                 <td><?= htmlspecialchars($row['user_account_type'] ?? '') ?></td>
-
                                 <td><?= htmlspecialchars($row['authorized_software'] ?? '') ?></td>
-
                                 <td><?= htmlspecialchars($row['unauthorized_software'] ?? '') ?></td>
-
                                 <td><?= htmlspecialchars($row['created_date'] ?? '') ?></td>
-
                                 <td><?= htmlspecialchars($row['par_serial_no'] ?? '') ?></td>
-
                                 <td><?= htmlspecialchars($row['previous_owners_id'] ?? '') ?></td>
 
                                 <td>
-                                    <?= ($row['is_remote_acc'] == 1) ? 'Yes' : 'No' ?>
-                                </td>
+                            <?= $row['is_remote_acc']
+                                ? '<span style="color:green;font-weight:bold;">YES</span>'
+                                : '<span style="color:red;font-weight:bold;">NO</span>' ?>
+                             </td>
+
+                              <td>
+                            <?= $row['is_active']
+                                ? '<span style="color:green;font-weight:bold;">YES</span>'
+                                : '<span style="color:red;font-weight:bold;">NO</span>' ?>
+                            </td>
 
                                 <td>
 
                                     <!-- EDIT BUTTON -->
-                                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal"
-                                        data-bs-target="#editModal<?= $row['id'] ?>">
-
-                                        Edit
-
-                                    </button>
+         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal<?= $row['id'] ?>">Edit </button>
 
                                     <!-- DELETE BUTTON -->
                                     <button class="btn btn-danger btn-sm" data-bs-toggle="modal"
@@ -807,9 +942,8 @@ $result = $stmt->get_result();
                                     </div>
 
                                 </div>
-                                <!-- =========================
-     DELETE MODAL
-========================= -->
+
+                                <!-- =========================    DELETE MODAL ========================= -->
                                 <div class="modal fade" id="deleteModal<?= $row['id'] ?>" tabindex="-1">
 
                                     <div class="modal-dialog modal-dialog-centered">
@@ -894,52 +1028,95 @@ $result = $stmt->get_result();
 
                 </div>
 
-            </div>
+                <div class="stat-box active">
 
-            <!-- PAGINATION -->
-            <div class="pagination">
+                    <span class="label">
+                        Active
+                    </span>
 
-                <?php if ($page > 1): ?>
+                    <span class="value">
+                        <?= $activeDevices ?>
+                    </span>
 
-                    <a
-                        href="?page=<?= $page - 1 ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division_filter) ?>&os=<?= urlencode($os_filter) ?>&office_application=<?= urlencode($office_filter) ?>">
+                </div>
 
-                        Prev
+                <div class="stat-box inactive">
 
-                    </a>
+                    <span class="label">
+                        Inactive
+                    </span>
 
-                <?php endif; ?>
+                    <span class="value">
+                        <?= $inactiveDevices ?>
+                    </span>
 
-                <?php
-                $startPage = max(1, $page - 1);
-                $endPage = min($totalPages, $startPage + 2);
-
-                for ($i = $startPage; $i <= $endPage; $i++):
-                    ?>
-
-                    <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division_filter) ?>&os=<?= urlencode($os_filter) ?>&office_application=<?= urlencode($office_filter) ?>"
-                        class="<?= $i == $page ? 'active-page' : '' ?>">
-
-                        <?= $i ?>
-
-                    </a>
-
-                <?php endfor; ?>
-
-                <?php if ($page < $totalPages): ?>
-
-                    <a
-                        href="?page=<?= $page + 1 ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division_filter) ?>&os=<?= urlencode($os_filter) ?>&office_application=<?= urlencode($office_filter) ?>">
-
-                        Next
-
-                    </a>
-
-                <?php endif; ?>
+                </div>
 
             </div>
 
-        </div>
+          <!-- PAGINATION -->
+<div class="pagination">
+
+    <!-- PAGINATION -->
+<?php if ($totalPages > 1): ?>
+
+<div class="pagination">
+
+    <?php if ($page > 1): ?>
+
+        <a href="?page=<?= $page - 1 ?>
+            &search=<?= urlencode($search) ?>
+            &division=<?= urlencode($division_filter) ?>
+            &os=<?= urlencode($os_filter) ?>
+            &office_application=<?= urlencode($office_filter) ?>
+            &is_active=<?= urlencode($active_filter) ?>">
+
+            Prev
+
+        </a>
+
+    <?php endif; ?>
+
+    <?php
+    $startPage = max(1, $page - 1);
+    $endPage = min($totalPages, $startPage + 2);
+
+    for ($i = $startPage; $i <= $endPage; $i++):
+    ?>
+
+        <a href="?page=<?= $i ?>
+            &search=<?= urlencode($search) ?>
+            &division=<?= urlencode($division_filter) ?>
+            &os=<?= urlencode($os_filter) ?>
+            &office_application=<?= urlencode($office_filter) ?>
+            &is_active=<?= urlencode($active_filter) ?>"
+
+            class="<?= ($i == $page ? 'active-page' : '') ?>">
+
+            <?= $i ?>
+
+        </a>
+
+    <?php endfor; ?>
+
+    <?php if ($page < $totalPages): ?>
+
+        <a href="?page=<?= $page + 1 ?>
+            &search=<?= urlencode($search) ?>
+            &division=<?= urlencode($division_filter) ?>
+            &os=<?= urlencode($os_filter) ?>
+            &office_application=<?= urlencode($office_filter) ?>
+            &is_active=<?= urlencode($active_filter) ?>">
+
+            Next
+
+        </a>
+
+    <?php endif; ?>
+
+</div>
+
+<?php endif; ?>
 
     </div>
 

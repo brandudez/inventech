@@ -12,7 +12,33 @@ if ($_SESSION['user']['role_id'] != 1) {
 }
 
 include("../../config/db.php");
+function getAntivirusNames($conn, $json)
+{
+    if (empty($json)) return '';
 
+    $ids = json_decode($json, true);
+
+    if (!is_array($ids) || empty($ids)) return '';
+
+    $ids = array_map('intval', $ids);
+    $ids = implode(',', $ids);
+
+    $result = $conn->query("
+        SELECT antivirus
+        FROM endpoint_security
+        WHERE id IN ($ids)
+    ");
+
+    
+
+    $names = [];
+
+    while ($row = $result->fetch_assoc()) {
+        $names[] = $row['antivirus'];
+    }
+
+    return implode(', ', $names);
+}
 /* =========================
    PAGINATION
 ========================= */
@@ -34,6 +60,9 @@ $search = trim($_GET['search'] ?? '');
 $division_filter = trim($_GET['division'] ?? '');
 $os_filter = trim($_GET['os'] ?? '');
 $office_filter = trim($_GET['office_application'] ?? '');
+$active_filter = isset($_GET['is_active'])
+    ? trim($_GET['is_active'])
+    : '';
 
 /* =========================
    WHERE CONDITIONS
@@ -88,6 +117,13 @@ if (!empty($office_filter)) {
     $types .= 's';
 }
 
+/* ACTIVE FILTER */
+if ($active_filter !== '') {
+    $where[] = "l.is_active = ?";
+    $params[] = $active_filter;
+    $types .= 'i';
+}
+
 $whereSQL = '';
 if (!empty($where)) {
     $whereSQL = "WHERE " . implode(" AND ", $where);
@@ -118,7 +154,82 @@ $totalResult = $stmtTotal->get_result();
 $totalDevices = $totalResult->fetch_assoc()['total'];
 
 $totalPages = ceil($totalDevices / $limit);
+/* =========================
+   BASE FILTERS
+========================= */
+$baseWhere = $where;
+$baseParams = $params;
+$baseTypes = $types;
 
+/* =========================
+   ACTIVE COUNT
+========================= */
+$activeWhere = $baseWhere;
+$activeParams = $baseParams;
+$activeTypes = $baseTypes;
+
+$activeWhere[] = "l.is_active = 1";
+
+$activeSQL = '';
+
+if (!empty($activeWhere)) {
+    $activeSQL = "WHERE " . implode(" AND ", $activeWhere);
+}
+
+$activeQuery = "
+    SELECT COUNT(*) AS total
+    FROM laptops l
+    LEFT JOIN personnels p ON l.personnel_id = p.id
+    LEFT JOIN divisions dv ON l.division_id = dv.id
+    $activeSQL
+";
+
+$stmtActive = $conn->prepare($activeQuery);
+
+if (!empty($activeParams)) {
+    $stmtActive->bind_param($activeTypes, ...$activeParams);
+}
+
+$stmtActive->execute();
+
+$activeDevices = $stmtActive
+    ->get_result()
+    ->fetch_assoc()['total'] ?? 0;
+
+/* =========================
+   INACTIVE COUNT
+========================= */
+$inactiveWhere = $baseWhere;
+$inactiveParams = $baseParams;
+$inactiveTypes = $baseTypes;
+
+$inactiveWhere[] = "l.is_active = 0";
+
+$inactiveSQL = '';
+
+if (!empty($inactiveWhere)) {
+    $inactiveSQL = "WHERE " . implode(" AND ", $inactiveWhere);
+}
+
+$inactiveQuery = "
+    SELECT COUNT(*) AS total
+    FROM laptops l
+    LEFT JOIN personnels p ON l.personnel_id = p.id
+    LEFT JOIN divisions dv ON l.division_id = dv.id
+    $inactiveSQL
+";
+
+$stmtInactive = $conn->prepare($inactiveQuery);
+
+if (!empty($inactiveParams)) {
+    $stmtInactive->bind_param($inactiveTypes, ...$inactiveParams);
+}
+
+$stmtInactive->execute();
+
+$inactiveDevices = $stmtInactive
+    ->get_result()
+    ->fetch_assoc()['total'] ?? 0;
 /* =========================
    GET TABLE DATA
 ========================= */
@@ -335,6 +446,76 @@ $result = $stmt->get_result();
                         </ul>
 
                     </div>
+                    <!-- STATUS DROPDOWN -->
+<div class="dropdown">
+
+    <button class="btn filter-btn dropdown-toggle"
+            type="button"
+            data-bs-toggle="dropdown"
+            data-bs-auto-close="outside">
+
+        <?= ($active_filter !== '')
+            ? (($active_filter == 1) ? 'Active' : 'Inactive')
+            : 'Status' ?>
+
+    </button>
+
+    <ul class="dropdown-menu dropdown-scroll">
+
+        <!-- ACTIVE -->
+        <li>
+            <label class="dropdown-item">
+
+                <input type="radio"
+                       name="is_active"
+                       value="1"
+
+                       onchange="document.getElementById('filterForm').submit();"
+
+                       <?= ($active_filter === '1') ? 'checked' : '' ?>>
+
+                Active
+
+            </label>
+        </li>
+
+        <!-- INACTIVE -->
+        <li>
+            <label class="dropdown-item">
+
+                <input type="radio"
+                       name="is_active"
+                       value="0"
+
+                       onchange="document.getElementById('filterForm').submit();"
+
+                       <?= ($active_filter === '0') ? 'checked' : '' ?>>
+
+                Inactive
+
+            </label>
+        </li>
+
+        <!-- ALL -->
+        <li>
+            <label class="dropdown-item">
+
+                <input type="radio"
+                       name="is_active"
+                       value=""
+
+                       onchange="document.getElementById('filterForm').submit();"
+
+                       <?= ($active_filter === '') ? 'checked' : '' ?>>
+
+                All
+
+            </label>
+        </li>
+
+    </ul>
+
+</div>
                 </form>
 
             </div>
@@ -392,6 +573,7 @@ $result = $stmt->get_result();
                         <th>PAR SERIAL NUMBER</th>
                         <th>PREVIOUS HANDLERS</th>
                         <th>IS REMOTELY ACCESSIBLE?</th>
+                        <th>IS ACTIVE?</th>
                         <th>ACTION</th>
 
                     </tr>
@@ -436,8 +618,10 @@ $result = $stmt->get_result();
                                 </td>
 
                                 <td>
-                                    <?= htmlspecialchars($row['endpoint_security_name'] ?? '') ?>
-                                </td>
+    <?= nl2br(htmlspecialchars(
+        getAntivirusNames($conn, $row['endpoint_security_id'])
+    )) ?>
+</td>
 
                                 <td>
                                     <?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?>
@@ -474,10 +658,17 @@ $result = $stmt->get_result();
 
                                 <td><?= htmlspecialchars($row['previous_owners_id'] ?? '') ?></td>
 
-                                <td>
-                                    <?= ($row['is_remote_acc'] == 1) ? 'Yes' : 'No' ?>
+                               <td>
+                                    <?= $row['is_remote_acc']
+                                        ? '<span style="color:green;font-weight:bold;">YES</span>'
+                                        : '<span style="color:red;font-weight:bold;">NO</span>' ?>
                                 </td>
 
+                                <td>
+                                    <?= $row['is_active']
+                                        ? '<span style="color:green;font-weight:bold;">YES</span>'
+                                        : '<span style="color:red;font-weight:bold;">NO</span>' ?>
+                                </td>
                                 <td>
 
                                     <!-- EDIT BUTTON -->
@@ -895,19 +1086,43 @@ $result = $stmt->get_result();
 
             <div class="user-stats">
 
-                <div class="stat-box total">
+    <div class="stat-box total">
 
-                    <span class="label">
-                        Total Devices
-                    </span>
+        <span class="label">
+            Total Devices
+        </span>
 
-                    <span class="value">
-                        <?= $totalDevices ?>
-                    </span>
+        <span class="value">
+            <?= $totalDevices ?>
+        </span>
 
-                </div>
+    </div>
 
-            </div>
+    <div class="stat-box active">
+
+        <span class="label">
+            Active
+        </span>
+
+        <span class="value">
+            <?= $activeDevices ?>
+        </span>
+
+    </div>
+
+    <div class="stat-box inactive">
+
+        <span class="label">
+            Inactive
+        </span>
+
+        <span class="value">
+            <?= $inactiveDevices ?>
+        </span>
+
+    </div>
+
+                    </div>
 
             <!-- PAGINATION -->
             <div class="pagination">
