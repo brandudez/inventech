@@ -19,7 +19,7 @@ include("../../config/db.php");
 ========================= */
 $limit = 10;
 
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $page = max(1, $page);
 
 $offset = ($page - 1) * $limit;
@@ -79,7 +79,7 @@ if (!empty($search)) {
         d.division LIKE ?
     )";
 
-      $searchValue = "%$search%";
+    $searchValue = "%$search%";
 
     for ($i = 0; $i < 9; $i++) {
         $params[] = $searchValue;
@@ -159,6 +159,7 @@ $result = $stmt->get_result();
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Switch Devices</title>
@@ -171,259 +172,427 @@ $result = $stmt->get_result();
 
 <body>
 
-<?php include 'superadmin_sidebar.php'; ?>
-<?php include 'superadmin_navbar.php'; ?>
+    <?php include 'superadmin_sidebar.php'; ?>
+    <?php include 'superadmin_navbar.php'; ?>
 
-<!-- TOP BAR -->
-<div class="top-bar">
+    <!-- TOP BAR -->
+    <div class="top-bar">
 
-    <div class="filters">
+        <div class="filters">
 
-        <!-- DIVISION FILTER (FIXED) -->
-        <!-- DIVISION FILTER -->
-<div class="dropdown">
+            <!-- DIVISION FILTER (FIXED) -->
+            <!-- DIVISION FILTER -->
+            <div class="dropdown">
 
-    <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
-        <?= (!empty($division_id) && isset($divisions[$division_id]))
-            ? $divisions[$division_id]
-            : 'Division' ?>
-    </button>
+                <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
+                    <?= (!empty($division_id) && isset($divisions[$division_id]))
+                        ? $divisions[$division_id]
+                        : 'Division' ?>
+                </button>
 
-    <ul class="dropdown-menu p-3 dropdown-scroll">
+                <ul class="dropdown-menu p-3 dropdown-scroll">
 
-        <!-- ALL -->
-        <li>
-            <a class="dropdown-item"
-               href="?search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
-                All
-            </a>
-        </li>
+                    <!-- ALL -->
+                    <li>
+                        <a class="dropdown-item"
+                            href="?search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
+                            All
+                        </a>
+                    </li>
 
-        <?php foreach ($divisions as $id => $name): ?>
-            <li>
-                <a class="dropdown-item"
-                   href="?division_id=<?= $id ?>&search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
-                    <?= $name ?>
-                </a>
-            </li>
-        <?php endforeach; ?>
+                    <?php foreach ($divisions as $id => $name): ?>
+                        <li>
+                            <a class="dropdown-item"
+                                href="?division_id=<?= $id ?>&search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
+                                <?= $name ?>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
 
-    </ul>
+                </ul>
 
-</div>
+            </div>
 
-        <!-- ACTIVE FILTER -->
-        <div class="dropdown">
+            <!-- ACTIVE FILTER -->
+            <div class="dropdown">
 
-            <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
-                <?= $is_active === '' ? 'Is Active?' : ($is_active == 1 ? 'YES' : 'NO') ?>
-            </button>
+                <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
+                    <?= $is_active === '' ? 'Is Active?' : ($is_active == 1 ? 'YES' : 'NO') ?>
+                </button>
 
-            <ul class="dropdown-menu p-3">
+                <ul class="dropdown-menu p-3">
 
-                <li>
-                    <a class="dropdown-item"
-                       href="?division_id=<?= urlencode($division_id) ?>&search=<?= urlencode($search) ?>">
-                        All
-                    </a>
-                </li>
+                    <li>
+                        <a class="dropdown-item"
+                            href="?division_id=<?= urlencode($division_id) ?>&search=<?= urlencode($search) ?>">
+                            All
+                        </a>
+                    </li>
 
-                <li>
-                    <a class="dropdown-item"
-                       href="?is_active=1&division_id=<?= urlencode($division_id) ?>&search=<?= urlencode($search) ?>">
-                        YES
-                    </a>
-                </li>
+                    <li>
+                        <a class="dropdown-item"
+                            href="?is_active=1&division_id=<?= urlencode($division_id) ?>&search=<?= urlencode($search) ?>">
+                            YES
+                        </a>
+                    </li>
 
-                <li>
-                    <a class="dropdown-item"
-                       href="?is_active=0&division_id=<?= urlencode($division_id) ?>&search=<?= urlencode($search) ?>">
-                        NO
-                    </a>
-                </li>
+                    <li>
+                        <a class="dropdown-item"
+                            href="?is_active=0&division_id=<?= urlencode($division_id) ?>&search=<?= urlencode($search) ?>">
+                            NO
+                        </a>
+                    </li>
 
-            </ul>
+                </ul>
+
+            </div>
 
         </div>
 
-    </div>
+        <!-- ADD SWITCHES BUTTON -->
+        <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addSwitchModal">
+            Add Switch
+        </button>
 
-    <!-- SEARCH -->
-    <div class="search-container">
+        <!-- ADD SWITCH MODAL -->
+        <div class="modal fade" id="addSwitchModal" tabindex="-1" aria-labelledby="addSwitchModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content">
 
-        <form method="GET" class="search-form">
+                    <!-- Header -->
+                    <div class="modal-header text-white" style="background-color:#0d6ea8;">
+                        <h5 class="modal-title" id="addSwitchModalLabel">Add Switch</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
 
-            <input type="hidden" name="division_id" value="<?= htmlspecialchars($division_id) ?>">
-            <input type="hidden" name="is_active" value="<?= htmlspecialchars($is_active) ?>">
+                    <!-- Body -->
+                    <div class="modal-body">
+                        <form>
+                            <div class="row g-3">
 
-            <input type="text"
-                   name="search"
-                   class="search-input"
-                   placeholder="Search switches..."
-                   value="<?= htmlspecialchars($search) ?>">
+                                <div class="col-md-6">
+                                    <label class="form-label">Personnel</label>
+                                    <input type="text" class="form-control" name="personnel">
+                                </div>
 
-            <button type="submit" class="search-btn">Search</button>
+                                <div class="col-md-6">
+                                    <label class="form-label">Division</label>
+                                    <input type="text" class="form-control" name="division">
+                                </div>
 
-        </form>
+                                <div class="col-md-6">
+                                    <label class="form-label">Manufacturer</label>
+                                    <input type="text" class="form-control" name="manufacturer">
+                                </div>
 
-    </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Model</label>
+                                    <input type="text" class="form-control" name="model">
+                                </div>
 
-</div>
+                                <div class="col-md-6">
+                                    <label class="form-label">PAR Serial No</label>
+                                    <input type="text" class="form-control" name="par_serial_no">
+                                </div>
 
-<!-- TABLE -->
-<div class="contenttable">
+                                <div class="col-md-6">
+                                    <label class="form-label">Ports</label>
+                                    <input type="number" class="form-control" name="ports">
+                                </div>
 
-    <div class="table-container">
+                                <div class="col-md-6">
+                                    <label class="form-label">Active Ports</label>
+                                    <input type="number" class="form-control" name="active_ports">
+                                </div>
 
-        <table class="users-table">
+                                <div class="col-md-6">
+                                    <label class="form-label">Managed</label>
+                                    <select class="form-control" name="managed">
+                                        <option value="">Select</option>
+                                        <option value="yes">Yes</option>
+                                        <option value="no">No</option>
+                                    </select>
+                                </div>
 
-            <thead>
-                <tr>
-    <th>PERSONNEL</th>
-    <th>DIVISION</th>
-    <th>MANUFACTURER</th>
-    <th>MODEL</th>
-    <th>PAR SERIAL NO</th>
-    <th>PORTS</th>
-    <th>ACTIVE PORTS</th>
-    <th>MANAGED</th>
-    <th>UNMANAGED</th>
-    <th>FIRMWARE</th>
-    <th>VLAN SUPPORTED</th>
-    <th>LOCATION</th>
-    <th>IS REMOTE ACCESSIBLE?</th>
-    <th>REMOTE DETAILS</th>
-    <th>REMARKS</th>
-    <th>PNP FOCAL</th>
-    <th>CONTACT</th>
-    <th>ACQ DATE</th>
-    <th>ACQ TYPE</th>
-    <th>ACQ DETAILS</th>
-    <th>PREVIOUS HANDLERS</th>  
-     <th>IS ACTIVE?</th>
-    <th>ACTIONS</th>
-</tr>
+                                <div class="col-md-6">
+                                    <label class="form-label">Unmanaged</label>
+                                    <select class="form-control" name="unmanaged">
+                                        <option value="">Select</option>
+                                        <option value="yes">Yes</option>
+                                        <option value="no">No</option>
+                                    </select>
+                                </div>
 
-            </thead>
+                                <div class="col-md-6">
+                                    <label class="form-label">Firmware</label>
+                                    <input type="text" class="form-control" name="firmware">
+                                </div>
 
-            <tbody>
+                                <div class="col-md-6">
+                                    <label class="form-label">VLAN Supported</label>
+                                    <select class="form-control" name="vlan_supported">
+                                        <option value="">Select</option>
+                                        <option value="yes">Yes</option>
+                                        <option value="no">No</option>
+                                    </select>
+                                </div>
 
-            <?php if ($result->num_rows > 0): ?>
+                                <div class="col-md-6">
+                                    <label class="form-label">Location</label>
+                                    <input type="text" class="form-control" name="location">
+                                </div>
 
-                <?php while ($row = $result->fetch_assoc()): ?>
+                                <div class="col-md-6">
+                                    <label class="form-label">Remote Accessible?</label>
+                                    <select class="form-control" name="remote_access">
+                                        <option value="">Select</option>
+                                        <option value="yes">Yes</option>
+                                        <option value="no">No</option>
+                                    </select>
+                                </div>
 
-                    <tr>
+                                <div class="col-md-6">
+                                    <label class="form-label">Remote Details</label>
+                                    <input type="text" class="form-control" name="remote_details">
+                                </div>
 
-    <td><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></td>
-    <td><?= htmlspecialchars($row['division'] ?? 'N/A') ?></td>
+                                <div class="col-md-6">
+                                    <label class="form-label">Remarks</label>
+                                    <input type="text" class="form-control" name="remarks">
+                                </div>
 
-    <td><?= htmlspecialchars($row['manufacturer']) ?></td>
-    <td><?= htmlspecialchars($row['model']) ?></td>
-    <td><?= htmlspecialchars($row['serial_no']) ?></td>
+                                <div class="col-md-6">
+                                    <label class="form-label">PNP Focal</label>
+                                    <input type="text" class="form-control" name="pnp_focal">
+                                </div>
 
-    <td><?= $row['no_of_ports'] ?></td>
-    <td><?= $row['no_of_active_ports'] ?></td>
-    <td><?= $row['no_of_managed'] ?></td>
-    <td><?= $row['no_of_unmanaged'] ?></td>
+                                <div class="col-md-6">
+                                    <label class="form-label">Contact</label>
+                                    <input type="text" class="form-control" name="contact">
+                                </div>
 
-    <td><?= htmlspecialchars($row['firmware_version']) ?></td>
+                                <div class="col-md-6">
+                                    <label class="form-label">Acquisition Date</label>
+                                    <input type="date" class="form-control" name="acq_date">
+                                </div>
 
-    <td>
-        <?= $row['is_vlan_supported']
-            ? '<span class="text-success fw-bold">YES</span>'
-            : '<span class="text-danger fw-bold">NO</span>' ?>
-    </td>
+                                <div class="col-md-6">
+                                    <label class="form-label">Acquisition Type</label>
+                                    <input type="text" class="form-control" name="acq_type">
+                                </div>
 
-    <td><?= htmlspecialchars($row['location']) ?></td>
+                                <div class="col-md-6">
+                                    <label class="form-label">Acquisition Details</label>
+                                    <input type="text" class="form-control" name="acq_details">
+                                </div>
 
-   
-    <td>
-        <?= $row['is_remote_access']
-            ? '<span class="text-success fw-bold">YES</span>'
-            : '<span class="text-danger fw-bold">NO</span>' ?>
-    </td>
+                                <div class="col-md-6">
+                                    <label class="form-label">Previous Handlers</label>
+                                    <input type="text" class="form-control" name="previous_handlers">
+                                </div>
 
-    <td><?= htmlspecialchars($row['remote_connection_details']) ?></td>
-    <td><?= htmlspecialchars($row['remarks']) ?></td>
+                                <div class="col-md-6">
+                                    <label class="form-label">Is Active?</label>
+                                    <select class="form-control" name="is_active">
+                                        <option value="">Select</option>
+                                        <option value="yes">Yes</option>
+                                        <option value="no">No</option>
+                                    </select>
+                                </div>
 
-    <td><?= htmlspecialchars($row['pnp_focal_person']) ?></td>
-    <td><?= htmlspecialchars($row['contact_details']) ?></td>
+                            </div>
+                        </form>
+                    </div>
 
-    <td><?= htmlspecialchars($row['acquisition_date']) ?></td>
-    <td><?= htmlspecialchars($row['acquisition_type']) ?></td>
-    <td><?= htmlspecialchars($row['acquisition_details']) ?></td>
+                    <!-- Footer -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">
+                            Save
+                        </button>
+                    </div>
 
-    <td><?= htmlspecialchars($row['previous_owners_id']) ?></td>
-
-    <td>
-        <?= $row['is_active']
-            ? '<span class="text-success fw-bold">YES</span>'
-            : '<span class="text-danger fw-bold">NO</span>' ?>
-    </td>
-    <td>
-        <button class="btn btn-primary btn-sm">View</button>
-    </td>
-
-</tr>
-
-
-                <?php endwhile; ?>
-
-            <?php else: ?>
-
-                <tr>
-                    <td colspan="15" class="text-center">No switches found.</td>
-                </tr>
-
-            <?php endif; ?>
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-    <!-- PAGINATION -->
-    <div class="table-footer">
-
-        <div class="user-stats">
-            <div class="stat-box total">
-                <span class="label">Total Devices</span>
-                <span class="value"><?= $totalSwitches ?></span>
+                </div>
             </div>
         </div>
+        <!-- SEARCH -->
+        <div class="search-container">
 
-        <?php if ($totalPages > 1): ?>
-        <div class="pagination">
+            <form method="GET" class="search-form">
 
-            <?php if ($page > 1): ?>
-                <a href="?page=<?= $page - 1 ?>&search=<?= urlencode($search) ?>&division_id=<?= urlencode($division_id) ?>&is_active=<?= urlencode($is_active) ?>">Prev</a>
-            <?php endif; ?>
+                <input type="hidden" name="division_id" value="<?= htmlspecialchars($division_id) ?>">
+                <input type="hidden" name="is_active" value="<?= htmlspecialchars($is_active) ?>">
 
-            <?php
-            $start = max(1, $page - 1);
-            $end = min($totalPages, $start + 2);
+                <input type="text" name="search" class="search-input" placeholder="Search switches..."
+                    value="<?= htmlspecialchars($search) ?>">
 
-            for ($i = $start; $i <= $end; $i++):
-            ?>
-                <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&division_id=<?= urlencode($division_id) ?>&is_active=<?= urlencode($is_active) ?>"
-                   class="<?= ($i == $page ? 'active-page' : '') ?>">
-                    <?= $i ?>
-                </a>
-            <?php endfor; ?>
+                <button type="submit" class="search-btn">Search</button>
 
-            <?php if ($page < $totalPages): ?>
-                <a href="?page=<?= $page + 1 ?>&search=<?= urlencode($search) ?>&division_id=<?= urlencode($division_id) ?>&is_active=<?= urlencode($is_active) ?>">Next</a>
-            <?php endif; ?>
+            </form>
 
         </div>
-        <?php endif; ?>
 
     </div>
 
-</div>
+    <!-- TABLE -->
+    <div class="contenttable">
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <div class="table-container">
+
+            <table class="users-table">
+
+                <thead>
+                    <tr>
+                        <th>PERSONNEL</th>
+                        <th>DIVISION</th>
+                        <th>MANUFACTURER</th>
+                        <th>MODEL</th>
+                        <th>PAR SERIAL NO</th>
+                        <th>PORTS</th>
+                        <th>ACTIVE PORTS</th>
+                        <th>MANAGED</th>
+                        <th>UNMANAGED</th>
+                        <th>FIRMWARE</th>
+                        <th>VLAN SUPPORTED</th>
+                        <th>LOCATION</th>
+                        <th>IS REMOTE ACCESSIBLE?</th>
+                        <th>REMOTE DETAILS</th>
+                        <th>REMARKS</th>
+                        <th>PNP FOCAL</th>
+                        <th>CONTACT</th>
+                        <th>ACQ DATE</th>
+                        <th>ACQ TYPE</th>
+                        <th>ACQ DETAILS</th>
+                        <th>PREVIOUS HANDLERS</th>
+                        <th>IS ACTIVE?</th>
+                        <th>ACTIONS</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    <?php if ($result->num_rows > 0): ?>
+
+                        <?php while ($row = $result->fetch_assoc()): ?>
+
+                            <tr>
+
+                                <td><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></td>
+                                <td><?= htmlspecialchars($row['division'] ?? 'N/A') ?></td>
+
+                                <td><?= htmlspecialchars($row['manufacturer']) ?></td>
+                                <td><?= htmlspecialchars($row['model']) ?></td>
+                                <td><?= htmlspecialchars($row['serial_no']) ?></td>
+
+                                <td><?= $row['no_of_ports'] ?></td>
+                                <td><?= $row['no_of_active_ports'] ?></td>
+                                <td><?= $row['no_of_managed'] ?></td>
+                                <td><?= $row['no_of_unmanaged'] ?></td>
+
+                                <td><?= htmlspecialchars($row['firmware_version']) ?></td>
+
+                                <td>
+                                    <?= $row['is_vlan_supported']
+                                        ? '<span class="text-success fw-bold">YES</span>'
+                                        : '<span class="text-danger fw-bold">NO</span>' ?>
+                                </td>
+
+                                <td><?= htmlspecialchars($row['location']) ?></td>
+
+
+                                <td>
+                                    <?= $row['is_remote_access']
+                                        ? '<span class="text-success fw-bold">YES</span>'
+                                        : '<span class="text-danger fw-bold">NO</span>' ?>
+                                </td>
+
+                                <td><?= htmlspecialchars($row['remote_connection_details']) ?></td>
+                                <td><?= htmlspecialchars($row['remarks']) ?></td>
+
+                                <td><?= htmlspecialchars($row['pnp_focal_person']) ?></td>
+                                <td><?= htmlspecialchars($row['contact_details']) ?></td>
+
+                                <td><?= htmlspecialchars($row['acquisition_date']) ?></td>
+                                <td><?= htmlspecialchars($row['acquisition_type']) ?></td>
+                                <td><?= htmlspecialchars($row['acquisition_details']) ?></td>
+
+                                <td><?= htmlspecialchars($row['previous_owners_id']) ?></td>
+
+                                <td>
+                                    <?= $row['is_active']
+                                        ? '<span class="text-success fw-bold">YES</span>'
+                                        : '<span class="text-danger fw-bold">NO</span>' ?>
+                                </td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm">View</button>
+                                </td>
+
+                            </tr>
+
+
+                        <?php endwhile; ?>
+
+                    <?php else: ?>
+
+                        <tr>
+                            <td colspan="15" class="text-center">No switches found.</td>
+                        </tr>
+
+                    <?php endif; ?>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <!-- PAGINATION -->
+        <div class="table-footer">
+
+            <div class="user-stats">
+                <div class="stat-box total">
+                    <span class="label">Total Devices</span>
+                    <span class="value"><?= $totalSwitches ?></span>
+                </div>
+            </div>
+
+            <?php if ($totalPages > 1): ?>
+                <div class="pagination">
+
+                    <?php if ($page > 1): ?>
+                        <a
+                            href="?page=<?= $page - 1 ?>&search=<?= urlencode($search) ?>&division_id=<?= urlencode($division_id) ?>&is_active=<?= urlencode($is_active) ?>">Prev</a>
+                    <?php endif; ?>
+
+                    <?php
+                    $start = max(1, $page - 1);
+                    $end = min($totalPages, $start + 2);
+
+                    for ($i = $start; $i <= $end; $i++):
+                        ?>
+                        <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&division_id=<?= urlencode($division_id) ?>&is_active=<?= urlencode($is_active) ?>"
+                            class="<?= ($i == $page ? 'active-page' : '') ?>">
+                            <?= $i ?>
+                        </a>
+                    <?php endfor; ?>
+
+                    <?php if ($page < $totalPages): ?>
+                        <a
+                            href="?page=<?= $page + 1 ?>&search=<?= urlencode($search) ?>&division_id=<?= urlencode($division_id) ?>&is_active=<?= urlencode($is_active) ?>">Next</a>
+                    <?php endif; ?>
+
+                </div>
+            <?php endif; ?>
+
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
+
 </html>

@@ -199,241 +199,331 @@ $result = $stmt->get_result();
 
 <body>
 
-<?php include 'superadmin_sidebar.php'; ?>
-<?php include 'superadmin_navbar.php'; ?>
+    <?php include 'superadmin_sidebar.php'; ?>
+    <?php include 'superadmin_navbar.php'; ?>
 
-<div class="top-bar">
+    <div class="top-bar">
 
-    <!-- FILTERS -->
-    <div class="filters">
+        <!-- FILTERS -->
+        <div class="filters">
 
-        <!-- DIVISION DROPDOWN -->
-        <div class="dropdown">
+            <!-- DIVISION DROPDOWN -->
+            <div class="dropdown">
 
-            <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
-                <?= !empty($division) ? htmlspecialchars($division) : 'Division' ?>
-            </button>
+                <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
+                    <?= !empty($division) ? htmlspecialchars($division) : 'Division' ?>
+                </button>
 
-            <ul class="dropdown-menu p-3 dropdown-scroll">
+                <ul class="dropdown-menu p-3 dropdown-scroll">
 
-                <li>
-                    <a class="dropdown-item"
-                       href="?search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
-                        All
-                    </a>
-                </li>
+                    <li>
+                        <a class="dropdown-item"
+                            href="?search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
+                            All
+                        </a>
+                    </li>
 
-                <?php
-                $divisionQuery = mysqli_query($conn, "
+                    <?php
+                    $divisionQuery = mysqli_query($conn, "
                     SELECT division
                     FROM divisions
                     ORDER BY id ASC
                 ");
 
-                while ($div = mysqli_fetch_assoc($divisionQuery)):
-                    $divName = $div['division'];
-                ?>
+                    while ($div = mysqli_fetch_assoc($divisionQuery)):
+                        $divName = $div['division'];
+                        ?>
+
+                        <li>
+                            <a class="dropdown-item"
+                                href="?division=<?= urlencode($divName) ?>&search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
+                                <?= htmlspecialchars($divName) ?>
+                            </a>
+                        </li>
+
+                    <?php endwhile; ?>
+
+                </ul>
+
+            </div>
+
+            <!-- ACTIVE FILTER -->
+            <div class="dropdown">
+
+                <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
+                    <?= $is_active === '' ? 'Is Active?' : ($is_active == 1 ? 'YES' : 'NO') ?>
+                </button>
+
+                <ul class="dropdown-menu p-3">
 
                     <li>
                         <a class="dropdown-item"
-                           href="?division=<?= urlencode($divName) ?>&search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
-                            <?= htmlspecialchars($divName) ?>
+                            href="?division=<?= urlencode($division) ?>&search=<?= urlencode($search) ?>">
+                            All
                         </a>
                     </li>
 
-                <?php endwhile; ?>
+                    <li>
+                        <a class="dropdown-item"
+                            href="?is_active=1&division=<?= urlencode($division) ?>&search=<?= urlencode($search) ?>">
+                            YES
+                        </a>
+                    </li>
 
-            </ul>
+                    <li>
+                        <a class="dropdown-item"
+                            href="?is_active=0&division=<?= urlencode($division) ?>&search=<?= urlencode($search) ?>">
+                            NO
+                        </a>
+                    </li>
+
+                </ul>
+
+            </div>
 
         </div>
+        <!-- ADD FIREWALLS BUTTON -->
+        <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addFirewallModal">
+            Add Firewall
+        </button>
 
-        <!-- ACTIVE FILTER -->
-        <div class="dropdown">
+        <!-- ADD FIREWALL MODAL -->
+        <div class="modal fade" id="addFirewallModal" tabindex="-1" aria-labelledby="addFirewallModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
 
-            <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
-                <?= $is_active === '' ? 'Is Active?' : ($is_active == 1 ? 'YES' : 'NO') ?>
-            </button>
+                    <!-- Header -->
+                    <div class="modal-header text-white" style="background-color:#0d6ea8;">
+                        <h5 class="modal-title" id="addFirewallModalLabel">Add Firewall</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
 
-            <ul class="dropdown-menu p-3">
+                    <!-- Body -->
+                    <div class="modal-body">
+                        <form>
+                            <div class="row g-3">
 
-                <li>
-                    <a class="dropdown-item"
-                       href="?division=<?= urlencode($division) ?>&search=<?= urlencode($search) ?>">
-                        All
-                    </a>
-                </li>
+                                <div class="col-md-6">
+                                    <label class="form-label">Personnel</label>
+                                    <input type="text" class="form-control" name="personnel">
+                                </div>
 
-                <li>
-                    <a class="dropdown-item"
-                       href="?is_active=1&division=<?= urlencode($division) ?>&search=<?= urlencode($search) ?>">
-                        YES
-                    </a>
-                </li>
+                                <div class="col-md-6">
+                                    <label class="form-label">Division</label>
+                                    <input type="text" class="form-control" name="division">
+                                </div>
 
-                <li>
-                    <a class="dropdown-item"
-                       href="?is_active=0&division=<?= urlencode($division) ?>&search=<?= urlencode($search) ?>">
-                        NO
-                    </a>
-                </li>
+                                <div class="col-md-6">
+                                    <label class="form-label">Manufacturer</label>
+                                    <input type="text" class="form-control" name="manufacturer">
+                                </div>
 
-            </ul>
+                                <div class="col-md-6">
+                                    <label class="form-label">Model</label>
+                                    <input type="text" class="form-control" name="model">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Serial No</label>
+                                    <input type="text" class="form-control" name="serial_no">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">No of Ports</label>
+                                    <input type="number" class="form-control" name="no_of_ports">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Active Ports</label>
+                                    <input type="number" class="form-control" name="active_ports">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Firmware</label>
+                                    <input type="text" class="form-control" name="firmware">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Location</label>
+                                    <input type="text" class="form-control" name="location">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Is Active?</label>
+                                    <select class="form-control" name="is_active">
+                                        <option value="">Select</option>
+                                        <option value="yes">Yes</option>
+                                        <option value="no">No</option>
+                                    </select>
+                                </div>
+
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">
+                            Save
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- SEARCH -->
+        <div class="search-container">
+
+            <form class="search-form" method="GET">
+
+                <input type="text" name="search" class="search-input" placeholder="Search firewalls..."
+                    value="<?= htmlspecialchars($search) ?>">
+
+                <input type="hidden" name="division" value="<?= htmlspecialchars($division) ?>">
+                <input type="hidden" name="is_active" value="<?= htmlspecialchars($is_active) ?>">
+
+                <button type="submit" class="search-btn">
+                    Search
+                </button>
+
+            </form>
 
         </div>
 
     </div>
 
-    <!-- SEARCH -->
-    <div class="search-container">
+    <!-- TABLE -->
+    <div class="contenttable">
 
-        <form class="search-form" method="GET">
+        <div class="table-container">
 
-            <input type="text"
-                   name="search"
-                   class="search-input"
-                   placeholder="Search firewalls..."
-                   value="<?= htmlspecialchars($search) ?>">
+            <table class="users-table">
 
-            <input type="hidden" name="division" value="<?= htmlspecialchars($division) ?>">
-            <input type="hidden" name="is_active" value="<?= htmlspecialchars($is_active) ?>">
-
-            <button type="submit" class="search-btn">
-                Search
-            </button>
-
-        </form>
-
-    </div>
-
-</div>
-
-<!-- TABLE -->
-<div class="contenttable">
-
-    <div class="table-container">
-
-        <table class="users-table">
-
-            <thead>
-                <tr>
-                    <th>PERSONNEL</th>
-                    <th>DIVISION</th>
-                    <th>MANUFACTURER</th>
-                    <th>MODEL</th>
-                    <th>SERIAL NO</th>
-                    <th>NO OF PORTS</th>
-                    <th>ACTIVE PORTS</th>
-                    <th>FIRMWARE</th>
-                    <th>LOCATION</th>
-                    <th>IS ACTIVE</th>
-                    <th>ACTION</th>
-                </tr>
-            </thead>
-
-            <tbody>
-
-            <?php if ($result->num_rows > 0): ?>
-                <?php while ($row = $result->fetch_assoc()): ?>
-
+                <thead>
                     <tr>
-                        <td><?= htmlspecialchars($row['personnel_name'] ?? 'N/A') ?></td>
-                        <td><?= htmlspecialchars($row['division'] ?? 'N/A') ?></td>
-                        <td><?= htmlspecialchars($row['manufacturer']) ?></td>
-                        <td><?= htmlspecialchars($row['model']) ?></td>
-                        <td><?= htmlspecialchars($row['serial_no']) ?></td>
-                        <td><?= htmlspecialchars($row['no_of_ports']) ?></td>
-                        <td><?= htmlspecialchars($row['no_of_active_ports']) ?></td>
-                        <td><?= htmlspecialchars($row['firmware_version']) ?></td>
-                        <td><?= htmlspecialchars($row['location']) ?></td>
-
-                        <td>
-                            <?= $row['is_active']
-                                ? '<span class="text-success fw-bold">YES</span>'
-                                : '<span class="text-danger fw-bold">NO</span>' ?>
-                        </td>
-
-                        <td>
-                            <button class="btn btn-sm btn-primary">Edit</button>
-                        </td>
+                        <th>PERSONNEL</th>
+                        <th>DIVISION</th>
+                        <th>MANUFACTURER</th>
+                        <th>MODEL</th>
+                        <th>SERIAL NO</th>
+                        <th>NO OF PORTS</th>
+                        <th>ACTIVE PORTS</th>
+                        <th>FIRMWARE</th>
+                        <th>LOCATION</th>
+                        <th>IS ACTIVE</th>
+                        <th>ACTION</th>
                     </tr>
+                </thead>
 
-                <?php endwhile; ?>
-            <?php else: ?>
+                <tbody>
 
-                <tr>
-                    <td colspan="11" class="text-center">No firewall devices found.</td>
-                </tr>
+                    <?php if ($result->num_rows > 0): ?>
+                        <?php while ($row = $result->fetch_assoc()): ?>
 
-            <?php endif; ?>
+                            <tr>
+                                <td><?= htmlspecialchars($row['personnel_name'] ?? 'N/A') ?></td>
+                                <td><?= htmlspecialchars($row['division'] ?? 'N/A') ?></td>
+                                <td><?= htmlspecialchars($row['manufacturer']) ?></td>
+                                <td><?= htmlspecialchars($row['model']) ?></td>
+                                <td><?= htmlspecialchars($row['serial_no']) ?></td>
+                                <td><?= htmlspecialchars($row['no_of_ports']) ?></td>
+                                <td><?= htmlspecialchars($row['no_of_active_ports']) ?></td>
+                                <td><?= htmlspecialchars($row['firmware_version']) ?></td>
+                                <td><?= htmlspecialchars($row['location']) ?></td>
 
-            </tbody>
+                                <td>
+                                    <?= $row['is_active']
+                                        ? '<span class="text-success fw-bold">YES</span>'
+                                        : '<span class="text-danger fw-bold">NO</span>' ?>
+                                </td>
 
-        </table>
+                                <td>
+                                    <button class="btn btn-sm btn-primary">Edit</button>
+                                </td>
+                            </tr>
 
-    </div>
+                        <?php endwhile; ?>
+                    <?php else: ?>
 
-    <!-- FOOTER -->
-    <div class="table-footer">
+                        <tr>
+                            <td colspan="11" class="text-center">No firewall devices found.</td>
+                        </tr>
 
+                    <?php endif; ?>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <!-- FOOTER -->
         <div class="table-footer">
- <!-- STATS -->
-            <div class="user-stats">
 
-                <div class="stat-box total">
+            <div class="table-footer">
+                <!-- STATS -->
+                <div class="user-stats">
 
-                    <span class="label">
-                        Total Devices
-                    </span>
+                    <div class="stat-box total">
 
-                    <span class="value">
-                        <?= $totalDevices ?>
-                    </span>
+                        <span class="label">
+                            Total Devices
+                        </span>
+
+                        <span class="value">
+                            <?= $totalDevices ?>
+                        </span>
+
+                    </div>
+
+                    <div class="stat-box active">
+
+                        <span class="label">
+                            Active
+                        </span>
+
+                        <span class="value">
+                            <?= $activeDevices ?>
+                        </span>
+
+                    </div>
+
+                    <div class="stat-box inactive">
+
+                        <span class="label">
+                            Inactive
+                        </span>
+
+                        <span class="value">
+                            <?= $inactiveDevices ?>
+                        </span>
+
+                    </div>
 
                 </div>
 
-                <div class="stat-box active">
 
-                    <span class="label">
-                        Active
-                    </span>
+                <div class="pagination">
 
-                    <span class="value">
-                        <?= $activeDevices ?>
-                    </span>
-
-                </div>
-
-                <div class="stat-box inactive">
-
-                    <span class="label">
-                        Inactive
-                    </span>
-
-                    <span class="value">
-                        <?= $inactiveDevices ?>
-                    </span>
+                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                        <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division) ?>&is_active=<?= urlencode($is_active) ?>"
+                            class="<?= ($i == $page) ? 'active-page' : '' ?>">
+                            <?= $i ?>
+                        </a>
+                    <?php endfor; ?>
 
                 </div>
 
             </div>
 
-
-        <div class="pagination">
-
-            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division) ?>&is_active=<?= urlencode($is_active) ?>"
-                   class="<?= ($i == $page) ? 'active-page' : '' ?>">
-                    <?= $i ?>
-                </a>
-            <?php endfor; ?>
-
         </div>
 
-    </div>
-
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
+
 </html>

@@ -48,7 +48,7 @@ if (!empty($search)) {
         CONCAT(per.first_name, ' ', per.middle_name, ' ', per.last_name) LIKE ?
     )";
 
-     $searchValue = "%$search%";
+    $searchValue = "%$search%";
 
     for ($i = 0; $i < 5; $i++) {
         $params[] = $searchValue;
@@ -185,6 +185,92 @@ $result = $stmt->get_result();
 
             </div>
 
+        </div>
+
+        <!-- ADD HEADSET BUTTON -->
+        <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addHeadsetModal">
+            Add Headset
+        </button>
+
+        <!-- ADD HEADSET MODAL -->
+        <div class="modal fade" id="addHeadsetModal" tabindex="-1" aria-labelledby="addHeadsetModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+
+                    <!-- Header -->
+                    <div class="modal-header text-white" style="background-color:#0d6ea8;">
+                        <h5 class="modal-title" id="addHeadsetModalLabel">Add Headset</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="modal-body">
+                        <form>
+
+                            <div class="row g-3">
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Personnel</label>
+                                    <input type="text" class="form-control" name="personnel">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Division</label>
+                                    <input type="text" class="form-control" name="division">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Brand</label>
+                                    <input type="text" class="form-control" name="brand">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Model</label>
+                                    <input type="text" class="form-control" name="model">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Serial No</label>
+                                    <input type="text" class="form-control" name="serial_no">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Acquisition Details</label>
+                                    <input type="text" class="form-control" name="acquisition_details">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Acquisition Date</label>
+                                    <input type="date" class="form-control" name="acquisition_date">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Previous Owners</label>
+                                    <input type="text" class="form-control" name="previous_owners">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Created Date</label>
+                                    <input type="date" class="form-control" name="created_date">
+                                </div>
+
+                            </div>
+
+                        </form>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">
+                            Save
+                        </button>
+                    </div>
+
+                </div>
+            </div>
         </div>
 
         <!-- SEARCH RIGHT SIDE -->
