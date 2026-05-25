@@ -284,7 +284,7 @@ $result = $stmt->get_result();
                     value="<?= htmlspecialchars($search) ?>">
 
                 <button type="submit" class="search-btn">
-                    Search
+                    <i class="bi bi-search"></i>
                 </button>
 
             </form>
@@ -334,7 +334,7 @@ $result = $stmt->get_result();
 
                                 <td>
                                     <button class="btn btn-primary btn-sm">
-                                        View Details
+                                        <i class="bi bi-gear-fill"></i>
                                     </button>
                                 </td>
                             </tr>

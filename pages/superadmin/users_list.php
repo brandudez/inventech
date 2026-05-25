@@ -308,7 +308,7 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
                     value="<?= htmlspecialchars($search); ?>">
 
                 <button type="submit" class="search-btn">
-                    Search
+                    <i class="bi bi-search"></i>
                 </button>
 
             </form>
@@ -532,12 +532,12 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
                                     '<?= htmlspecialchars($row['created_by'] ?? 'SYSTEM', ENT_QUOTES); ?>',
                                     '<?= $row['is_active']; ?>'
                                 )">
-                                        Edit
+                                       <i class="bi bi-gear-fill"></i>
                                     </button>
 
                                     <button type="button" class="btn-change"
                                     onclick="openPasswordModal(<?= $row['id']; ?>)">
-                                    Change Password
+                                    <i class="bi bi-key"></i> 
                                 </button>
                                 </td>
 

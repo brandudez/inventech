@@ -287,7 +287,7 @@ body {
 }
 
 .btn-primary {
-    background: #37d75f;
+    background: #008000;
     color: white;
     font-weight: 600;
     border: none;
@@ -596,7 +596,7 @@ body {
     transition: 0.3s ease;
     margin-left: 15px;
     display: inline-block;
-    background: #dd1d1d;
+    background: #dc3434;
     box-shadow: 0 4px 10px rgba(13, 110, 168, 0.3);
 }
 
@@ -984,4 +984,16 @@ body {
 /* PREVENT PAGE SCROLL WHEN MODAL IS ACTIVE */
 body.modal-open {
     overflow: hidden;
+}
+.users-table tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+.users-table tbody tr:nth-child(even) {
+    background-color: #dedcdc;
+}
+
+/* Optional hover effect */
+.users-table tbody tr:hover {
+    background-color: #dfe6e9;
 }

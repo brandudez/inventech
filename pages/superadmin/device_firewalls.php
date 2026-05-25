@@ -387,7 +387,7 @@ $result = $stmt->get_result();
                 <input type="hidden" name="is_active" value="<?= htmlspecialchars($is_active) ?>">
 
                 <button type="submit" class="search-btn">
-                    Search
+                    <i class="bi bi-search"></i>
                 </button>
 
             </form>

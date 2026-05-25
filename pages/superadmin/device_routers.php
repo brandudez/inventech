@@ -453,7 +453,7 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
                 <input type="text" name="search" class="search-input" placeholder="Search routers..."
                     value="<?= htmlspecialchars($search) ?>">
 
-                <button type="submit" class="search-btn">Search</button>
+                <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
 
             </form>
 
@@ -533,7 +533,7 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
                                 <td><?= htmlspecialchars($row['previous_owners_id']) ?></td>
 
                                 <td>
-                                    <button class="btn btn-primary btn-sm">View</button>
+                                    <button class="btn btn-primary btn-sm"><i class="bi bi-gear-fill"></i></button>
                                 </td>
                             </tr>
 

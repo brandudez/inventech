@@ -13,15 +13,13 @@ if ($_SESSION['user']['role_id'] != 1) {
 
 include("../../config/db.php");
 
-function getAntivirusNames($conn, $json)
+function getEndpointNames($conn, $json)
 {
-    if (empty($json))
-        return '';
+    if (empty($json)) return '';
 
     $ids = json_decode($json, true);
 
-    if (!is_array($ids) || empty($ids))
-        return '';
+    if (!is_array($ids) || empty($ids)) return '';
 
     $ids = array_map('intval', $ids);
     $ids = implode(',', $ids);
@@ -38,7 +36,7 @@ function getAntivirusNames($conn, $json)
         $names[] = $row['antivirus'];
     }
 
-    return implode(",", $names);
+    return implode(', ', $names);
 }
 function getPersonnelNames($conn, $json)
 {
@@ -197,7 +195,7 @@ $query = "
         d.*,
 
         CONCAT(
-            r.rank, ',  ',
+            r.rank, '  ',
             p.first_name, ' ',
             p.middle_name, ' ',
             p.last_name
@@ -218,7 +216,7 @@ $query = "
 
     $whereSQL
 
-    ORDER BY d.id DESC
+    ORDER BY d.device_name ASC
 
     LIMIT ?, ?
 ";
@@ -356,7 +354,7 @@ $result = $stmt->get_result();
                     value="<?= htmlspecialchars($search) ?>">
 
                 <button type="submit" class="search-btn">
-                    Search
+                    <i class="bi bi-search"></i>
                 </button>
 
             </form>
@@ -564,7 +562,7 @@ $result = $stmt->get_result();
                                                 <td><?= htmlspecialchars($row['office_application'] ?? '') ?></td>
                                                 <td><?= htmlspecialchars($row['office_license_key'] ?? '') ?></td>
                                                 <td><?= ($row['is_office_licensed'] == 1) ? 'Yes' : 'No' ?></td>
-                                                <td><?= nl2br(htmlspecialchars(getAntivirusNames($conn, $row['endpoint_security_id']))) ?></td>
+                                                <td><?= getEndpointNames($conn, $row['endpoint_security_id']) ?></td>
                                                 <td><?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?> </td>
                                                 <td><?= htmlspecialchars($row['date_installed'] ?? '') ?></td>
                                                 <td><?= htmlspecialchars($row['guid'] ?? '') ?></td>
@@ -598,15 +596,9 @@ $result = $stmt->get_result();
 
                                                     <!-- EDIT BUTTON -->
                                                     <button class="btn btn-primary btn-sm" data-bs-toggle="modal"
-                                                        data-bs-target="#editModal<?= $row['id'] ?>">Edit </button>
+                                                        data-bs-target="#editModal<?= $row['id'] ?>"><i class="bi bi-gear-fill"></i> </button>
 
-                                                    <!-- DELETE BUTTON -->
-                                                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal"
-                                                        data-bs-target="#deleteModal<?= $row['id'] ?>">
-
-                                                        Delete
-
-                                                    </button>
+                                
 
                                                 </td>
 
@@ -633,156 +625,333 @@ $result = $stmt->get_result();
                                                             <!-- MODAL BODY -->
                                                             <div class="modal-body">
 
-                                                                <form>
+                                                                <form action="add_desktop.php" method="POST">
 
                                                                     <div class="row g-3">
 
                                                                         <div class="col-md-4">
                                                                             <label class="form-label">Device Name</label>
-                                                                            <input type="text" class="form-control">
+                                                                           <input type="text" class="form-control" name="device_name" required>
                                                                         </div>
 
                                                                         <div class="col-md-4">
                                                                             <label class="form-label">Personnel</label>
-                                                                            <input type="text" class="form-control">
+
+                                                                            <select name="personnel_id" class="form-select" required>
+
+                                                                                <option value="" disabled selected hidden>
+                                                                                    Select Personnel
+                                                                                </option>
+
+                                                                                 <?php
+                                                                                    $personnelQuery = mysqli_query($conn, "
+                                                                                        SELECT 
+                                                                                            p.id,
+                                                                                            r.rank,
+                                                                                            p.first_name,
+                                                                                            p.middle_name,
+                                                                                            p.last_name,
+                                                                                            p.rank_id
+                                                                                        FROM personnels p
+                                                                                        LEFT JOIN ranks r
+                                                                                            ON p.rank_id = r.id
+                                                                                        ORDER BY p.rank_id DESC
+                                                                                    ");
+
+
+                                                                                while ($personnel = mysqli_fetch_assoc($personnelQuery)):
+
+                                                                                    $fullName = trim(
+                                                                                        ($personnel['rank'] ?? '') . ' ' .
+                                                                                        ($personnel['first_name'] ?? '') . ' ' .
+                                                                                        ($personnel['middle_name'] ?? '') . ' ' .
+                                                                                        ($personnel['last_name'] ?? '')
+                                                                                    );
+                                                                                ?>
+
+                                                                                    <option value="<?= $personnel['id'] ?>">
+                                                                                        <?= htmlspecialchars($fullName) ?>
+                                                                                    </option>
+
+                                                                                <?php endwhile; ?>
+
+                                                                            </select>
                                                                         </div>
 
-                                                                        <div class="col-md-4">
-                                                                            <label class="form-label">Division</label>
-                                                                            <input type="text" class="form-control">
-                                                                        </div>
+                                                                       <div class="col-md-4">
+                                                                        <label class="form-label">Division</label>
 
+                                                                        <select name="division_id" class="form-select" required>
+
+                                                                            <option value="" disabled selected hidden>
+                                                                                Select Division
+                                                                            </option>
+
+                                                                            <?php
+                                                                            $divisionQuery = mysqli_query($conn, "
+                                                                                SELECT id, division
+                                                                                FROM divisions
+                                                                                ORDER BY id ASC
+                                                                            ");
+
+                                                                            while ($division = mysqli_fetch_assoc($divisionQuery)):
+                                                                            ?>
+
+                                                                                <option value="<?= $division['id'] ?>">
+                                                                                    <?= htmlspecialchars($division['division']) ?>
+                                                                                </option>
+
+                                                                            <?php endwhile; ?>
+
+                                                                        </select>
+                                                                    </div>
                                                                         <div class="col-md-4">
                                                                             <label class="form-label">IP Address</label>
-                                                                            <input type="text" class="form-control">
+                                                                           <input type="text" class="form-control" name="ip_address" required>
                                                                         </div>
 
-                                                                        <div class="col-md-4">
-                                                                            <label class="form-label">Operating System</label>
-                                                                            <input type="text" class="form-control">
-                                                                        </div>
+                                                                       <div class="col-md-4">
+                                                                        <label class="form-label">Operating System</label>
 
-                                                                        <div class="col-md-4">
+                                                                        <select name="os" class="form-select" required>
+                                                                            <option value="" disabled selected hidden>Select Operating System</option>
+
+                                                                            <!-- Windows 10 -->
+                                                                            <option value="Windows 10 Home">Windows 10 Home</option>
+                                                                            <option value="Windows 10 Pro">Windows 10 Pro</option>
+                                                                            <option value="Windows 10 Pro for Workstations">Windows 10 Pro for Workstations</option>
+                                                                            <option value="Windows 10 Enterprise">Windows 10 Enterprise</option>
+                                                                            <option value="Windows 10 Education">Windows 10 Education</option>
+                                                                            <option value="Windows 10 IoT">Windows 10 IoT</option>
+
+                                                                            <!-- Windows 11 -->
+                                                                            <option value="Windows 11 Home">Windows 11 Home</option>
+                                                                            <option value="Windows 11 Pro">Windows 11 Pro</option>
+                                                                            <option value="Windows 11 Pro for Workstations">Windows 11 Pro for Workstations</option>
+                                                                            <option value="Windows 11 Enterprise">Windows 11 Enterprise</option>
+                                                                            <option value="Windows 11 Education">Windows 11 Education</option>
+                                                                            <option value="Windows 11 SE">Windows 11 SE</option>
+                                                                        </select>
+                                                                    </div>
+
+                                                                       <div class="col-md-4">
                                                                             <label class="form-label">Is OS Licensed?</label>
-                                                                            <select class="form-select">
-                                                                                <option>Select</option>
-                                                                                <option>Yes</option>
-                                                                                <option>No</option>
+
+                                                                            <select name="os_licensed" class="form-select" required>
+                                                                                <option value="" disabled selected hidden>Select OS License</option>
+                                                                                <option value="Yes">Yes</option>
+                                                                                <option value="No">No</option>
                                                                             </select>
                                                                         </div>
 
                                                                         <div class="col-md-6">
                                                                             <label class="form-label">OS License Key</label>
-                                                                            <input type="text" class="form-control">
+                                                                           <input type="text" class="form-control" name="os_license_key" required>
                                                                         </div>
 
                                                                         <div class="col-md-6">
-                                                                            <label class="form-label">Office Application</label>
-                                                                            <input type="text" class="form-control">
-                                                                        </div>
+                                                                        <label class="form-label">Office Application</label>
+
+                                                                        <select name="office_application" class="form-select" required>
+                                                                            <option value="" disabled selected hidden>Select Office Application</option>
+
+                                                                            <option value="Microsoft 365 (M365)">Microsoft 365 (M365)</option>
+                                                                            <option value="Microsoft Office 2021 Professional">Microsoft Office 2021 Professional</option>
+                                                                            <option value="WPS Office">WPS Office</option>
+                                                                            <option value="Microsoft Word">Microsoft Word</option>
+                                                                            <option value="Microsoft Excel">Microsoft Excel</option>
+                                                                            <option value="Microsoft PowerPoint">Microsoft PowerPoint</option>
+                                                                            <option value="Google Docs">Google Docs</option>
+                                                                            <option value="Google Sheets">Google Sheets</option>
+                                                                        </select>
+                                                                    </div>
 
                                                                         <div class="col-md-6">
                                                                             <label class="form-label">Office License Key</label>
-                                                                            <input type="text" class="form-control">
+                                                                            <input type="text" class="form-control" name="office_license_key" required>
                                                                         </div>
 
                                                                         <div class="col-md-6">
                                                                             <label class="form-label">Is Office Licensed?</label>
-                                                                            <select class="form-select">
+                                                                            <select name="is_office_licensed" class="form-select" required>
                                                                                 <option>Select</option>
                                                                                 <option>Yes</option>
                                                                                 <option>No</option>
                                                                             </select>
                                                                         </div>
 
-                                                                        <div class="col-md-4">
-                                                                            <label class="form-label">Endpoint Security</label>
-                                                                            <input type="text" class="form-control">
-                                                                        </div>
+                                                                    <div class="col-md-12">
+                                                                        <label class="form-label">Endpoint Security</label>
 
+                                                                        <div class="row">
+
+                                                                            <?php
+                                                                            $epQuery = mysqli_query($conn, "
+                                                                                SELECT id, antivirus
+                                                                                FROM endpoint_security
+                                                                                ORDER BY id ASC
+                                                                            ");
+
+                                                                            while ($ep = mysqli_fetch_assoc($epQuery)):
+                                                                            ?>
+
+                                                                                <div class="col-md-4">
+                                                                                    <div class="form-check">
+                                                                                        <input
+                                                                                            class="form-check-input"
+                                                                                            type="checkbox"
+                                                                                            name="endpoint_security[]"
+                                                                                            value="<?= $ep['id'] ?>"
+                                                                                            id="ep<?= $ep['id'] ?>"
+                                                                                        >
+
+                                                                                        <label class="form-check-label" for="ep<?= $ep['id'] ?>">
+                                                                                            <?= htmlspecialchars($ep['antivirus']) ?>
+                                                                                        </label>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                            <?php endwhile; ?>
+
+                                                                        </div>
+                                                                    </div>
                                                                         <div class="col-md-4">
                                                                             <label class="form-label"># of Installed Antivirus</label>
-                                                                            <input type="number" class="form-control">
+                                                                            <input type="number" class="form-control" name="no_of_installed_anti_virus" required>
                                                                         </div>
 
                                                                         <div class="col-md-4">
                                                                             <label class="form-label">Date Installed</label>
-                                                                            <input type="date" class="form-control">
+                                                                            <input type="date" class="form-control" name="date_installed" required>
                                                                         </div>
 
                                                                         <div class="col-md-6">
                                                                             <label class="form-label">GUID</label>
-                                                                            <input type="text" class="form-control">
+                                                                            <input type="text" class="form-control" name="guid" required>
                                                                         </div>
 
                                                                         <div class="col-md-6">
                                                                             <label class="form-label">MAC Address</label>
-                                                                            <input type="text" class="form-control">
+                                                                            <input type="text" class="form-control" name="mac_address" required>
                                                                         </div>
 
                                                                         <div class="col-md-4">
                                                                             <label class="form-label">CPU Brand</label>
-                                                                            <input type="text" class="form-control">
+                                                                            <input type="text" class="form-control" name="cpu_brand" required>
                                                                         </div>
 
                                                                         <div class="col-md-4">
                                                                             <label class="form-label"># of CPU Cores</label>
-                                                                            <input type="number" class="form-control">
+                                                                            <input type="number" class="form-control" name="cpu_cores" required>
                                                                         </div>
 
                                                                         <div class="col-md-4">
                                                                             <label class="form-label">GBs of RAM</label>
-                                                                            <input type="number" class="form-control">
+                                                                            <input type="number" class="form-control" name="gb_ram" required>
                                                                         </div>
 
                                                                         <div class="col-md-4">
                                                                             <label class="form-label">Monitor Brand</label>
-                                                                            <input type="text" class="form-control">
+                                                                            <input type="text" class="form-control" name="monitor_brand" required>
                                                                         </div>
 
                                                                         <div class="col-md-4">
                                                                             <label class="form-label">Monitor Size</label>
-                                                                            <input type="text" class="form-control">
+                                                                            <input type="text" class="form-control" name="monitor_size_inches" required>
                                                                         </div>
 
                                                                         <div class="col-md-4">
                                                                             <label class="form-label"># of User Accounts</label>
-                                                                            <input type="number" class="form-control">
+                                                                            <input type="number" class="form-control" name="no_of_user_accounts" required>
                                                                         </div>
 
                                                                         <div class="col-md-6">
                                                                             <label class="form-label">User Account Type</label>
-                                                                            <input type="text" class="form-control">
+                                                                            <input type="text" class="form-control" name="user_account_type" required>
                                                                         </div>
 
                                                                         <div class="col-md-6">
                                                                             <label class="form-label">Authorized Software</label>
-                                                                            <textarea class="form-control" rows="2"></textarea>
+                                                                            <textarea class="form-control" name="authorized_software" required></textarea>
                                                                         </div>
 
                                                                         <div class="col-md-6">
                                                                             <label class="form-label">Unauthorized Software</label>
-                                                                            <textarea class="form-control" rows="2"></textarea>
+                                                                            <textarea class="form-control" name="unauthorized_software" required></textarea>
                                                                         </div>
 
                                                                         <div class="col-md-6">
                                                                             <label class="form-label">Acquisition Date</label>
-                                                                            <input type="date" class="form-control">
+                                                                            <input type="date" class="form-control" name="acquisition_date" required>
                                                                         </div>
 
                                                                         <div class="col-md-6">
                                                                             <label class="form-label">PAR Serial Number</label>
-                                                                            <input type="text" class="form-control">
+                                                                           <input type="text" name="par_serial_no" class="form-control">
                                                                         </div>
 
-                                                                        <div class="col-md-6">
+                                                                     <div class="col-md-6">
                                                                             <label class="form-label">Previous Handler/s</label>
-                                                                            <input type="text" class="form-control">
+
+                                                                            <div class="dropdown w-100">
+
+                                                                                <button class="form-select text-start" type="button" data-bs-toggle="dropdown">
+                                                                                    Select Previous Handler/s
+                                                                                </button>
+
+                                                                                <div class="dropdown-menu w-100 p-2" style="max-height: 250px; overflow-y: auto;">
+
+                                                                                    <?php
+                                                                                    $handlerQuery = mysqli_query($conn, "
+                                                                                        SELECT 
+                                                                                            p.id,
+                                                                                            r.rank,
+                                                                                            p.first_name,
+                                                                                            p.middle_name,
+                                                                                            p.last_name,
+                                                                                            p.rank_id
+                                                                                        FROM personnels p
+                                                                                        LEFT JOIN ranks r ON p.rank_id = r.id
+                                                                                        ORDER BY p.rank_id DESC
+                                                                                    ");
+
+                                                                                    while ($handler = mysqli_fetch_assoc($handlerQuery)):
+
+                                                                                        $fullName = trim(
+                                                                                            ($handler['rank'] ?? '') . ' ' .
+                                                                                            ($handler['first_name'] ?? '') . ' ' .
+                                                                                            ($handler['middle_name'] ?? '') . ' ' .
+                                                                                            ($handler['last_name'] ?? '')
+                                                                                        );
+                                                                                    ?>
+
+                                                                                        <div class="form-check">
+                                                                                            <input 
+                                                                                                class="form-check-input"
+                                                                                                type="checkbox"
+                                                                                                name="previous_owners_id[]"
+                                                                                                value="<?= $handler['id'] ?>"
+                                                                                                id="ph<?= $handler['id'] ?>"
+                                                                                            >
+
+                                                                                            <label class="form-check-label" for="ph<?= $handler['id'] ?>">
+                                                                                                <?= htmlspecialchars($fullName) ?>
+                                                                                            </label>
+                                                                                        </div>
+
+                                                                                    <?php endwhile; ?>
+
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <small class="text-muted">
+                                                                                You can select multiple handlers
+                                                                            </small>
                                                                         </div>
 
                                                                         <div class="col-md-3">
                                                                             <label class="form-label">Is Remotely Accessible?</label>
-                                                                            <select class="form-select">
+                                                                            <select class="form-select" name="is_remote_acc" required>
                                                                                 <option>Select</option>
                                                                                 <option>Yes</option>
                                                                                 <option>No</option>
@@ -791,7 +960,7 @@ $result = $stmt->get_result();
 
                                                                         <div class="col-md-3">
                                                                             <label class="form-label">Is Active?</label>
-                                                                            <select class="form-select">
+                                                                            <select class="form-select" name="is_active" required>
                                                                                 <option>Select</option>
                                                                                 <option>Yes</option>
                                                                                 <option>No</option>
@@ -799,11 +968,6 @@ $result = $stmt->get_result();
                                                                         </div>
 
                                                                     </div>
-
-                                                                </form>
-
-                                                            </div>
-
                                                             <!-- MODAL FOOTER -->
                                                             <div class="modal-footer">
                                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -814,6 +978,12 @@ $result = $stmt->get_result();
                                                                     Save Desktop
                                                                 </button>
                                                             </div>
+
+
+                                                       </form>
+                                                            </div>
+
+                                                           
 
                                                         </div>
 
@@ -1226,7 +1396,7 @@ $result = $stmt->get_result();
                 <?php endif; ?>
 
             </div>
-
+          
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>

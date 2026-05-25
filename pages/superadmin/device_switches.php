@@ -428,7 +428,7 @@ $result = $stmt->get_result();
                 <input type="text" name="search" class="search-input" placeholder="Search switches..."
                     value="<?= htmlspecialchars($search) ?>">
 
-                <button type="submit" class="search-btn">Search</button>
+                <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
 
             </form>
 
@@ -527,7 +527,7 @@ $result = $stmt->get_result();
                                         : '<span class="text-danger fw-bold">NO</span>' ?>
                                 </td>
                                 <td>
-                                    <button class="btn btn-primary btn-sm">View</button>
+                                    <button class="btn btn-primary btn-sm"><i class="bi bi-gear-fill"></i></button>
                                 </td>
 
                             </tr>

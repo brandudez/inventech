@@ -166,11 +166,11 @@ $totalUsers = $countStmt->get_result()->fetch_assoc()['total'];
 $totalPages = ceil($totalUsers / $limit);
 
 /* =========================
-   FINAL QUERY (FIXED SORTING)
+   FINAL QUERY (DESC RANK SORTING)
 ========================= */
 $sql .= "
 ORDER BY 
-    r.id ASC,
+    r.id DESC,
     p.id DESC
 LIMIT ? OFFSET ?
 ";
@@ -193,7 +193,7 @@ $inactiveCount = $conn->query("SELECT COUNT(*) as total FROM personnels WHERE is
 /* =========================
    FILTER OPTIONS (DYNAMIC)
 ========================= */
-$ranksResult = $conn->query("SELECT id, rank FROM ranks ORDER BY sort_order ASC");
+$ranksResult = $conn->query("SELECT id, rank FROM ranks ORDER BY id DESC");
 $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id ASC");
 ?>
 
@@ -239,7 +239,7 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
                     value="<?= htmlspecialchars($search); ?>" onkeyup="liveSearch(event)">
 
                 <button type="submit" class="search-btn">
-                    Search
+                    <i class="bi bi-search"></i>
                 </button>
 
             </form>
@@ -423,7 +423,7 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
                                             '<?= $row['is_active']; ?>'
                                         )">
 
-                                        Edit
+                                       <i class="bi bi-gear-fill"></i>
 
                                     </button>
 
