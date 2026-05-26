@@ -1,189 +1,243 @@
 body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    min-height: 100vh;
-    background-image: url('../img/Home.png');
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  min-height: 100vh;
+  background-image: url("../img/Home.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
 }
 
 /* ================= NAVBAR ================= */
 .navbar {
-    background: 
-    #ffffff;
-    color: white;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 20px;
+  background: #ffffff;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
 }
 
 .nav-left {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 .logo {
-    width: 35px;
-    height: 35px;
-    margin-right: 10px;
+  width: 35px;
+  height: 35px;
+  margin-right: 10px;
 }
 
 .title {
-    font-weight: bold;
-    letter-spacing: 1px;
+  font-weight: bold;
+  letter-spacing: 1px;
 }
 
 .nav-right button {
-    display: inline-block;
-    text-decoration: none;
-    background-color: transparent;
-    color: #136fa8;
-    border: 1px solid #136fa8;
-    padding: 8px 20px;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: 0.3s ease;
+  display: inline-block;
+  text-decoration: none;
+  background-color: transparent;
+  color: #136fa8;
+  border: 1px solid #136fa8;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: 0.3s ease;
 }
 
 .nav-right button:hover {
-    background-color: #136fa8;
-    color: #ffffff;
+  background-color: #136fa8;
+  color: #ffffff;
 }
 
 /* ================= LANDING ================= */
 .landing {
-    padding: 30px 20px;
-    max-width: 1200px;
-    margin: 0 auto;
+  padding: 30px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .content-wrapper {
-    display: flex;
-    gap: 30px;
-    align-items: center;
-    background-color: rgba(0, 31, 62, 0.95);
-    padding: 30px;
-    border-radius: 8px;
-     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  background-color: rgba(0, 31, 62, 0.95);
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
 }
 
 .logo-section {
-    flex-shrink: 0;
+  flex-shrink: 0;
 }
 
 .seal-logo {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
- box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .text-section {
-    flex: 1;
+  flex: 1;
 }
 
 .main-title {
-    font-size: 36px;
-    font-weight: 900;
-   color: #ffffff;
-    letter-spacing: 1px;
-    line-height: 1.2;
+  font-size: 36px;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 1px;
+  line-height: 1.2;
 }
 
+/* ================= MODAL BACKDROP ================= */
 .modal {
   display: none;
   position: fixed;
-  top: 0;
+  z-index: 999;
   left: 0;
+  top: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.5); /* dark overlay */
-  backdrop-filter: blur(5px);
+  background: rgba(0, 0, 0, 0.5);
+
   justify-content: center;
   align-items: center;
 }
-
-.modal-content.glass {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border-radius: 15px;
-  padding: 30px;
-  width: 320px;
-  color: #fff;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.2);
-}
-
 .modal-content h2 {
   text-align: center;
   margin-bottom: 20px;
 }
+/* modal box */
+.modal-content {
+  background: white;
+  padding: 38px;
+  width: 350px;
+  border-radius: 10px;
+  position: relative;
+}
 
+/* close button */
+.close-btn {
+  position: absolute;
+  right: 10px;
+  top: 5px;
+  font-size: 25px;
+  cursor: pointer;
+}
+
+/* inputs */
 .modal-content input {
-  width: 100%;
-  padding: 10px;
-  margin: 8px 0 15px;
-  border: none;
-  border-radius: 8px;
-  outline: none;
+  width: 94%;
+  padding: 8px;
+  margin: 8px 0;
 }
 
 .modal-content button {
-  width: 107%;
+  width: 100%;
   padding: 10px;
-  border: none;
-  border-radius: 8px;
-  background: #4a90e2;
+  background: #0d6ea8;
   color: white;
-  margin-top: 15px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.modal-content button:hover {
-  background: #357bd8;
-}
-
-.close-btn {
-  float: right;
-  font-size: 22px;
+  border: none;
   cursor: pointer;
 }
-
-.error-text {
-  color: #ff6b6b;
+/* ================= LOGIN CARD ================= */
+.login-card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 30px;
+  border-radius: 20px;
+  width: 320px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   text-align: center;
-  margin-bottom: 10px;
-}
-
-.password-box {
   position: relative;
+  animation: fadeIn 0.3s ease;
 }
 
-.password-wrapper {
-  position: relative;
+.login-card h2 {
+  color: white;
+  margin-bottom: 20px;
 }
 
-.password-wrapper .form-control {
-  padding-right: 10px;
+.login-card label {
+  color: white;
+  display: block;
+  text-align: left;
+  margin-top: 10px;
 }
 
-.toggle-icon {
-    color: #000000;
-  position: absolute;
-  right: -13px;
-  top: 50%;
-  transform: translateY(-50%);
+/* ANIMATION */
+@keyframes fadeIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.login-card h2 {
+  margin-bottom: 20px;
+  color: #ffffff;
+  text-align: center;
+}
+
+.login-card input {
+  width: 100%;
+  border-radius: 5px;
+  border-bottom: 1px solid black;
+  margin-bottom: 20px;
+  padding: 5px;
+  /* background: transparent; */
+  color: black;
+}
+
+/* ================= BUTTONS ================= */
+.login-card button {
+  margin-top: 10px;
+  background: #0d6ea8;
+  color: white;
+  border: none;
+  padding: 10px;
+  width: 100%;
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 1.1rem;
 }
 
-.toggle-icon:hover {
-  color: #838383;
+.login-card button:hover {
+  background: #095a8a;
 }
 
+/* ================= CLOSE BUTTON ================= */
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 28px;
+  cursor: pointer;
+  color: white;
+}
+
+.close-btn:hover {
+  opacity: 0.7;
+}
+
+/* ================= ANIMATION ================= */
+@keyframes fadeIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

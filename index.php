@@ -7,7 +7,7 @@ session_start();
 <head>
   <meta charset="UTF-8">
   <title>ITMS Inventech</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 
@@ -17,27 +17,27 @@ session_start();
   <div class="navbar">
     <div class="nav-left">
       <img src="assets/img/ITMSLOGO.jpg" class="logo">
-      <span class="title">ITMS INVENTECH</span>
+      <!-- <span class="title">ITMS INVENTECH</span> -->
     </div>
 
     <div class="nav-right">
-      <button onclick="openModal()">LOGIN</button>
+      <button onclick="openModal()">Login</button>
     </div>
   </div>
 
   <!-- ================= LANDING PAGE ================= -->
   <div class="landing">
-    <div class="content-wrapper">
+    <!-- <div class="content-wrapper">
 
-      <div class="logo-section">
-        <img src="assets/img/ITMSLOGO.jpg" class="seal-logo">
-      </div>
-
-      <div class="text-section">
-        <h1 class="main-title">INVENTORY MANAGEMENT SYSTEM</h1>
-      </div>
-
+    <div class="logo-section">
+      <img src="assets/img/ITMSLOGO.jpg" class="seal-logo">
     </div>
+
+    <div class="text-section">
+       <h1 class="main-title">ITSD INVENTORY MANAGEMENT SYSTEM</h1> -->
+  </div>
+
+  </div>
   </div>
 
   <!-- ================= LOGIN MODAL ================= -->
