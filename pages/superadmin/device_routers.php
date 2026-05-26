@@ -535,9 +535,117 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
                                 <td><?= htmlspecialchars($row['acquisition_type']) ?></td>
                                 <td><?= htmlspecialchars($row['previous_owners_id']) ?></td>
 
+                                <!-- BUTTON -->
                                 <td>
-                                    <button class="btn btn-primary btn-sm"><i class="bi bi-gear-fill"></i></button>
+                                    <button 
+                                        class="btn btn-primary btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editRouterModal">
+
+                                        <i class="bi bi-gear-fill"></i>
+
+                                    </button>
                                 </td>
+
+                                <!-- EDIT ROUTER MODAL -->
+                                <div class="modal fade editModal" id="editRouterModal" tabindex="-1" aria-labelledby="editRouterModalLabel" aria-hidden="true">
+
+                                    <div class="modal-dialog modal-lg modal-dialog-centered">
+
+                                        <div class="modal-content">
+
+                                            <!-- Header -->
+                                            <div class="modal-header">
+
+                                                <h5 class="modal-title" id="editRouterModalLabel">
+                                                    Edit Router
+                                                </h5>
+
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+
+                                            </div>
+
+                                            <!-- Body -->
+                                            <div class="modal-body">
+
+                                                <div class="row g-3">
+
+                                                    <!-- Personnel -->
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Personnel</label>
+                                                        <input type="text" class="form-control" placeholder="Enter Personnel">
+                                                    </div>
+
+                                                    <!-- Division -->
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Division</label>
+                                                        <input type="text" class="form-control" placeholder="Enter Division">
+                                                    </div>
+
+                                                    <!-- Brand -->
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Brand</label>
+                                                        <input type="text" class="form-control" placeholder="Enter Brand">
+                                                    </div>
+
+                                                    <!-- Model -->
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Model</label>
+                                                        <input type="text" class="form-control" placeholder="Enter Model">
+                                                    </div>
+
+                                                    <!-- Serial No -->
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Serial No</label>
+                                                        <input type="text" class="form-control" placeholder="Enter Serial No">
+                                                    </div>
+
+                                                    <!-- Acquisition Details -->
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Acquisition Details</label>
+                                                        <input type="text" class="form-control" placeholder="Enter Acquisition Details">
+                                                    </div>
+
+                                                    <!-- Acquisition Date -->
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Acquisition Date</label>
+                                                        <input type="date" class="form-control">
+                                                    </div>
+
+                                                    <!-- Previous Owners -->
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Previous Owners</label>
+                                                        <input type="text" class="form-control" placeholder="Enter Previous Owners">
+                                                    </div>
+
+                                                    <!-- Created Date -->
+                                                    <div class="col-md-12">
+                                                        <label class="form-label">Created Date</label>
+                                                        <input type="date" class="form-control">
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                            <!-- Footer -->
+                                            <div class="modal-footer">
+
+                                                <button type="button" class="btn cancelBtn" data-bs-dismiss="modal">
+                                                    Cancel
+                                                </button>
+
+                                                <button type="button" class="btn saveBtn">
+                                                    Save Changes
+                                                </button>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
                             </tr>
 
                         <?php endwhile; ?>

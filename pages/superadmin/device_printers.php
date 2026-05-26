@@ -142,10 +142,9 @@ $result = $stmt->get_result();
     <title>Camera Devices</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <link rel="stylesheet" href="../superadmin/css/devices.css">
     <link rel="stylesheet" href="css/superadmin_navbar.css">
     <link rel="stylesheet" href="./css/superadmin_sidebar.css">
+    <link rel="stylesheet" href="../superadmin/css/devices.css">
 </head>
 
 <body>
@@ -406,10 +405,111 @@ $result = $stmt->get_result();
                                 <td><?= htmlspecialchars($row['previous_handlers'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['created_date'] ?? 'N/A') ?></td>
                                 <td>
-                                    <button class="btn btn-primary btn-sm">
+                                    <button 
+                                        class="btn btn-primary btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editPrinterModal">
                                         <i class="bi bi-gear-fill"></i>
                                     </button>
                                 </td>
+                                <!-- Edit Printer Modal -->
+                                <div class="modal fade editModal" id="editPrinterModal" tabindex="-1" aria-labelledby="editPrinterModalLabel" aria-hidden="true">
+                                    
+                                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                                        
+                                        <div class="modal-content">
+
+                                            <!-- Header -->
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="editPrinterModalLabel">
+                                                    Edit Printer
+                                                </h5>
+
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+
+                                            <!-- Body -->
+                                            <div class="modal-body">
+
+                                                <div class="row g-3">
+
+                                                    <!-- Personnel -->
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Personnel</label>
+                                                        <input type="text" class="form-control" placeholder="Enter Personnel">
+                                                    </div>
+
+                                                    <!-- Division -->
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Division</label>
+                                                        <input type="text" class="form-control" placeholder="Enter Division">
+                                                    </div>
+
+                                                    <!-- Brand -->
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Brand</label>
+                                                        <input type="text" class="form-control" placeholder="Enter Brand">
+                                                    </div>
+
+                                                    <!-- Model -->
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Model</label>
+                                                        <input type="text" class="form-control" placeholder="Enter Model">
+                                                    </div>
+
+                                                    <!-- PAR Serial Number -->
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">PAR Serial Number</label>
+                                                        <input type="text" class="form-control" placeholder="Enter PAR Serial Number">
+                                                    </div>
+
+                                                    <!-- Acquisition Details -->
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Acquisition Details</label>
+                                                        <input type="text" class="form-control" placeholder="Enter Acquisition Details">
+                                                    </div>
+
+                                                    <!-- Acquisition Date -->
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Acquisition Date</label>
+                                                        <input type="date" class="form-control">
+                                                    </div>
+
+                                                    <!-- Previous Handlers -->
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Previous Handlers</label>
+                                                        <input type="text" class="form-control" placeholder="Enter Previous Handlers">
+                                                    </div>
+
+                                                    <!-- Created Date -->
+                                                    <div class="col-md-12">
+                                                        <label class="form-label">Created Date</label>
+                                                        <input type="date" class="form-control">
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                            <!-- Footer -->
+                                            <div class="modal-footer">
+                                                
+                                                <button type="button" class="btn cancelBtn" data-bs-dismiss="modal">
+                                                    Cancel
+                                                </button>
+
+                                                <button type="button" class="btn saveBtn">
+                                                    Save Changes
+                                                </button>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
                             </tr>
 
                         <?php endwhile; ?>
@@ -418,7 +518,7 @@ $result = $stmt->get_result();
 
                         <tr>
                             <td colspan="10" class="text-center">
-                                No cameras found.
+                                No printers found.
                             </td>
                         </tr>
 
@@ -478,55 +578,6 @@ $result = $stmt->get_result();
         </div>
 
     </div>
-    <!-- SCRIPT -->
-    <script>
-
-        const checkboxes = document.querySelectorAll('.division-checkbox');
-
-        checkboxes.forEach(checkbox => {
-
-            checkbox.addEventListener('change', function () {
-
-                let selected = [];
-
-                // GET ALL CHECKED VALUES
-                document.querySelectorAll('.division-checkbox:checked')
-                    .forEach(cb => {
-
-                        if (cb.value !== 'all') {
-                            selected.push(cb.value);
-                        }
-
-                    });
-
-                // SHOW LOADING
-                document.getElementById('loadingFilter')
-                    .classList.remove('d-none');
-
-                // WAIT 1 SECOND
-                setTimeout(() => {
-
-                    let url = new URL(window.location.href);
-
-                    // REMOVE OLD VALUES
-                    url.searchParams.delete('division[]');
-
-                    // ADD NEW VALUES
-                    selected.forEach(div => {
-                        url.searchParams.append('division[]', div);
-                    });
-
-                    // REDIRECT
-                    window.location.href = url.toString();
-
-                }, 1000);
-
-            });
-
-        });
-
-    </script>
-
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
