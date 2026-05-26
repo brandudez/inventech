@@ -1,9 +1,14 @@
+:root {
+    --sidebar-expanded: 247px;
+    --sidebar-collapsed: 115px;
+}
+
 /* =========================
    TOP BAR
 ========================= */
 .top-bar {
     margin-top: 80px;
-    margin-left: 247px;
+    margin-left: var(--sidebar-expanded);
     margin-right: 35px;
 
     display: flex;
@@ -12,35 +17,31 @@
 
     gap: 20px;
 
-    flex-wrap: nowrap; /* IMPORTANT */
+    flex-wrap: nowrap;
 
     transition: all 0.3s ease;
 }
 
-/* ===== WHEN SIDEBAR COLLAPSED ===== */
+/* sidebar collapsed */
 .sidebar.collapsed ~ .top-bar {
-    margin-left: 115px;
+    margin-left: var(--sidebar-collapsed);
 }
 
 /* =========================
-   LEFT SIDE SEARCH
+   SEARCH
 ========================= */
 .search-container {
     display: flex;
     align-items: center;
 }
 
-/* SEARCH FORM */
 .search-form {
     display: flex;
     align-items: center;
-
     gap: 12px;
-
-    flex-wrap: nowrap; /* IMPORTANT */
+    flex-wrap: nowrap;
 }
 
-/* SEARCH INPUT */
 .search-input {
     width: 320px;
 
@@ -54,24 +55,20 @@
     font-size: 14px;
     font-weight: 500;
 
-    background: #ffffff;
+    background: #fff;
 
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 
     transition: all 0.3s ease;
 }
 
-/* INPUT FOCUS */
 .search-input:focus {
     border-color: #0d6ea8;
-
-    box-shadow: 0 0 0 4px rgba(13, 110, 168, 0.15);
+    box-shadow: 0 0 0 4px rgba(13,110,168,0.15);
 }
 
-/* SEARCH BUTTON */
 .search-btn {
     border: none;
-
     padding: 12px 22px;
 
     border-radius: 24px;
@@ -87,16 +84,14 @@
 
     transition: all 0.3s ease;
 
-    box-shadow: 0 4px 14px rgba(13, 110, 168, 0.25);
+    box-shadow: 0 4px 14px rgba(13,110,168,0.25);
 
     white-space: nowrap;
 }
 
-/* SEARCH HOVER */
 .search-btn:hover {
     transform: translateY(-2px);
-
-    box-shadow: 0 6px 18px rgba(13, 110, 168, 0.35);
+    box-shadow: 0 6px 18px rgba(13,110,168,0.35);
 }
 
 /* =========================
@@ -105,34 +100,8 @@
 .right-side {
     display: flex;
     align-items: center;
-
     gap: 12px;
-
-    flex-wrap: nowrap; /* IMPORTANT */
-}
-
-/* =========================
-   FILTERS
-========================= */
-.filters {
-    display: flex;
-    align-items: center;
-
-    gap: 12px;
-
-    flex-wrap: nowrap; /* IMPORTANT */
-}
-
-/* FILTER FORM */
-#filterForm {
-    display: flex;
-    align-items: center;
-
-    gap: 12px;
-
-    margin: 0;
-
-    flex-wrap: nowrap; /* IMPORTANT */
+    flex-wrap: nowrap;
 }
 
 /* =========================
@@ -140,14 +109,12 @@
 ========================= */
 .filter-btn {
     border: none;
-
     padding: 12px 20px;
 
     border-radius: 14px;
 
     background: #0d6ea8;
-
-    color: white;
+    color: #fff;
 
     font-size: 14px;
     font-weight: 600;
@@ -161,27 +128,10 @@
     white-space: nowrap;
 }
 
-/* HOVER */
 .filter-btn:hover {
     background: #2190d1;
-
     transform: translateY(-2px);
-
     box-shadow: 0 6px 18px rgba(13,110,168,0.15);
-}
-
-/* ACTIVE */
-.filter-btn.active {
-    background: #0d6ea8;
-
-    color: #ffffff;
-
-    box-shadow: 0 6px 18px rgba(13,110,168,0.35);
-}
-
-/* ACTIVE HOVER */
-.filter-btn.active:hover {
-    background: #095a8a;
 }
 
 /* =========================
@@ -189,40 +139,24 @@
 ========================= */
 .dropdown-menu {
     border-radius: 12px;
-
     min-width: 220px;
 
     box-shadow: 0 6px 18px rgba(0,0,0,0.15);
 }
 
-/* SCROLL */
 .dropdown-menu.dropdown-scroll {
     max-height: 280px;
-
     overflow-y: auto;
-
-    border-radius: 12px;
 }
 
-/* SCROLLBAR */
+/* scrollbar */
 .dropdown-menu.dropdown-scroll::-webkit-scrollbar {
     width: 6px;
 }
 
 .dropdown-menu.dropdown-scroll::-webkit-scrollbar-thumb {
     background: #0d6ea8;
-
     border-radius: 10px;
-}
-
-/* ITEMS */
-.dropdown-item {
-    display: flex;
-    align-items: center;
-
-    gap: 10px;
-
-    cursor: pointer;
 }
 
 /* =========================
@@ -230,11 +164,9 @@
 ========================= */
 .add-btn {
     background: #0d6ea8;
-
-    color: #ffffff;
+    color: #fff;
 
     border: none;
-
     padding: 12px 18px;
 
     border-radius: 14px;
@@ -246,141 +178,111 @@
     white-space: nowrap;
 }
 
-/* HOVER */
 .add-btn:hover {
     background-color: #0b5f91;
-
-    color: #ffffff;
-
     transform: translateY(-2px);
-
     box-shadow: 0 6px 18px rgba(13,110,168,0.35);
 }
 
 /* =========================
-   MODAL
+   CONTENT TABLE CONTAINER
 ========================= */
-.custom-header {
-    background-color: #0d6ea8;
-
-    color: white;
+.contenttable {
+    margin-left: var(--sidebar-expanded);
+    margin-right: 35px;
+    margin-top: 35px;
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    overflow-x: auto;
 }
 
-.save-btn {
-    background-color: #0d6ea8;
-
-    color: white;
-
-    border: none;
-}
-
-.save-btn:hover {
-    background-color: #095985;
-
-    color: white;
+/* sidebar collapsed */
+.sidebar.collapsed ~ .contenttable {
+    margin-left: var(--sidebar-collapsed);
 }
 
 /* =========================
-   MOBILE
+   TABLE WRAPPER (ROUNDED CARD)
 ========================= */
-@media screen and (max-width: 768px) {
+.table-wrapper {
+    background: #ffffff;
 
-    .top-bar {
-        margin-left: 100px;
+    border-radius: 18px;
 
-        flex-direction: column;
+    padding: 20px;
 
-        align-items: stretch;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.08);
 
-        flex-wrap: wrap;
-    }
+    overflow-x: auto;
 
-    .sidebar.collapsed ~ .top-bar {
-        margin-left: 95px;
-    }
+    border: 1px solid #eef2f6;
 
-    .right-side,
-    .filters,
-    #filterForm,
-    .search-form {
-        width: 100%;
-
-        flex-wrap: wrap;
-    }
-
-    .search-input {
-        width: 100%;
-    }
-}
-
-/* ===== TABLE CONTENT ===== */
-.contenttable {
-    margin-left: 220px;
-    margin-top: 10px;
-    padding: 25px;
     transition: all 0.3s ease;
 }
 
-/* ===== ADJUST WHEN COLLAPSED ===== */
-.sidebar.collapsed ~ .contenttable {
-    margin-left: 90px;
-}
-
-/* ===== TABLE CONTAINER ===== */
-.table-container {
-    width: 100%;
-    background: #fff;
-    border-radius: 18px;
-    overflow-x: auto;
-    box-shadow: 0 4px 18px rgba(0,0,0,0.08);
-}
-
-/* ===== TABLE ===== */
+/* =========================
+   TABLE
+========================= */
 .users-table {
     width: 100%;
     border-collapse: collapse;
     min-width: 1200px;
 }
 
-/* ===== TABLE HEADER ===== */
+/* HEADER */
 .users-table thead {
     background: #0d6ea8;
 }
 
 .users-table thead th {
     color: white;
+
     padding: 18px 12px;
+
     border: 1px solid rgba(255,255,255,0.1);
+
     font-size: 12px;
     font-weight: 700;
+
     text-align: center;
+
     white-space: nowrap;
+
     text-transform: uppercase;
 }
 
-/* ===== TABLE BODY ===== */
+/* BODY */
 .users-table tbody td {
     padding: 16px 12px;
+
     font-size: 13px;
     font-weight: 500;
+
     text-align: center;
+
     border-bottom: 1px solid #e5e7eb;
+
     color: #333;
+
     white-space: nowrap;
 }
 
-/* ===== ROW HOVER ===== */
+/* ROW HOVER */
 .users-table tbody tr:hover {
     background: #f5f9fc;
     transition: 0.2s ease;
 }
 
-/* ===== STATUS ===== */
+/* =========================
+   STATUS
+========================= */
 .status {
     padding: 6px 12px;
     border-radius: 20px;
+
     font-size: 12px;
     font-weight: 600;
+
     display: inline-block;
 }
 
@@ -389,72 +291,71 @@
     color: #047857;
 }
 
-/* ===== RESPONSIVE ===== */
-@media screen and (max-width: 992px) {
-
-    .main,
-    .contenttable {
-        margin-left: 90px;
-    }
-
-    .grid {
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    }
-}
-
-/* FOOTER LAYOUT */
+/* =========================
+   FOOTER
+========================= */
 .table-footer {
     margin-top: 20px;
+
     display: flex;
     justify-content: space-between;
     align-items: center;
+
     gap: 20px;
+
     flex-wrap: wrap;
 }
 
-/* STATS SECTION */
+/* STATS */
 .user-stats {
     display: flex;
     gap: 12px;
 }
 
-/* STAT CARDS */
 .stat-box {
     min-width: 120px;
+
     padding: 12px 16px;
+
     border-radius: 14px;
+
     background: #fff;
     border: 1px solid #e6eef5;
+
     box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+
     text-align: center;
 }
 
-/* LABEL */
 .stat-box .label {
     font-size: 12px;
     color: #777;
     display: block;
 }
 
-/* VALUE */
 .stat-box .value {
     font-size: 18px;
     font-weight: bold;
     color: #0d6ea8;
 }
 
-/* COLORS */
-.stat-box.active .value { color: green; }
-.stat-box.inactive .value { color: red; }
+.stat-box.active .value {
+    color: green;
+}
 
-/* PAGINATION*/
+.stat-box.inactive .value {
+    color: red;
+}
+
+/* =========================
+   PAGINATION
+========================= */
 .pagination {
     display: flex;
     gap: 8px;
     align-items: center;
 }
 
-/* BUTTON STYLE */
 .pagination a,
 .pagination span {
     min-width: 38px;
@@ -473,7 +374,7 @@
     font-size: 13px;
     font-weight: 600;
 
-    background: #ffffff;
+    background: #fff;
     color: #2c3e50;
 
     border: 1px solid #e6eef5;
@@ -483,7 +384,6 @@
     transition: 0.25s ease;
 }
 
-/* HOVER EFFECT */
 .pagination a:hover {
     background: #0d6ea8;
     color: white;
@@ -491,15 +391,12 @@
     box-shadow: 0 6px 14px rgba(13,110,168,0.25);
 }
 
-/* ACTIVE PAGE */
 .pagination .active {
     background: linear-gradient(135deg, #0d6ea8, #2c5aa0);
     color: white;
     border: none;
-    box-shadow: 0 6px 14px rgba(13,110,168,0.3);
 }
 
-/* DOTS */
 .pagination .dots {
     background: transparent;
     border: none;
@@ -507,29 +404,30 @@
     color: #888;
 }
 
-/* ===== MOBILE ===== */
+/* =========================
+   RESPONSIVE
+========================= */
+@media screen and (max-width: 992px) {
+
+    .contenttable {
+        margin-left: var(--sidebar-collapsed);
+        margin-right: 15px;
+    }
+
+    .table-wrapper {
+        padding: 15px;
+        border-radius: 14px;
+    }
+}
+
 @media screen and (max-width: 768px) {
 
-    .main,
-    .contenttable {
-        margin-left: 0;
-        padding-top: 70px;
+    .table-wrapper {
+        padding: 12px;
+        border-radius: 12px;
     }
 
-    .content,
-    .contenttable {
-        padding: 15px;
+    .users-table {
+        min-width: 900px;
     }
-
-    .page-title {
-        font-size: 24px;
-    }
-
-    .card {
-        min-height: 150px;
-    }.action-buttons {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
 }

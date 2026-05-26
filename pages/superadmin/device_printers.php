@@ -156,172 +156,7 @@ $result = $stmt->get_result();
     <!-- TOP BAR -->
     <div class="top-bar">
 
-        <!-- DIVISION FILTER -->
-        <div class="filters">
-
-            <div class="dropdown">
-
-                <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                    data-bs-auto-close="outside">
-
-                    <?php echo !empty($division) ? htmlspecialchars($division) : 'Division'; ?>
-
-                </button>
-
-                <ul class="dropdown-menu p-3 dropdown-scroll">
-
-                    <li>
-                        <a class="dropdown-item" href="?search=<?php echo urlencode($search); ?>">
-                            All
-                        </a>
-                    </li>
-
-                    <?php
-                    $divisionQuery = mysqli_query($conn, "SELECT * FROM divisions ORDER BY division ASC");
-
-                    while ($div = mysqli_fetch_assoc($divisionQuery)):
-                        ?>
-                        <li>
-                            <a class="dropdown-item"
-                                href="?division=<?php echo urlencode($div['division']); ?>&search=<?php echo urlencode($search); ?>">
-                                <?php echo htmlspecialchars($div['division']); ?>
-                            </a>
-                        </li>
-                    <?php endwhile; ?>
-
-                </ul>
-
-            </div>
-
-        </div>
-        <!-- ADD PRINTER BUTTON -->
-        <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addModal">
-            Add Printer
-        </button>
-
-
-        <!-- ADD PRINTER MODAL -->
-        <div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
-
-            <div class="modal-dialog modal-xl modal-dialog-scrollable">
-
-                <div class="modal-content custom-modal">
-
-                    <!-- HEADER -->
-                    <div class="modal-header custom-header">
-                        <h5 class="modal-title text-white">
-                            Add Printer
-                        </h5>
-
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">
-                        </button>
-                    </div>
-
-                    <!-- BODY -->
-                    <div class="modal-body">
-
-                        <form action="add_printer.php" method="POST">
-
-                            <div class="row g-3">
-
-                                <!-- PERSONNEL -->
-                                <div class="col-md-6">
-                                    <label class="form-label">Personnel</label>
-                                    <input type="text" name="personnel" class="form-control" required>
-                                </div>
-
-                                <!-- DIVISION -->
-                                <div class="col-md-6">
-                                    <label class="form-label">Division</label>
-                                    <select name="division" class="form-select" required>
-                                        <option value="">Select Division</option>
-
-                                        <?php
-                                        $divisions = mysqli_query($conn, "SELECT division FROM divisions ORDER BY division ASC");
-                                        while ($row = mysqli_fetch_assoc($divisions)):
-                                            ?>
-                                            <option value="<?= $row['division'] ?>">
-                                                <?= $row['division'] ?>
-                                            </option>
-                                        <?php endwhile; ?>
-
-                                    </select>
-                                </div>
-
-                                <!-- BRAND -->
-                                <div class="col-md-6">
-                                    <label class="form-label">Brand</label>
-                                    <input type="text" name="brand" class="form-control" required>
-                                </div>
-
-                                <!-- MODEL -->
-                                <div class="col-md-6">
-                                    <label class="form-label">Model</label>
-                                    <input type="text" name="model" class="form-control" required>
-                                </div>
-
-                                <!-- PAR SERIAL NUMBER -->
-                                <div class="col-md-6">
-                                    <label class="form-label">PAR Serial Number</label>
-                                    <input type="text" name="par_serial_number" class="form-control">
-                                </div>
-
-                                <!-- ACQUISITION DETAILS -->
-                                <div class="col-md-6">
-                                    <label class="form-label">Acquisition Details</label>
-                                    <input type="text" name="acquisition_details" class="form-control">
-                                </div>
-
-                                <!-- ACQUISITION DATE -->
-                                <div class="col-md-6">
-                                    <label class="form-label">Acquisition Date</label>
-                                    <input type="date" name="acquisition_date" class="form-control">
-                                </div>
-
-                                <!-- PREVIOUS HANDLERS -->
-                                <div class="col-md-6">
-                                    <label class="form-label">Previous Handlers</label>
-                                    <input type="text" name="previous_handlers" class="form-control">
-                                </div>
-
-                                <!-- CREATED DATE -->
-                                <div class="col-md-6">
-                                    <label class="form-label">Created Date</label>
-                                    <input type="date" name="created_date" class="form-control"
-                                        value="<?= date('Y-m-d') ?>">
-                                </div>
-
-                            </div>
-
-                            <!-- FOOTER -->
-                            <div class="modal-footer mt-4">
-
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-
-                                    Close
-
-                                </button>
-
-                                <button type="submit" name="save_printer" class="btn save-btn">
-
-                                    Save Printer
-
-                                </button>
-
-                            </div>
-
-                        </form>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- SEARCH -->
+        <!-- LEFT SIDE: SEARCH -->
         <div class="search-container">
 
             <form class="search-form" method="GET">
@@ -336,6 +171,198 @@ $result = $stmt->get_result();
                 </button>
 
             </form>
+
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="right-side">
+
+            <!-- DIVISION FILTER -->
+            <div class="filters">
+
+                <div class="dropdown">
+
+                    <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                        data-bs-auto-close="outside">
+
+                        <?php echo !empty($division) ? htmlspecialchars($division) : 'Division'; ?>
+
+                    </button>
+
+                    <ul class="dropdown-menu p-3 dropdown-scroll">
+
+                        <!-- ALL OPTION -->
+                        <li class="mb-2">
+                            <div class="form-check">
+
+                                <input class="form-check-input division-checkbox" type="checkbox" value=""
+                                    id="allDivision" <?php echo empty($division) ? 'checked' : ''; ?>>
+
+                                <label class="form-check-label" for="allDivision">
+                                    All
+                                </label>
+
+                            </div>
+                        </li>
+
+                        <?php
+                        $divisionQuery = mysqli_query($conn, "SELECT * FROM divisions ORDER BY division ASC");
+
+                        while ($div = mysqli_fetch_assoc($divisionQuery)):
+
+                            $checked = ($division == $div['division']) ? 'checked' : '';
+                            ?>
+
+                            <li class="mb-2">
+
+                                <div class="form-check">
+
+                                    <input class="form-check-input division-checkbox" type="checkbox"
+                                        value="<?php echo htmlspecialchars($div['division']); ?>"
+                                        id="division_<?php echo $div['id']; ?>" <?php echo $checked; ?>>
+
+                                    <label class="form-check-label" for="division_<?php echo $div['id']; ?>">
+                                        <?php echo htmlspecialchars($div['division']); ?>
+                                    </label>
+
+                                </div>
+
+                            </li>
+
+                        <?php endwhile; ?>
+
+                    </ul>
+
+                </div>
+
+            </div>
+
+            <!-- ADD BUTTON -->
+            <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addModal">
+                Add Printer
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ADD PRINTER MODAL -->
+    <div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
+
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+
+            <div class="modal-content custom-modal">
+
+                <!-- HEADER -->
+                <div class="modal-header custom-header">
+                    <h5 class="modal-title text-white">
+                        Add Printer
+                    </h5>
+
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">
+                        X
+                    </button>
+                </div>
+
+                <!-- BODY -->
+                <div class="modal-body">
+
+                    <form action="add_printer.php" method="POST">
+
+                        <div class="row g-3">
+
+                            <!-- PERSONNEL -->
+                            <div class="col-md-6">
+                                <label class="form-label">Personnel</label>
+                                <input type="text" name="personnel" class="form-control" required>
+                            </div>
+
+                            <!-- DIVISION -->
+                            <div class="col-md-6">
+                                <label class="form-label">Division</label>
+                                <select name="division" class="form-select" required>
+                                    <option value="">Select Division</option>
+
+                                    <?php
+                                    $divisions = mysqli_query($conn, "SELECT division FROM divisions ORDER BY division ASC");
+                                    while ($row = mysqli_fetch_assoc($divisions)):
+                                        ?>
+                                        <option value="<?= $row['division'] ?>">
+                                            <?= $row['division'] ?>
+                                        </option>
+                                    <?php endwhile; ?>
+
+                                </select>
+                            </div>
+
+                            <!-- BRAND -->
+                            <div class="col-md-6">
+                                <label class="form-label">Brand</label>
+                                <input type="text" name="brand" class="form-control" required>
+                            </div>
+
+                            <!-- MODEL -->
+                            <div class="col-md-6">
+                                <label class="form-label">Model</label>
+                                <input type="text" name="model" class="form-control" required>
+                            </div>
+
+                            <!-- PAR SERIAL NUMBER -->
+                            <div class="col-md-6">
+                                <label class="form-label">PAR Serial Number</label>
+                                <input type="text" name="par_serial_number" class="form-control">
+                            </div>
+
+                            <!-- ACQUISITION DETAILS -->
+                            <div class="col-md-6">
+                                <label class="form-label">Acquisition Details</label>
+                                <input type="text" name="acquisition_details" class="form-control">
+                            </div>
+
+                            <!-- ACQUISITION DATE -->
+                            <div class="col-md-6">
+                                <label class="form-label">Acquisition Date</label>
+                                <input type="date" name="acquisition_date" class="form-control">
+                            </div>
+
+                            <!-- PREVIOUS HANDLERS -->
+                            <div class="col-md-6">
+                                <label class="form-label">Previous Handlers</label>
+                                <input type="text" name="previous_handlers" class="form-control">
+                            </div>
+
+                            <!-- CREATED DATE -->
+                            <div class="col-md-6">
+                                <label class="form-label">Created Date</label>
+                                <input type="date" name="created_date" class="form-control"
+                                    value="<?= date('Y-m-d') ?>">
+                            </div>
+
+                        </div>
+
+                        <!-- FOOTER -->
+                        <div class="modal-footer mt-4">
+
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+
+                                Close
+
+                            </button>
+
+                            <button type="submit" name="save_printer" class="btn save-btn">
+
+                                Save Printer
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
 
         </div>
 
@@ -452,6 +479,55 @@ $result = $stmt->get_result();
         </div>
 
     </div>
+    <!-- SCRIPT -->
+    <script>
+
+        const checkboxes = document.querySelectorAll('.division-checkbox');
+
+        checkboxes.forEach(checkbox => {
+
+            checkbox.addEventListener('change', function () {
+
+                let selected = [];
+
+                // GET ALL CHECKED VALUES
+                document.querySelectorAll('.division-checkbox:checked')
+                    .forEach(cb => {
+
+                        if (cb.value !== 'all') {
+                            selected.push(cb.value);
+                        }
+
+                    });
+
+                // SHOW LOADING
+                document.getElementById('loadingFilter')
+                    .classList.remove('d-none');
+
+                // WAIT 1 SECOND
+                setTimeout(() => {
+
+                    let url = new URL(window.location.href);
+
+                    // REMOVE OLD VALUES
+                    url.searchParams.delete('division[]');
+
+                    // ADD NEW VALUES
+                    selected.forEach(div => {
+                        url.searchParams.append('division[]', div);
+                    });
+
+                    // REDIRECT
+                    window.location.href = url.toString();
+
+                }, 1000);
+
+            });
+
+        });
+
+    </script>
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

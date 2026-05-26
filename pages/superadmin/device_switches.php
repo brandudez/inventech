@@ -178,9 +178,28 @@ $result = $stmt->get_result();
     <!-- TOP BAR -->
     <div class="top-bar">
 
-        <div class="filters">
+        <!-- LEFT SIDE: SEARCH -->
+        <div class="search-container">
 
-            <!-- DIVISION FILTER (FIXED) -->
+            <form method="GET" class="search-form">
+
+                <input type="hidden" name="division_id" value="<?= htmlspecialchars($division_id) ?>">
+                <input type="hidden" name="is_active" value="<?= htmlspecialchars($is_active) ?>">
+
+                <input type="text" name="search" class="search-input" placeholder="Search switches..."
+                    value="<?= htmlspecialchars($search) ?>">
+
+                <button type="submit" class="search-btn">
+                    <i class="bi bi-search"></i>
+                </button>
+
+            </form>
+
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="right-side">
+
             <!-- DIVISION FILTER -->
             <div class="dropdown">
 
@@ -204,7 +223,7 @@ $result = $stmt->get_result();
                         <li>
                             <a class="dropdown-item"
                                 href="?division_id=<?= $id ?>&search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
-                                <?= $name ?>
+                                <?= htmlspecialchars($name) ?>
                             </a>
                         </li>
                     <?php endforeach; ?>
@@ -213,7 +232,7 @@ $result = $stmt->get_result();
 
             </div>
 
-            <!-- ACTIVE FILTER -->
+            <!-- IS ACTIVE FILTER -->
             <div class="dropdown">
 
                 <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
@@ -247,193 +266,176 @@ $result = $stmt->get_result();
 
             </div>
 
+            <!-- ADD BUTTON (LAST ITEM ON RIGHT) -->
+            <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addSwitchModal">
+                Add Switch
+            </button>
+
         </div>
 
-        <!-- ADD SWITCHES BUTTON -->
-        <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addSwitchModal">
-            Add Switch
-        </button>
+    </div>
 
-        <!-- ADD SWITCH MODAL -->
-        <div class="modal fade" id="addSwitchModal" tabindex="-1" aria-labelledby="addSwitchModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog modal-xl modal-dialog-centered">
-                <div class="modal-content">
+    <!-- ADD SWITCH MODAL -->
+    <div class="modal fade" id="addSwitchModal" tabindex="-1" aria-labelledby="addSwitchModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
 
-                    <!-- Header -->
-                    <div class="modal-header text-white" style="background-color:#0d6ea8;">
-                        <h5 class="modal-title" id="addSwitchModalLabel">Add Switch</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                            aria-label="Close"></button>
-                    </div>
-
-                    <!-- Body -->
-                    <div class="modal-body">
-                        <form>
-                            <div class="row g-3">
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Personnel</label>
-                                    <input type="text" class="form-control" name="personnel">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Division</label>
-                                    <input type="text" class="form-control" name="division">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Manufacturer</label>
-                                    <input type="text" class="form-control" name="manufacturer">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Model</label>
-                                    <input type="text" class="form-control" name="model">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">PAR Serial No</label>
-                                    <input type="text" class="form-control" name="par_serial_no">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Ports</label>
-                                    <input type="number" class="form-control" name="ports">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Active Ports</label>
-                                    <input type="number" class="form-control" name="active_ports">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Managed</label>
-                                    <select class="form-control" name="managed">
-                                        <option value="">Select</option>
-                                        <option value="yes">Yes</option>
-                                        <option value="no">No</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Unmanaged</label>
-                                    <select class="form-control" name="unmanaged">
-                                        <option value="">Select</option>
-                                        <option value="yes">Yes</option>
-                                        <option value="no">No</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Firmware</label>
-                                    <input type="text" class="form-control" name="firmware">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">VLAN Supported</label>
-                                    <select class="form-control" name="vlan_supported">
-                                        <option value="">Select</option>
-                                        <option value="yes">Yes</option>
-                                        <option value="no">No</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Location</label>
-                                    <input type="text" class="form-control" name="location">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Remote Accessible?</label>
-                                    <select class="form-control" name="remote_access">
-                                        <option value="">Select</option>
-                                        <option value="yes">Yes</option>
-                                        <option value="no">No</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Remote Details</label>
-                                    <input type="text" class="form-control" name="remote_details">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Remarks</label>
-                                    <input type="text" class="form-control" name="remarks">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">PNP Focal</label>
-                                    <input type="text" class="form-control" name="pnp_focal">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Contact</label>
-                                    <input type="text" class="form-control" name="contact">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Acquisition Date</label>
-                                    <input type="date" class="form-control" name="acq_date">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Acquisition Type</label>
-                                    <input type="text" class="form-control" name="acq_type">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Acquisition Details</label>
-                                    <input type="text" class="form-control" name="acq_details">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Previous Handlers</label>
-                                    <input type="text" class="form-control" name="previous_handlers">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Is Active?</label>
-                                    <select class="form-control" name="is_active">
-                                        <option value="">Select</option>
-                                        <option value="yes">Yes</option>
-                                        <option value="no">No</option>
-                                    </select>
-                                </div>
-
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Footer -->
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">
-                            Save
-                        </button>
-                    </div>
-
+                <!-- Header -->
+                <div class="modal-header text-white" style="background-color:#0d6ea8;">
+                    <h5 class="modal-title" id="addSwitchModalLabel">Add Switch</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
+
+                <!-- Body -->
+                <div class="modal-body">
+                    <form>
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <label class="form-label">Personnel</label>
+                                <input type="text" class="form-control" name="personnel">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Division</label>
+                                <input type="text" class="form-control" name="division">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Manufacturer</label>
+                                <input type="text" class="form-control" name="manufacturer">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Model</label>
+                                <input type="text" class="form-control" name="model">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">PAR Serial No</label>
+                                <input type="text" class="form-control" name="par_serial_no">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Ports</label>
+                                <input type="number" class="form-control" name="ports">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Active Ports</label>
+                                <input type="number" class="form-control" name="active_ports">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Managed</label>
+                                <select class="form-control" name="managed">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Unmanaged</label>
+                                <select class="form-control" name="unmanaged">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Firmware</label>
+                                <input type="text" class="form-control" name="firmware">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">VLAN Supported</label>
+                                <select class="form-control" name="vlan_supported">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Location</label>
+                                <input type="text" class="form-control" name="location">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Remote Accessible?</label>
+                                <select class="form-control" name="remote_access">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Remote Details</label>
+                                <input type="text" class="form-control" name="remote_details">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Remarks</label>
+                                <input type="text" class="form-control" name="remarks">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">PNP Focal</label>
+                                <input type="text" class="form-control" name="pnp_focal">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Contact</label>
+                                <input type="text" class="form-control" name="contact">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Acquisition Date</label>
+                                <input type="date" class="form-control" name="acq_date">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Acquisition Type</label>
+                                <input type="text" class="form-control" name="acq_type">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Acquisition Details</label>
+                                <input type="text" class="form-control" name="acq_details">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Previous Handlers</label>
+                                <input type="text" class="form-control" name="previous_handlers">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Is Active?</label>
+                                <select class="form-control" name="is_active">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">
+                        Save
+                    </button>
+                </div>
+
             </div>
         </div>
-        <!-- SEARCH -->
-        <div class="search-container">
-
-            <form method="GET" class="search-form">
-
-                <input type="hidden" name="division_id" value="<?= htmlspecialchars($division_id) ?>">
-                <input type="hidden" name="is_active" value="<?= htmlspecialchars($is_active) ?>">
-
-                <input type="text" name="search" class="search-input" placeholder="Search switches..."
-                    value="<?= htmlspecialchars($search) ?>">
-
-                <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
-
-            </form>
-
-        </div>
-
     </div>
 
     <!-- TABLE -->

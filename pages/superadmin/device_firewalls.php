@@ -202,20 +202,43 @@ $result = $stmt->get_result();
     <?php include 'superadmin_sidebar.php'; ?>
     <?php include 'superadmin_navbar.php'; ?>
 
+    <!-- TOP BAR -->
     <div class="top-bar">
 
-        <!-- FILTERS -->
-        <div class="filters">
+        <!-- LEFT SIDE: SEARCH -->
+        <div class="search-container">
 
-            <!-- DIVISION DROPDOWN -->
+            <form method="GET" class="search-form">
+
+                <input type="hidden" name="division_id" value="<?= htmlspecialchars($division_id) ?>">
+                <input type="hidden" name="is_active" value="<?= htmlspecialchars($is_active) ?>">
+
+                <input type="text" name="search" class="search-input" placeholder="Search routers..."
+                    value="<?= htmlspecialchars($search) ?>">
+
+                <button type="submit" class="search-btn">
+                    <i class="bi bi-search"></i>
+                </button>
+
+            </form>
+
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="right-side">
+
+            <!-- DIVISION FILTER -->
             <div class="dropdown">
 
                 <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
-                    <?= !empty($division) ? htmlspecialchars($division) : 'Division' ?>
+                    <?= (!empty($division_id) && isset($divisions[$division_id]))
+                        ? $divisions[$division_id]
+                        : 'Division' ?>
                 </button>
 
                 <ul class="dropdown-menu p-3 dropdown-scroll">
 
+                    <!-- ALL -->
                     <li>
                         <a class="dropdown-item"
                             href="?search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
@@ -223,31 +246,20 @@ $result = $stmt->get_result();
                         </a>
                     </li>
 
-                    <?php
-                    $divisionQuery = mysqli_query($conn, "
-                    SELECT division
-                    FROM divisions
-                    ORDER BY id ASC
-                ");
-
-                    while ($div = mysqli_fetch_assoc($divisionQuery)):
-                        $divName = $div['division'];
-                        ?>
-
+                    <?php foreach ($divisions as $id => $name): ?>
                         <li>
                             <a class="dropdown-item"
-                                href="?division=<?= urlencode($divName) ?>&search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
-                                <?= htmlspecialchars($divName) ?>
+                                href="?division_id=<?= $id ?>&search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
+                                <?= htmlspecialchars($name) ?>
                             </a>
                         </li>
-
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
 
                 </ul>
 
             </div>
 
-            <!-- ACTIVE FILTER -->
+            <!-- IS ACTIVE FILTER -->
             <div class="dropdown">
 
                 <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
@@ -258,21 +270,21 @@ $result = $stmt->get_result();
 
                     <li>
                         <a class="dropdown-item"
-                            href="?division=<?= urlencode($division) ?>&search=<?= urlencode($search) ?>">
+                            href="?division_id=<?= urlencode($division_id) ?>&search=<?= urlencode($search) ?>">
                             All
                         </a>
                     </li>
 
                     <li>
                         <a class="dropdown-item"
-                            href="?is_active=1&division=<?= urlencode($division) ?>&search=<?= urlencode($search) ?>">
+                            href="?is_active=1&division_id=<?= urlencode($division_id) ?>&search=<?= urlencode($search) ?>">
                             YES
                         </a>
                     </li>
 
                     <li>
                         <a class="dropdown-item"
-                            href="?is_active=0&division=<?= urlencode($division) ?>&search=<?= urlencode($search) ?>">
+                            href="?is_active=0&division_id=<?= urlencode($division_id) ?>&search=<?= urlencode($search) ?>">
                             NO
                         </a>
                     </li>
@@ -281,119 +293,105 @@ $result = $stmt->get_result();
 
             </div>
 
+            <!-- ADD BUTTON (LAST ITEM ON RIGHT) -->
+            <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addRouterModal">
+                Add Router
+            </button>
+
         </div>
-        <!-- ADD FIREWALLS BUTTON -->
-        <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addFirewallModal">
-            Add Firewall
-        </button>
 
-        <!-- ADD FIREWALL MODAL -->
-        <div class="modal fade" id="addFirewallModal" tabindex="-1" aria-labelledby="addFirewallModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content">
+    </div>
 
-                    <!-- Header -->
-                    <div class="modal-header text-white" style="background-color:#0d6ea8;">
-                        <h5 class="modal-title" id="addFirewallModalLabel">Add Firewall</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                            aria-label="Close"></button>
-                    </div>
+    </div>
 
-                    <!-- Body -->
-                    <div class="modal-body">
-                        <form>
-                            <div class="row g-3">
 
-                                <div class="col-md-6">
-                                    <label class="form-label">Personnel</label>
-                                    <input type="text" class="form-control" name="personnel">
-                                </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label">Division</label>
-                                    <input type="text" class="form-control" name="division">
-                                </div>
+    <!-- ADD FIREWALL MODAL -->
+    <div class="modal fade" id="addFirewallModal" tabindex="-1" aria-labelledby="addFirewallModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
 
-                                <div class="col-md-6">
-                                    <label class="form-label">Manufacturer</label>
-                                    <input type="text" class="form-control" name="manufacturer">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Model</label>
-                                    <input type="text" class="form-control" name="model">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Serial No</label>
-                                    <input type="text" class="form-control" name="serial_no">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">No of Ports</label>
-                                    <input type="number" class="form-control" name="no_of_ports">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Active Ports</label>
-                                    <input type="number" class="form-control" name="active_ports">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Firmware</label>
-                                    <input type="text" class="form-control" name="firmware">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Location</label>
-                                    <input type="text" class="form-control" name="location">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Is Active?</label>
-                                    <select class="form-control" name="is_active">
-                                        <option value="">Select</option>
-                                        <option value="yes">Yes</option>
-                                        <option value="no">No</option>
-                                    </select>
-                                </div>
-
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Footer -->
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">
-                            Save
-                        </button>
-                    </div>
-
+                <!-- Header -->
+                <div class="modal-header text-white" style="background-color:#0d6ea8;">
+                    <h5 class="modal-title" id="addFirewallModalLabel">Add Firewall</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
+
+                <!-- Body -->
+                <div class="modal-body">
+                    <form>
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <label class="form-label">Personnel</label>
+                                <input type="text" class="form-control" name="personnel">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Division</label>
+                                <input type="text" class="form-control" name="division">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Manufacturer</label>
+                                <input type="text" class="form-control" name="manufacturer">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Model</label>
+                                <input type="text" class="form-control" name="model">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Serial No</label>
+                                <input type="text" class="form-control" name="serial_no">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">No of Ports</label>
+                                <input type="number" class="form-control" name="no_of_ports">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Active Ports</label>
+                                <input type="number" class="form-control" name="active_ports">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Firmware</label>
+                                <input type="text" class="form-control" name="firmware">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Location</label>
+                                <input type="text" class="form-control" name="location">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Is Active?</label>
+                                <select class="form-control" name="is_active">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">
+                        Save
+                    </button>
+                </div>
+
             </div>
         </div>
-
-        <!-- SEARCH -->
-        <div class="search-container">
-
-            <form class="search-form" method="GET">
-
-                <input type="text" name="search" class="search-input" placeholder="Search firewalls..."
-                    value="<?= htmlspecialchars($search) ?>">
-
-                <input type="hidden" name="division" value="<?= htmlspecialchars($division) ?>">
-                <input type="hidden" name="is_active" value="<?= htmlspecialchars($is_active) ?>">
-
-                <button type="submit" class="search-btn">
-                    <i class="bi bi-search"></i>
-                </button>
-
-            </form>
-
-        </div>
-
     </div>
 
     <!-- TABLE -->
