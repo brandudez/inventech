@@ -228,34 +228,62 @@ $result = $stmt->get_result();
         <div class="right-side">
 
             <!-- DIVISION FILTER -->
-            <div class="dropdown">
+            <div class="filters">
 
-                <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
-                    <?= (!empty($division_id) && isset($divisions[$division_id]))
-                        ? $divisions[$division_id]
-                        : 'Division' ?>
-                </button>
+                <div class="dropdown">
 
-                <ul class="dropdown-menu p-3 dropdown-scroll">
+                    <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                        data-bs-auto-close="outside">
 
-                    <!-- ALL -->
-                    <li>
-                        <a class="dropdown-item"
-                            href="?search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
-                            All
-                        </a>
-                    </li>
+                        <?php echo !empty($division) ? htmlspecialchars($division) : 'Division'; ?>
 
-                    <?php foreach ($divisions as $id => $name): ?>
-                        <li>
-                            <a class="dropdown-item"
-                                href="?division_id=<?= $id ?>&search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
-                                <?= htmlspecialchars($name) ?>
-                            </a>
+                    </button>
+
+                    <ul class="dropdown-menu p-3 dropdown-scroll">
+
+                        <!-- ALL OPTION -->
+                        <li class="mb-2">
+                            <div class="form-check">
+
+                                <input class="form-check-input division-checkbox" type="checkbox" value=""
+                                    id="allDivision" <?php echo empty($division) ? 'checked' : ''; ?>>
+
+                                <label class="form-check-label" for="allDivision">
+                                    All
+                                </label>
+
+                            </div>
                         </li>
-                    <?php endforeach; ?>
 
-                </ul>
+                        <?php
+                        $divisionQuery = mysqli_query($conn, "SELECT * FROM divisions ORDER BY division ASC");
+
+                        while ($div = mysqli_fetch_assoc($divisionQuery)):
+
+                            $checked = ($division == $div['division']) ? 'checked' : '';
+                            ?>
+
+                            <li class="mb-2">
+
+                                <div class="form-check">
+
+                                    <input class="form-check-input division-checkbox" type="checkbox"
+                                        value="<?php echo htmlspecialchars($div['division']); ?>"
+                                        id="division_<?php echo $div['id']; ?>" <?php echo $checked; ?>>
+
+                                    <label class="form-check-label" for="division_<?php echo $div['id']; ?>">
+                                        <?php echo htmlspecialchars($div['division']); ?>
+                                    </label>
+
+                                </div>
+
+                            </li>
+
+                        <?php endwhile; ?>
+
+                    </ul>
+
+                </div>
 
             </div>
 
