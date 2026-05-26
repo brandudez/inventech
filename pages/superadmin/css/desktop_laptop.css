@@ -49,6 +49,11 @@
     font-weight: 600;
 }
 
+.filter-btn:hover {
+    background: #2190d1;
+    color: black;
+}
+
 /* DROPDOWN BOX */
 .dropdown-menu.dropdown-scroll {
     max-height: 280px;
@@ -122,20 +127,21 @@
 /* BUTTON STYLE (Desktop + Laptop unified) */
 .add-desktop-btn,
 .add-laptop-btn {
-    background: #0d6ea8;
-    color: #ffffff;
-    border: none;
-    padding: 12px 18px;
-    border-radius: 14px;
+    background: #008000;
+    color: white;
     font-weight: 600;
+    border: none;
+    padding: 12px 20px;
+    cursor: pointer;
+    border-radius: 10px;
     transition: all 0.2s ease;
 }
 
 /* HOVER EFFECT (same for both) */
 .add-desktop-btn:hover,
 .add-laptop-btn:hover {
-    background-color: #0b5f91;
-    color: #ffffff;
+    background: #00a700;
+    color: black;
     transform: translateY(-2px);
     box-shadow: 0 6px 18px rgba(13,110,168,0.35);
 }
@@ -276,21 +282,6 @@
         filter: invert(1);
     }
 
-    /* LAPTOP BUTTON */
-    .add-laptop-btn{
-        background-color: #0d6ea8;
-        color: #fff;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 8px;
-        font-weight: 500;
-    }
-
-    .add-laptop-btn:hover{
-        background-color: #095985;
-        color: #fff;
-    }
-
 /* =========================
    TABLE CONTENT
 ========================= */
@@ -354,15 +345,10 @@
 /* TABLE BODY */
 .users-table tbody td {
     padding: 16px 12px;
-font-weight: 500;
     font-size: 13px;
-
     text-align: center;
-
     border-bottom: 1px solid #e5e7eb;
-
     color: #333;
-
     white-space: nowrap;
 }
 
