@@ -769,7 +769,7 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
                 <!-- NAME -->
                 <div class="form-group">
                     <label>Name</label>
-                    <input type="text" id="edit_name" name="name">
+                    <input type="text" id="edit_name" name="name" readonly>
                 </div>
 
                 <!-- EMAIL (READONLY) -->

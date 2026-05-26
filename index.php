@@ -13,88 +13,89 @@ session_start();
 
 <body>
 
-<!-- ================= NAVBAR ================= -->
-<div class="navbar">
-  <div class="nav-left">
-    <img src="assets/img/ITMSLOGO.jpg" class="logo">
-    <span class="title">ITMS INVENTECH</span>
+  <!-- ================= NAVBAR ================= -->
+  <div class="navbar">
+    <div class="nav-left">
+      <img src="assets/img/ITMSLOGO.jpg" class="logo">
+      <!-- <span class="title">ITMS INVENTECH</span> -->
+    </div>
+
+    <div class="nav-right">
+      <button onclick="openModal()">Login</button>
+    </div>
   </div>
 
-  <div class="nav-right">
-    <button onclick="openModal()">LOGIN</button>
-  </div>
-</div>
-
-<!-- ================= LANDING PAGE ================= -->
-<div class="landing">
-  <div class="content-wrapper">
+  <!-- ================= LANDING PAGE ================= -->
+  <div class="landing">
+    <!-- <div class="content-wrapper">
 
     <div class="logo-section">
       <img src="assets/img/ITMSLOGO.jpg" class="seal-logo">
     </div>
 
     <div class="text-section">
-      <h1 class="main-title">INVENTORY MANAGEMENT SYSTEM</h1>
-    </div>
+       <h1 class="main-title">ITSD INVENTORY MANAGEMENT SYSTEM</h1> -->
+  </div>
 
   </div>
-</div>
+  </div>
 
-<!-- ================= LOGIN MODAL ================= -->
-<div id="loginModal" class="modal">
+  <!-- ================= LOGIN MODAL ================= -->
+  <div id="loginModal" class="modal">
 
-  <div class="modal-content">
+    <div class="modal-content">
 
-    <span class="close-btn" onclick="closeModal()">&times;</span>
+      <span class="close-btn" onclick="closeModal()">&times;</span>
 
-    <h2>LOGIN</h2>
+      <h2>LOGIN</h2>
 
-    <!-- ERROR -->
-    <?php if (isset($_GET['error'])): ?>
-      <p style="color:red; text-align:center;">
-        <?php
+      <!-- ERROR -->
+      <?php if (isset($_GET['error'])): ?>
+        <p style="color:red; text-align:center;">
+          <?php
           if ($_GET['error'] == "user_not_found") echo "User not found";
           if ($_GET['error'] == "account_disabled") echo "Account is disabled";
           if ($_GET['error'] == "wrong_password") echo "Wrong password";
           if ($_GET['error'] == "invalid_role") echo "Invalid role";
-        ?>
-      </p>
-    <?php endif; ?>
+          ?>
+        </p>
+      <?php endif; ?>
 
-    <form method="POST" action="auth/login.php">
+      <form method="POST" action="auth/login.php">
 
-      <label>Email</label>
-      <input type="email" name="email" required>
+        <label>Email</label>
+        <input type="email" name="email" required>
 
-      <label>Password</label>
-      <input type="password" name="password" required>
+        <label>Password</label>
+        <input type="password" name="password" required>
 
-      <button type="submit" name="login">Login</button>
+        <button type="submit" name="login">Login</button>
 
-    </form>
+      </form>
+
+    </div>
 
   </div>
 
-</div>
+  <!-- ================= SCRIPT ================= -->
+  <script>
+    function openModal() {
+      document.getElementById("loginModal").style.display = "flex";
+    }
 
-<!-- ================= SCRIPT ================= -->
-<script>
-function openModal() {
-  document.getElementById("loginModal").style.display = "flex";
-}
+    function closeModal() {
+      document.getElementById("loginModal").style.display = "none";
+    }
 
-function closeModal() {
-  document.getElementById("loginModal").style.display = "none";
-}
+    window.onclick = function(event) {
+      let modal = document.getElementById("loginModal");
 
-window.onclick = function (event) {
-  let modal = document.getElementById("loginModal");
-
-  if (event.target === modal) {
-    modal.style.display = "none";
-  }
-};
-</script>
+      if (event.target === modal) {
+        modal.style.display = "none";
+      }
+    };
+  </script>
 
 </body>
+
 </html>

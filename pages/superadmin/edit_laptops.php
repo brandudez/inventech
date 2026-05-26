@@ -16,69 +16,90 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $id = $_POST['id'];
 
-if (
-    empty($_POST['par_serial_no']) ||
-    empty($_POST['previous_owners_id']) ||
-    empty($_POST['endpoint_security'])
-) {
-    $_SESSION['toast_error'] = "PAR Serial, Endpoint Security, and Previous Handlers are required.";
+    if (
+        empty($_POST['par_serial_no']) ||
+        empty($_POST['previous_owners_id']) ||
+        empty($_POST['endpoint_security'])
+    ) {
+        $_SESSION['toast_error'] = "PAR Serial, Endpoint Security, and Previous Handlers are required.";
+        header("Location: device_laptops.php?edit=" . $id);
+        exit();
+    }
 
-    header("Location: device_desktops.php?edit=" . $_POST['id']);
-    exit();
-}
-    // BASIC
+    /* =========================
+       BASIC
+    ========================= */
     $device_name = $_POST['device_name'];
     $personnel_id = $_POST['personnel_id'];
     $division_id = $_POST['division_id'];
 
-    // NETWORK
+    /* =========================
+       NETWORK
+    ========================= */
     $ip_address = $_POST['ip_address'];
     $mac_address = $_POST['mac_address'];
     $is_remote_acc = $_POST['is_remote_acc'];
 
-    // OS
+    /* =========================
+       OS
+    ========================= */
     $os = $_POST['os'];
     $is_os_licensed = $_POST['is_os_licensed'];
     $os_license_key = $_POST['os_license_key'];
 
-    // OFFICE
+    /* =========================
+       OFFICE
+    ========================= */
     $office_application = $_POST['office_application'];
     $office_license_key = $_POST['office_license_key'];
     $is_office_licensed = $_POST['is_office_licensed'];
 
-    // HARDWARE
+    /* =========================
+       HARDWARE
+    ========================= */
     $cpu_brand = $_POST['cpu_brand'];
     $cpu_cores = $_POST['cpu_cores'];
     $gb_ram = $_POST['gb_ram'];
-    $monitor_brand = $_POST['monitor_brand'];
-    $monitor_size_inches = $_POST['monitor_size_inches'];
-    $no_of_user_accounts = $_POST['no_of_user_accounts'];
-    $user_account_type = $_POST['user_account_type'];
 
-    // DATES
+    /* =========================
+       DATES
+    ========================= */
     $date_installed = $_POST['date_installed'];
     $acquisition_date = $_POST['acquisition_date'];
 
-    // SECURITY
+    /* =========================
+       SECURITY
+    ========================= */
     $no_of_installed_anti_virus = $_POST['no_of_installed_anti_virus'];
 
-    // IDENTIFIERS
+    /* =========================
+       IDENTIFIERS
+    ========================= */
     $guid = $_POST['guid'];
     $par_serial_no = $_POST['par_serial_no'];
 
-    // SOFTWARE
+    /* =========================
+       SOFTWARE
+    ========================= */
     $authorized_software = $_POST['authorized_software'];
     $unauthorized_software = $_POST['unauthorized_software'];
 
-    // STATUS
+    /* =========================
+       STATUS
+    ========================= */
     $is_active = $_POST['is_active'];
 
-    // MULTI SELECTS (FIXED TO JSON)
-$previous_handlers = json_encode($_POST['previous_owners_id'] ?? []);
-$endpoint_security = json_encode($_POST['endpoint_security'] ?? []);
+    /* =========================
+       MULTI SELECT (JSON)
+    ========================= */
+    $previous_handlers = json_encode($_POST['previous_owners_id'] ?? []);
+    $endpoint_security = json_encode($_POST['endpoint_security'] ?? []);
 
+    /* =========================
+       UPDATE QUERY (DESKTOP STYLE)
+    ========================= */
     $query = "
-        UPDATE desktops SET
+        UPDATE laptops SET
             device_name = '$device_name',
             personnel_id = '$personnel_id',
             division_id = '$division_id',
@@ -98,10 +119,6 @@ $endpoint_security = json_encode($_POST['endpoint_security'] ?? []);
             cpu_brand = '$cpu_brand',
             cpu_cores = '$cpu_cores',
             gb_ram = '$gb_ram',
-            monitor_brand = '$monitor_brand',
-            monitor_size_inches = '$monitor_size_inches',
-            no_of_user_accounts = '$no_of_user_accounts',
-            user_account_type = '$user_account_type',
 
             date_installed = '$date_installed',
             acquisition_date = '$acquisition_date',
@@ -123,10 +140,9 @@ $endpoint_security = json_encode($_POST['endpoint_security'] ?? []);
     ";
 
     if (mysqli_query($conn, $query)) {
-        header("Location: device_desktops.php?updated=1");
+        header("Location: device_laptops.php?updated=1");
         exit();
     } else {
         echo "Error: " . mysqli_error($conn);
     }
 }
-?>

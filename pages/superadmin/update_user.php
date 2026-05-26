@@ -11,12 +11,15 @@ if ($_SESSION['user']['role_id'] != 1) {
     exit();
 }
 
+/* ✅ FIX: DATABASE CONNECTION */
+include("../../config/db.php");
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     header("Location: users_list.php");
     exit;
 }
 
+/* INPUTS */
 $user_id = $_POST['user_id'];
 $role_id = $_POST['role'];
 $rank_id = $_POST['rank'];
@@ -39,6 +42,7 @@ if (count($nameParts) == 2) {
     $last_name = implode(" ", array_slice($nameParts, 2));
 }
 
+/* UPDATE QUERY */
 $sql = "
 UPDATE users SET
     role_id = ?,
@@ -53,6 +57,10 @@ WHERE id = ?
 
 $stmt = $conn->prepare($sql);
 
+if (!$stmt) {
+    die("Prepare failed: " . $conn->error);
+}
+
 $stmt->bind_param(
     "iiiisssi",
     $role_id,
@@ -66,8 +74,8 @@ $stmt->bind_param(
 );
 
 $stmt->execute();
-
 $stmt->close();
 
 header("Location: users_list.php");
 exit;
+?>

@@ -423,7 +423,7 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
                                             '<?= $row['is_active']; ?>'
                                         )">
 
-                                       <i class="bi bi-gear-fill"></i>
+                                        <i class="bi bi-gear-fill"></i>
 
                                     </button>
 
@@ -559,18 +559,18 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
                         <!-- Rank -->
                         <div class="mb-3">
                             <label for="rank" class="form-label">Rank</label>
-                         <select class="form-select" id="rank" name="rank" required>
-                            <option value="" disabled selected>Select rank</option>
+                            <select class="form-select" id="rank" name="rank" required>
+                                <option value="" disabled selected>Select rank</option>
 
-                            <?php
-                            $ranksAdd = $conn->query("SELECT id, rank FROM ranks ORDER BY id ASC");
-                            while ($r = $ranksAdd->fetch_assoc()):
-                            ?>
-                                <option value="<?= $r['id'] ?>">
-                                    <?= htmlspecialchars($r['rank']) ?>
-                                </option>
-                            <?php endwhile; ?>
-                        </select>
+                                <?php
+                                $ranksAdd = $conn->query("SELECT id, rank FROM ranks ORDER BY id ASC");
+                                while ($r = $ranksAdd->fetch_assoc()):
+                                ?>
+                                    <option value="<?= $r['id'] ?>">
+                                        <?= htmlspecialchars($r['rank']) ?>
+                                    </option>
+                                <?php endwhile; ?>
+                            </select>
                         </div>
 
                         <!-- Name -->
@@ -596,19 +596,19 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
                         <!-- Division -->
                         <div class="mb-3">
                             <label for="division" class="form-label">Division</label>
-                           <select class="form-select" id="division" name="division" required>
-                            <option value="" disabled selected>Select division</option>
+                            <select class="form-select" id="division" name="division" required>
+                                <option value="" disabled selected>Select division</option>
 
-                            <?php
-                            $divAdd = $conn->query("SELECT id, division FROM divisions ORDER BY id ASC");
-                            while ($d = $divAdd->fetch_assoc()):
-                            ?>
-                                <option value="<?= $d['id'] ?>">
-                                    <?= htmlspecialchars($d['division']) ?>
-                                </option>
-                            <?php endwhile; ?>
-                        </select>
-                         </div>
+                                <?php
+                                $divAdd = $conn->query("SELECT id, division FROM divisions ORDER BY id ASC");
+                                while ($d = $divAdd->fetch_assoc()):
+                                ?>
+                                    <option value="<?= $d['id'] ?>">
+                                        <?= htmlspecialchars($d['division']) ?>
+                                    </option>
+                                <?php endwhile; ?>
+                            </select>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -644,16 +644,16 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
 
                     <label>Rank</label>
 
-              <select id="edit_rank" name="rank">
-                <?php
-                $ranksEdit = $conn->query("SELECT id, rank FROM ranks ORDER BY id ASC");
-                while ($r = $ranksEdit->fetch_assoc()):
-                ?>
-                    <option value="<?= $r['id'] ?>">
-                        <?= htmlspecialchars($r['rank']) ?>
-                    </option>
-                <?php endwhile; ?>
-            </select>
+                    <select id="edit_rank" name="rank">
+                        <?php
+                        $ranksEdit = $conn->query("SELECT id, rank FROM ranks ORDER BY id ASC");
+                        while ($r = $ranksEdit->fetch_assoc()):
+                        ?>
+                            <option value="<?= $r['id'] ?>">
+                                <?= htmlspecialchars($r['rank']) ?>
+                            </option>
+                        <?php endwhile; ?>
+                    </select>
                 </div>
 
                 <!-- NAME -->
@@ -661,7 +661,7 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
 
                     <label>Name</label>
 
-                    <input type="text" id="edit_name" name="name">
+                    <input type="text" id="edit_name" name="name" readonly>
 
                 </div>
 
@@ -670,7 +670,7 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
 
                     <label>Division</label>
 
-                   <select id="edit_division" name="division">
+                    <select id="edit_division" name="division">
                         <?php
                         $divEdit = $conn->query("SELECT id, division FROM divisions ORDER BY id ASC");
                         while ($d = $divEdit->fetch_assoc()):
@@ -718,7 +718,6 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
 
     <!-- JAVASCRIPT -->
     <script>
-
         function toggleDropdown(id) {
 
             document
@@ -751,7 +750,7 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
         }
 
         // CLOSE DROPDOWN
-        window.onclick = function (e) {
+        window.onclick = function(e) {
 
             if (!e.target.matches('.filter-btn')) {
 
@@ -766,11 +765,9 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
             }
 
         };
-
     </script>
     <!-- EDIT MODAL SCRIPT -->
     <script>
-
         function openEditModal(
             id,
             name,
@@ -808,7 +805,7 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
         }
 
         // CLOSE OUTSIDE CLICK
-        window.onclick = function (event) {
+        window.onclick = function(event) {
 
             const modal = document.getElementById("editModal");
 
@@ -817,36 +814,35 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
                 closeEditModal();
             }
         };
-
     </script>
 
     <script>
-      document.getElementById('addPersonnelForm').addEventListener('submit', function (e) {
-    e.preventDefault();
+        document.getElementById('addPersonnelForm').addEventListener('submit', function(e) {
+            e.preventDefault();
 
-    const form = this;
-    const data = new FormData(form);
+            const form = this;
+            const data = new FormData(form);
 
-    fetch("../superadmin/add_personnel.php", {
-        method: "POST",
-        body: data
-    })
-    .then(res => res.json())
-    .then(res => {
+            fetch("../superadmin/add_personnel.php", {
+                    method: "POST",
+                    body: data
+                })
+                .then(res => res.json())
+                .then(res => {
 
-        if (res.status === "success") {
-            alert(res.message);
-            location.reload(); // refresh table
-        } else {
-            alert(res.message);
-        }
+                    if (res.status === "success") {
+                        alert(res.message);
+                        location.reload(); // refresh table
+                    } else {
+                        alert(res.message);
+                    }
 
-    })
-    .catch(err => {
-        console.error(err);
-        alert("Something went wrong");
-    });
-});
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Something went wrong");
+                });
+        });
     </script>
 
     <!-- Bootstrap JS Bundle (includes Popper) -->

@@ -2,7 +2,7 @@ body {
     margin: 0;
     font-family: Arial, sans-serif;
     min-height: 100vh;
-    background-image: url('../img/pnpbg.png');
+    background-image: url('../img/Home.png');
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;
@@ -10,7 +10,8 @@ body {
 
 /* ================= NAVBAR ================= */
 .navbar {
-    background: #0d6ea8;
+    background: 
+    #ffffff;
     color: white;
     display: flex;
     justify-content: space-between;
@@ -38,8 +39,8 @@ body {
     display: inline-block;
     text-decoration: none;
     background-color: transparent;
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: #136fa8;
+    border: 1px solid #136fa8;
     padding: 8px 20px;
     font-size: 14px;
     font-weight: bold;
@@ -49,8 +50,8 @@ body {
 }
 
 .nav-right button:hover {
-    background-color: white;
-    color: #0066cc;
+    background-color: #136fa8;
+    color: #ffffff;
 }
 
 /* ================= LANDING ================= */
