@@ -35,6 +35,130 @@ body {
 }
 
 /* =========================
+   FILTERS
+========================= */
+.filters {
+  display: flex;
+  align-items: center;
+}
+
+/* FORM */
+#filterForm {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+
+/* =========================
+   DROPDOWN / SELECT DESIGN
+========================= */
+/* BUTTON STYLE */
+.filter-btn {
+  background: #0d6ea8;
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-weight: 600;
+}
+
+/* DROPDOWN BOX */
+.dropdown-menu.dropdown-scroll {
+  max-height: 280px;
+  overflow-y: auto;
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* ITEM STYLE */
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 8px 12px;
+}
+
+/* HOVER */
+.dropdown-item:hover {
+  background: #eaf4fb;
+}
+
+/* SCROLLBAR */
+.dropdown-menu.dropdown-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-menu.dropdown-scroll::-webkit-scrollbar-thumb {
+  background: #0d6ea8;
+  border-radius: 10px;
+}
+
+.dropdown-menu.dropdown-scroll {
+  max-height: 280px;
+  overflow-y: auto;
+  border-radius: 12px;
+}
+
+/* scrollbar */
+.dropdown-menu.dropdown-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-menu.dropdown-scroll::-webkit-scrollbar-thumb {
+  background: #0d6ea8;
+  border-radius: 10px;
+}
+
+/* items */
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+/* ===== HOVER ===== */
+
+.add-desktop-btn:hover {
+  background: #2190d1;
+
+  color: white;
+
+  transform: translateY(-2px);
+
+  box-shadow: 0 6px 18px rgba(13, 110, 168, 0.35);
+}
+/* BUTTON STYLE (Desktop + Laptop unified) */
+.add-desktop-btn,
+.add-laptop-btn {
+  background: #0d6ea8;
+  color: #ffffff;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+/* HOVER EFFECT (same for both) */
+.add-desktop-btn:hover,
+.add-laptop-btn:hover {
+  background-color: #0b5f91;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(13, 110, 168, 0.35);
+}
+/* RIGHT SIDE CONTAINER */
+.right-side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* =========================
    SEARCH CONTAINER
 ========================= */
 .search-container {
@@ -104,130 +228,77 @@ body {
   box-shadow: 0 6px 18px rgba(13, 110, 168, 0.35);
 }
 
-/* =========================
-   RIGHT SIDE
-========================= */
-.right-side {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* =========================
-   FILTERS
-========================= */
-.filters {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-/* FILTER FORM */
-#filterForm {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: nowrap;
-}
-
-/* =========================
-   FILTER BUTTON
-========================= */
-.filter-btn {
+/* MODAL DESIGN */
+.custom-modal {
+  background-color: #0d6ea8 !important;
+  border-radius: 15px;
   border: none;
-  padding: 12px 20px;
-  border-radius: 14px;
+  overflow: hidden;
+}
 
-  background: #0d6ea8;
-  color: white;
+/* HEADER */
+.custom-modal .modal-header {
+  border-bottom: none;
+  background-color: #0d6ea8;
+  padding: 20px;
+}
 
-  font-size: 14px;
+/* BODY */
+.custom-modal .modal-body {
+  background-color: #f1f3f5;
+  padding: 25px;
+}
+
+/* FOOTER */
+.custom-modal .modal-footer {
+  background-color: #f5f5f5;
+  border-top: none;
+  padding: 10px;
+}
+
+/* LABELS */
+.custom-modal .form-label {
   font-weight: 600;
-
-  cursor: pointer;
-
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-
-  transition: all 0.3s ease;
+  color: #333;
 }
 
-.filter-btn:hover {
-  background: #2190d1;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(13, 110, 168, 0.15);
+/* INPUTS */
+.custom-modal .form-control,
+.custom-modal .form-select {
+  border-radius: 8px;
+  border: 1px solid #ced4da;
+  padding: 10px;
 }
 
-.filter-btn.active {
-  background: #0d6ea8;
-  color: #ffffff;
-  box-shadow: 0 6px 18px rgba(13, 110, 168, 0.35);
+.custom-modal .form-control:focus,
+.custom-modal .form-select:focus {
+  border-color: #0d6ea8;
+  box-shadow: 0 0 0 0.15rem rgba(13, 110, 168, 0.25);
 }
 
-.filter-btn.active:hover {
-  background: #095a8a;
+/* TEXTAREA */
+.custom-modal textarea {
+  resize: none;
 }
 
-/* =========================
-   ADD BUTTONS
-========================= */
-.add-desktop-btn,
+/* CLOSE BUTTON WHITE */
+.custom-modal .btn-close {
+  filter: invert(1);
+}
+
+/* LAPTOP BUTTON */
 .add-laptop-btn {
-  background: #008000;
-  color: #ffffff;
+  background-color: #0d6ea8;
+  color: #fff;
   border: none;
   padding: 10px 20px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  border-radius: 8px;
+  font-weight: 500;
 }
 
-.add-desktop-btn:hover,
 .add-laptop-btn:hover {
-  background: #52e076;
-  transform: translateY(-1px);
-}
-
-/* =========================
-   DROPDOWN
-========================= */
-.dropdown-menu {
-  border-radius: 12px;
-  min-width: 220px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-}
-
-.dropdown-menu.dropdown-scroll {
-  max-height: 280px;
-  overflow-y: auto;
-  border-radius: 12px;
-  border: none;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-/* SCROLLBAR */
-.dropdown-menu.dropdown-scroll::-webkit-scrollbar {
-  width: 6px;
-}
-
-.dropdown-menu.dropdown-scroll::-webkit-scrollbar-thumb {
-  background: #0d6ea8;
-  border-radius: 10px;
-}
-
-/* ITEMS */
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  padding: 8px 12px;
-}
-
-.dropdown-item:hover {
-  background: #eaf4fb;
+  background-color: #095985;
+  color: #fff;
 }
 
 /* =========================
@@ -280,11 +351,15 @@ body {
 /* TABLE BODY */
 .users-table tbody td {
   padding: 16px 12px;
-  font-size: 13px;
   font-weight: 500;
+  font-size: 13px;
+
   text-align: center;
+
   border-bottom: 1px solid #e5e7eb;
+
   color: #333;
+
   white-space: nowrap;
 }
 

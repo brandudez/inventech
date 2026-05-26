@@ -1,11 +1,4 @@
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: Arial, sans-serif;
-}
-
 /* ===== BODY ===== */
 body {
     background: #f4f7fb;
@@ -27,41 +20,32 @@ body {
 /* ===== SIDEBAR LINKS ===== */
 .sidebar a,
 .dropdown-btn {
+    
     position: relative;
     overflow: visible;
-}
+} */
 
 /* ===== HOVER LABEL / TOOLTIP ===== */
 .sidebar a::after,
 .dropdown-btn::after {
     content: attr(data-title);
-
     position: absolute;
     left: 75px;
     top: 50%;
     transform: translateY(-50%);
-
     background: rgba(15, 23, 42, 0.95);
     color: #fff;
-
     padding: 8px 14px;
     border-radius: 10px;
-
     font-size: 13px;
     font-weight: 500;
     letter-spacing: 0.3px;
-
     white-space: nowrap;
-
     opacity: 0;
     visibility: hidden;
-
     transition: all 0.25s ease;
-
     pointer-events: none;
-
     box-shadow: 0 5px 15px rgba(0,0,0,0.25);
-
     z-index: 9999;
 }
 
@@ -197,15 +181,11 @@ body {
     border: none;
     padding: 12px 20px;
     border-radius: 14px;
-
     background: #0d6ea8;
     color: white;
-
     font-size: 14px;
     font-weight: 600;
-
     cursor: pointer;
-
     box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 
     transition: all 0.3s ease;
@@ -215,9 +195,8 @@ body {
 
 .filter-btn:hover {
     background: #2190d1;
-
+    color: black;
     transform: translateY(-2px);
-
     box-shadow: 0 6px 18px rgba(13,110,168,0.15);
 }
 
@@ -291,13 +270,14 @@ body {
     color: white;
     font-weight: 600;
     border: none;
-    padding: 10px 20px;
+    padding: 10px 10px;
     cursor: pointer;
-    border-radius: 20px;
+    border-radius: 10px;
 }
 
 .btn-primary:hover {
-    background: #52e076;
+    background: #00a700;
+    color: black;
     transform: translateY(-1px);
 }
 /* RIGHT SIDE */

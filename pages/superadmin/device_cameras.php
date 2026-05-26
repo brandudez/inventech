@@ -157,136 +157,7 @@ $result = $stmt->get_result();
     <!-- TOP BAR -->
     <div class="top-bar">
 
-        <!-- FILTER -->
-        <div class="filters">
-
-            <div class="dropdown">
-
-                <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                    data-bs-auto-close="outside">
-
-                    <?php echo !empty($division) ? htmlspecialchars($division) : 'Division'; ?>
-
-                </button>
-
-                <ul class="dropdown-menu p-3 dropdown-scroll">
-
-                    <li>
-                        <a class="dropdown-item" href="?search=<?php echo urlencode($search); ?>">
-                            All
-                        </a>
-                    </li>
-
-                    <?php
-                    $divisionQuery = mysqli_query($conn, "
-                        SELECT id, division
-                        FROM divisions
-                        ORDER BY id ASC
-                    ");
-
-                    while ($div = mysqli_fetch_assoc($divisionQuery)):
-                        ?>
-                        <li>
-                            <a class="dropdown-item"
-                                href="?division=<?php echo urlencode($div['division']); ?>&search=<?php echo urlencode($search); ?>">
-                                <?php echo htmlspecialchars($div['division']); ?>
-                            </a>
-                        </li>
-                    <?php endwhile; ?>
-
-                </ul>
-
-            </div>
-
-        </div>
-        <!-- ADD CAMERA BUTTON -->
-        <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addModal">
-            Add Camera
-        </button>
-
-        <!-- ADD CAMERA MODAL -->
-        <div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content">
-
-                    <!-- Modal Header -->
-                    <div class="modal-header text-white" style="background-color:#0d6ea8;">
-                        <h5 class="modal-title" id="addModalLabel">Add Camera</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                            aria-label="Close"></button>
-                    </div>
-
-                    <!-- Modal Body -->
-                    <div class="modal-body">
-                        <form>
-
-                            <div class="row g-3">
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Personnel</label>
-                                    <input type="text" class="form-control" name="personnel">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Division</label>
-                                    <input type="text" class="form-control" name="division">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Brand</label>
-                                    <input type="text" class="form-control" name="brand">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Model</label>
-                                    <input type="text" class="form-control" name="model">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Serial Number</label>
-                                    <input type="text" class="form-control" name="serial_number">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Acquisition Details</label>
-                                    <input type="text" class="form-control" name="acquisition_details">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Acquisition Date</label>
-                                    <input type="date" class="form-control" name="acquisition_date">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Previous Handlers</label>
-                                    <input type="text" class="form-control" name="previous_handlers">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Created Date</label>
-                                    <input type="date" class="form-control" name="created_date">
-                                </div>
-
-                            </div>
-
-                        </form>
-                    </div>
-
-                    <!-- Modal Footer -->
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">
-                            Save
-                        </button>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-
-
-        <!-- SEARCH -->
+        <!-- LEFT SIDE: SEARCH -->
         <div class="search-container">
 
             <form class="search-form" method="GET">
@@ -303,6 +174,158 @@ $result = $stmt->get_result();
             </form>
 
         </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="right-side">
+
+            <!-- DIVISION FILTER -->
+            <div class="filters">
+
+                <div class="dropdown">
+
+                    <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                        data-bs-auto-close="outside">
+
+                        <?php echo !empty($division) ? htmlspecialchars($division) : 'Division'; ?>
+
+                    </button>
+
+                    <ul class="dropdown-menu p-3 dropdown-scroll">
+
+                        <!-- ALL OPTION -->
+                        <li class="mb-2">
+                            <div class="form-check">
+
+                                <input class="form-check-input division-checkbox" type="checkbox" value=""
+                                    id="allDivision" <?php echo empty($division) ? 'checked' : ''; ?>>
+
+                                <label class="form-check-label" for="allDivision">
+                                    All
+                                </label>
+
+                            </div>
+                        </li>
+
+                        <?php
+                        $divisionQuery = mysqli_query($conn, "SELECT * FROM divisions ORDER BY division ASC");
+
+                        while ($div = mysqli_fetch_assoc($divisionQuery)):
+
+                            $checked = ($division == $div['division']) ? 'checked' : '';
+                            ?>
+
+                            <li class="mb-2">
+
+                                <div class="form-check">
+
+                                    <input class="form-check-input division-checkbox" type="checkbox"
+                                        value="<?php echo htmlspecialchars($div['division']); ?>"
+                                        id="division_<?php echo $div['id']; ?>" <?php echo $checked; ?>>
+
+                                    <label class="form-check-label" for="division_<?php echo $div['id']; ?>">
+                                        <?php echo htmlspecialchars($div['division']); ?>
+                                    </label>
+
+                                </div>
+
+                            </li>
+
+                        <?php endwhile; ?>
+
+                    </ul>
+
+                </div>
+
+            </div>
+
+            <!-- ADD BUTTON -->
+            <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addModal">
+                Add Camera
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- ADD CAMERA MODAL -->
+    <div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header text-white" style="background-color:#0d6ea8;">
+                    <h5 class="modal-title" id="addModalLabel">Add Camera</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <form>
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <label class="form-label">Personnel</label>
+                                <input type="text" class="form-control" name="personnel">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Division</label>
+                                <input type="text" class="form-control" name="division">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Brand</label>
+                                <input type="text" class="form-control" name="brand">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Model</label>
+                                <input type="text" class="form-control" name="model">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Serial Number</label>
+                                <input type="text" class="form-control" name="serial_number">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Acquisition Details</label>
+                                <input type="text" class="form-control" name="acquisition_details">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Acquisition Date</label>
+                                <input type="date" class="form-control" name="acquisition_date">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Previous Handlers</label>
+                                <input type="text" class="form-control" name="previous_handlers">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Created Date</label>
+                                <input type="date" class="form-control" name="created_date">
+                            </div>
+
+                        </div>
+
+                    </form>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">
+                        Save
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
 
     </div>
 
@@ -353,7 +376,7 @@ $result = $stmt->get_result();
 
                                 <td>
                                     <button class="btn btn-primary btn-sm">
-                                       <i class="bi bi-gear-fill"></i> 
+                                        <i class="bi bi-gear-fill"></i>
                                     </button>
                                 </td>
 

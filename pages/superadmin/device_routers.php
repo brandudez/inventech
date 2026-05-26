@@ -226,10 +226,30 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
     <?php include 'superadmin_sidebar.php'; ?>
     <?php include 'superadmin_navbar.php'; ?>
 
-    <!-- ========================= TOP BAR ========================= -->
+    <!-- TOP BAR -->
     <div class="top-bar">
 
-        <div class="filters">
+        <!-- LEFT SIDE: SEARCH -->
+        <div class="search-container">
+
+            <form method="GET" class="search-form">
+
+                <input type="hidden" name="division_id" value="<?= htmlspecialchars($division_id) ?>">
+                <input type="hidden" name="is_active" value="<?= htmlspecialchars($is_active) ?>">
+
+                <input type="text" name="search" class="search-input" placeholder="Search routers..."
+                    value="<?= htmlspecialchars($search) ?>">
+
+                <button type="submit" class="search-btn">
+                    <i class="bi bi-search"></i>
+                </button>
+
+            </form>
+
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="right-side">
 
             <!-- DIVISION FILTER -->
             <div class="dropdown">
@@ -254,7 +274,7 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
                         <li>
                             <a class="dropdown-item"
                                 href="?division_id=<?= $id ?>&search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
-                                <?= $name ?>
+                                <?= htmlspecialchars($name) ?>
                             </a>
                         </li>
                     <?php endforeach; ?>
@@ -263,8 +283,7 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
 
             </div>
 
-
-            <!-- ACTIVE FILTER -->
+            <!-- IS ACTIVE FILTER -->
             <div class="dropdown">
 
                 <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
@@ -298,167 +317,151 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
 
             </div>
 
+            <!-- ADD BUTTON (LAST ITEM ON RIGHT) -->
+            <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addRouterModal">
+                Add Router
+            </button>
+
         </div>
-        <!-- ADD ROUTERS BUTTON -->
-        <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addRouterModal">
-            Add Router
-        </button>
 
-        <!-- ADD ROUTER MODAL -->
-        <div class="modal fade" id="addRouterModal" tabindex="-1" aria-labelledby="addRouterModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog modal-xl modal-dialog-centered">
-                <div class="modal-content">
+    </div>
 
-                    <!-- Header -->
-                    <div class="modal-header text-white" style="background-color:#0d6ea8;">
-                        <h5 class="modal-title" id="addRouterModalLabel">Add Router</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                            aria-label="Close"></button>
-                    </div>
+    </div>
 
-                    <!-- Body -->
-                    <div class="modal-body">
-                        <form>
-                            <div class="row g-3">
+    <!-- ADD ROUTER MODAL -->
+    <div class="modal fade" id="addRouterModal" tabindex="-1" aria-labelledby="addRouterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
 
-                                <div class="col-md-6">
-                                    <label class="form-label">Personnel</label>
-                                    <input type="text" class="form-control" name="personnel">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Division</label>
-                                    <input type="text" class="form-control" name="division">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Manufacturer</label>
-                                    <input type="text" class="form-control" name="manufacturer">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Model</label>
-                                    <input type="text" class="form-control" name="model">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Serial No</label>
-                                    <input type="text" class="form-control" name="serial_no">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Ports</label>
-                                    <input type="number" class="form-control" name="ports">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Active Ports</label>
-                                    <input type="number" class="form-control" name="active_ports">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">IP Range</label>
-                                    <input type="text" class="form-control" name="ip_range">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Firmware</label>
-                                    <input type="text" class="form-control" name="firmware">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Location</label>
-                                    <input type="text" class="form-control" name="location">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Active</label>
-                                    <select class="form-control" name="active">
-                                        <option value="">Select</option>
-                                        <option value="yes">Yes</option>
-                                        <option value="no">No</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Remote Access</label>
-                                    <select class="form-control" name="remote_access">
-                                        <option value="">Select</option>
-                                        <option value="yes">Yes</option>
-                                        <option value="no">No</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Remote Details</label>
-                                    <input type="text" class="form-control" name="remote_details">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Remarks</label>
-                                    <input type="text" class="form-control" name="remarks">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">PNP Focal</label>
-                                    <input type="text" class="form-control" name="pnp_focal">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Contact</label>
-                                    <input type="text" class="form-control" name="contact">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Acquisition Date</label>
-                                    <input type="date" class="form-control" name="acq_date">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Acquisition Type</label>
-                                    <input type="text" class="form-control" name="acq_type">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Previous Handlers</label>
-                                    <input type="text" class="form-control" name="previous_handlers">
-                                </div>
-
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Footer -->
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">
-                            Save
-                        </button>
-                    </div>
-
+                <!-- Header -->
+                <div class="modal-header text-white" style="background-color:#0d6ea8;">
+                    <h5 class="modal-title" id="addRouterModalLabel">Add Router</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
+
+                <!-- Body -->
+                <div class="modal-body">
+                    <form>
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <label class="form-label">Personnel</label>
+                                <input type="text" class="form-control" name="personnel">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Division</label>
+                                <input type="text" class="form-control" name="division">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Manufacturer</label>
+                                <input type="text" class="form-control" name="manufacturer">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Model</label>
+                                <input type="text" class="form-control" name="model">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Serial No</label>
+                                <input type="text" class="form-control" name="serial_no">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Ports</label>
+                                <input type="number" class="form-control" name="ports">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Active Ports</label>
+                                <input type="number" class="form-control" name="active_ports">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">IP Range</label>
+                                <input type="text" class="form-control" name="ip_range">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Firmware</label>
+                                <input type="text" class="form-control" name="firmware">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Location</label>
+                                <input type="text" class="form-control" name="location">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Active</label>
+                                <select class="form-control" name="active">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Remote Access</label>
+                                <select class="form-control" name="remote_access">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Remote Details</label>
+                                <input type="text" class="form-control" name="remote_details">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Remarks</label>
+                                <input type="text" class="form-control" name="remarks">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">PNP Focal</label>
+                                <input type="text" class="form-control" name="pnp_focal">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Contact</label>
+                                <input type="text" class="form-control" name="contact">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Acquisition Date</label>
+                                <input type="date" class="form-control" name="acq_date">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Acquisition Type</label>
+                                <input type="text" class="form-control" name="acq_type">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Previous Handlers</label>
+                                <input type="text" class="form-control" name="previous_handlers">
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">
+                        Save
+                    </button>
+                </div>
+
             </div>
         </div>
-
-
-        <!-- SEARCH -->
-        <div class="search-container">
-
-            <form method="GET" class="search-form">
-
-                <input type="hidden" name="division_id" value="<?= htmlspecialchars($division_id) ?>">
-                <input type="hidden" name="is_active" value="<?= htmlspecialchars($is_active) ?>">
-
-                <input type="text" name="search" class="search-input" placeholder="Search routers..."
-                    value="<?= htmlspecialchars($search) ?>">
-
-                <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
-
-            </form>
-
-        </div>
-
     </div>
 
     <!-- ========================= TABLE ========================= -->
