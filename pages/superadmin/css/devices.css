@@ -431,3 +431,133 @@
         min-width: 900px;
     }
 }
+
+/* =========================
+   MODAL OVERALL
+========================= */
+.custom-modal {
+    border-radius: 18px;
+    overflow: hidden;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+
+/* =========================
+   HEADER
+========================= */
+.custom-header {
+    background: #0d6ea8;
+    color: #fff;
+
+    padding: 16px 20px;
+
+    border-bottom: none;
+}
+
+.custom-header .modal-title {
+    font-weight: 700;
+    font-size: 18px;
+}
+
+/* CLOSE BUTTON (X) */
+.custom-header .btn-close {
+    filter: brightness(0) invert(1); /* makes X white */
+    opacity: 1;
+}
+
+.custom-header .btn-close:hover {
+    opacity: 0.7;
+}
+
+/* =========================
+   BODY
+========================= */
+.modal-body {
+    padding: 25px;
+    background: #f8fafc;
+}
+
+/* INPUT LABELS */
+.form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+}
+
+/* INPUT FIELDS */
+.form-control,
+.form-select {
+    border-radius: 12px;
+    border: 1px solid #dce3ec;
+
+    padding: 10px 14px;
+
+    font-size: 14px;
+
+    transition: all 0.3s ease;
+}
+
+/* FOCUS */
+.form-control:focus,
+.form-select:focus {
+    border-color: #0d6ea8;
+    box-shadow: 0 0 0 4px rgba(13,110,168,0.15);
+}
+
+/* =========================
+   FOOTER
+========================= */
+.modal-footer {
+    border-top: none;
+    background: #ffffff;
+
+    padding: 15px 25px;
+
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* CLOSE BUTTON */
+.modal-footer .btn-secondary {
+    background: #e5e7eb;
+    color: #334155;
+
+    border: none;
+
+    border-radius: 12px;
+
+    padding: 10px 18px;
+
+    font-weight: 600;
+
+    transition: 0.3s ease;
+}
+
+.modal-footer .btn-secondary:hover {
+    background: #cbd5e1;
+}
+
+/* SAVE BUTTON */
+.save-btn {
+    background: #0d6ea8;
+    color: #fff;
+
+    border: none;
+
+    border-radius: 12px;
+
+    padding: 10px 18px;
+
+    font-weight: 600;
+
+    transition: all 0.3s ease;
+
+    box-shadow: 0 4px 12px rgba(13,110,168,0.25);
+}
+
+.save-btn:hover {
+    background: #095a8a;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(13,110,168,0.35);
+}

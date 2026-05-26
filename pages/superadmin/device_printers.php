@@ -261,7 +261,6 @@ $result = $stmt->get_result();
                     </h5>
 
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">
-                        X
                     </button>
                 </div>
 

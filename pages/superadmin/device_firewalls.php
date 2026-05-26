@@ -213,7 +213,7 @@ $result = $stmt->get_result();
                 <input type="hidden" name="division_id" value="<?= htmlspecialchars($division_id) ?>">
                 <input type="hidden" name="is_active" value="<?= htmlspecialchars($is_active) ?>">
 
-                <input type="text" name="search" class="search-input" placeholder="Search routers..."
+                <input type="text" name="search" class="search-input" placeholder="Search firewalls..."
                     value="<?= htmlspecialchars($search) ?>">
 
                 <button type="submit" class="search-btn">
@@ -294,8 +294,8 @@ $result = $stmt->get_result();
             </div>
 
             <!-- ADD BUTTON (LAST ITEM ON RIGHT) -->
-            <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addRouterModal">
-                Add Router
+            <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addFirewallModal">
+                Add Firewall
             </button>
 
         </div>
