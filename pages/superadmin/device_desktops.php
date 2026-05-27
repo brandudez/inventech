@@ -106,7 +106,7 @@ $search = trim($_GET['search'] ?? '');
 /* =========================
    FILTERS
 ========================= */
-$division_filter = trim($_GET['division'] ?? '');
+$division_filter = $_GET['division'] ?? [];
 $os_filter       = trim($_GET['os'] ?? '');
 $office_filter   = trim($_GET['office_application'] ?? '');
 $active_filter   = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
@@ -138,10 +138,24 @@ if (! empty($search)) {
 }
 
 /* DIVISION */
-if (! empty($division_filter)) {
-    $where[]   = "dv.division = ?";
-    $params[]  = $division_filter;
-    $types    .= 's';
+if (!empty($division_filter)) {
+
+    if (is_array($division_filter)) {
+
+        $placeholders = implode(',', array_fill(0, count($division_filter), '?'));
+        $where[] = "dv.division IN ($placeholders)";
+
+        foreach ($division_filter as $val) {
+            $params[] = $val;
+            $types .= 's';
+        }
+
+    } else {
+
+        $where[] = "dv.division = ?";
+        $params[] = $division_filter;
+        $types .= 's';
+    }
 }
 
 /* OS */
@@ -351,7 +365,13 @@ $result = $stmt->get_result();
         <div class="search-container">
             <form class="search-form" method="GET">
 
-                <input type="hidden" name="division" value="<?php echo htmlspecialchars($division_filter) ?>">
+                <?php if (is_array($division_filter)): ?>
+                    <?php foreach ($division_filter as $div): ?>
+                        <input type="hidden" name="division[]" value="<?php echo htmlspecialchars($div) ?>">
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <input type="hidden" name="division[]" value="<?php echo htmlspecialchars($division_filter) ?>">
+                <?php endif; ?>
                 <input type="hidden" name="os" value="<?php echo htmlspecialchars($os_filter) ?>">
                 <input type="hidden" name="office_application" value="<?php echo htmlspecialchars($office_filter) ?>">
                 <input type="text" name="search" class="search-input" placeholder="Search desktops..."
@@ -380,7 +400,15 @@ $result = $stmt->get_result();
                     <button class="btn filter-btn dropdown-toggle" type="button"
                         data-bs-toggle="dropdown" data-bs-auto-close="outside">
 
-                        <?php echo !empty($division_filter) ? $division_filter : 'Division' ?>
+                        <?php
+                        if (empty($division_filter)) {
+                            echo 'Division';
+                        } elseif (is_array($division_filter)) {
+                            echo count($division_filter) . ' selected';
+                        } else {
+                            echo $division_filter;
+                        }
+                        ?>
 
                     </button>
 
@@ -388,7 +416,7 @@ $result = $stmt->get_result();
 
                         <!-- APPLY BUTTON (TOP) -->
                         <li class="mb-2">
-                            <button type="button" class="btn btn-primary w-100">
+                            <button type="button" class="btn btn-primary w-100" id="applyDivisionBtn">
                                 Apply
                             </button>
                         </li>
@@ -401,7 +429,10 @@ $result = $stmt->get_result();
                                     type="checkbox"
                                     value=""
                                     id="allDivision"
-                                    <?php echo empty($division_filter) ? 'checked' : ''; ?>>
+                                    <?php
+                                    $allChecked = empty($division_filter) || (is_array($division_filter) && in_array('all', $division_filter));
+                                    echo $allChecked ? 'checked' : '';
+                                    ?>
 
                                 <label class="form-check-label" for="allDivision">
                                     All
@@ -429,10 +460,16 @@ $result = $stmt->get_result();
 
                                     <input class="form-check-input division-checkbox"
                                         type="checkbox"
-                                        name="division"
+                                        name="division[]"
                                         value="<?php echo htmlspecialchars($div); ?>"
                                         id="division_<?php echo md5($div); ?>"
-                                        <?php echo $division_filter == $div ? 'checked' : ''; ?>>
+                                        <?php
+                                        $isChecked =
+                                            empty($division_filter)
+                                            || (is_array($division_filter) && in_array($div, $division_filter));
+
+                                        echo $isChecked ? 'checked' : '';
+                                        ?>
 
                                     <label class="form-check-label"
                                         for="division_<?php echo md5($div); ?>">
@@ -1804,24 +1841,86 @@ $result = $stmt->get_result();
 
         </div>
         <script>
-            document.querySelector("form").addEventListener("submit", function(e) {
+        
+document.addEventListener('DOMContentLoaded', function () {
 
-                const ep = document.querySelectorAll("input[name='endpoint_security[]']:checked");
-                const ph = document.querySelectorAll("input[name='previous_owners_id[]']:checked");
+    const form = document.getElementById('filterForm');
 
-                if (ep.length === 0) {
-                    e.preventDefault();
-                    alert("Select at least one Endpoint Security");
-                    return;
-                }
+    const allDivision = document.getElementById('allDivision');
+    const divisionCheckboxes = document.querySelectorAll('.division-checkbox:not(#allDivision)');
 
-                if (ph.length === 0) {
-                    e.preventDefault();
-                    alert("Select at least one Previous Handler");
-                    return;
-                }
+    const applyBtn = document.getElementById('applyDivisionBtn');
 
+    /* =========================
+       ALL TOGGLE
+    ========================= */
+    if (allDivision) {
+        allDivision.addEventListener('change', function () {
+
+            divisionCheckboxes.forEach(cb => {
+                cb.checked = this.checked;
             });
+
+        });
+    }
+
+    /* =========================
+       INDIVIDUAL CHECK -> UPDATE ALL STATE
+    ========================= */
+    divisionCheckboxes.forEach(cb => {
+        cb.addEventListener('change', function () {
+
+            const allChecked = Array.from(divisionCheckboxes).every(c => c.checked);
+
+            if (allDivision) {
+                allDivision.checked = allChecked;
+            }
+
+        });
+    });
+
+    /* =========================
+       APPLY BUTTON
+    ========================= */
+    if (applyBtn) {
+        applyBtn.addEventListener('click', function () {
+
+            // remove old inputs
+            document.querySelectorAll('input[name="division[]"]').forEach(el => el.remove());
+
+            const selected = [];
+
+            divisionCheckboxes.forEach(cb => {
+                if (cb.checked) {
+                    selected.push(cb.value);
+                }
+            });
+
+            // if ALL is checked OR nothing selected
+            if (allDivision.checked || selected.length === 0) {
+
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'division[]';
+                input.value = '';
+                form.appendChild(input);
+
+            } else {
+
+                selected.forEach(val => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'division[]';
+                    input.value = val;
+                    form.appendChild(input);
+                });
+            }
+
+            form.submit();
+        });
+    }
+
+});
         </script>
 
         <?php if (! empty($_SESSION['toast_error'])): ?>
