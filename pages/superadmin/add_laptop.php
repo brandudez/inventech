@@ -76,7 +76,7 @@ $office_license_key = $_POST['office_license_key'] ?? '';
 
 $par_serial_no = $_POST['par_serial_no'] ?? '';
 
-$is_active = ($_POST['is_active'] ?? 1) == "1" ? 1 : 1;
+$is_active = ($_POST['is_active'] ?? 1) == "1" ? 1 : 0;
 
 /* =========================
    INSERT QUERY (LAPTOPS TABLE)

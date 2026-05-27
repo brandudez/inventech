@@ -757,9 +757,9 @@ $result = $stmt->get_result();
                                                             <label class="form-label">Is OS Licensed?</label>
 
                                                             <select name="os_licensed" class="form-select" required>
-                                                                <option value="" disabled selected hidden>Select OS License</option>
-                                                                <option value="Yes">Yes</option>
-                                                                <option value="No">No</option>
+                                                                 <option value="">Select</option>
+                                                                <option value="1">Yes</option>
+                                                                <option value="0">No</option>
                                                             </select>
                                                         </div>
 
@@ -840,9 +840,9 @@ $result = $stmt->get_result();
                                                         <div class="col-md-6">
                                                             <label class="form-label">Is Office Licensed?</label>
                                                             <select name="is_office_licensed" class="form-select" required>
-                                                                <option>Select</option>
-                                                                <option>Yes</option>
-                                                                <option>No</option>
+                                                                <option value="">Select</option>
+                                                                <option value="1">Yes</option>
+                                                                <option value="0">No</option>
                                                             </select>
                                                         </div>
 
