@@ -127,10 +127,12 @@
    DROPDOWN
 ========================= */
 .dropdown-menu {
-  border-radius: 12px;
-  min-width: 220px;
-
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  min-width: 320px;
+  max-width: 450px;
+  width: max-content;
+  white-space: nowrap;
+  max-height: 350px;
+  overflow-y: auto;
 }
 
 .dropdown-menu.dropdown-scroll {

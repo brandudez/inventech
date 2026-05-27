@@ -352,14 +352,21 @@ $result = $stmt->get_result();
                     <!-- DIVISION DROPDOWN -->
                     <div class="dropdown">
 
-                        <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                            data-bs-auto-close="outside">
+                        <button class="btn filter-btn dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" data-bs-auto-close="outside">
 
                             <?= !empty($division_filter) ? $division_filter : 'Division' ?>
 
                         </button>
 
-                        <ul class="dropdown-menu dropdown-scroll">
+                        <ul class="dropdown-menu dropdown-scroll p-2">
+
+                            <!-- APPLY BUTTON TOP -->
+                            <li class="mb-2">
+                                <button type="button" class="btn btn-primary w-100">
+                                    Apply
+                                </button>
+                            </li>
 
                             <?php
                             $divisions = [];
@@ -368,15 +375,18 @@ $result = $stmt->get_result();
                                     SELECT division
                                     FROM divisions
                                     ORDER BY id ASC");
+
                             while ($row = mysqli_fetch_assoc($divisionQuery)) {
                                 $divisions[] = $row['division'];
                             }
+
                             foreach ($divisions as $division):
                             ?>
                                 <li>
                                     <label class="dropdown-item">
-                                        <input type="radio" name="division" value="<?= $division ?>"
-                                            onchange="document.getElementById('filterForm').submit();"
+                                        <input type="checkbox"
+                                            name="division"
+                                            value="<?= $division ?>"
                                             <?= $division_filter == $division ? 'checked' : '' ?>>
 
                                         <?= $division ?>
@@ -388,17 +398,25 @@ $result = $stmt->get_result();
 
                     </div>
 
+
                     <!-- OPERATING SYSTEM DROPDOWN -->
                     <div class="dropdown">
 
-                        <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                            data-bs-auto-close="outside">
+                        <button class="btn filter-btn dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" data-bs-auto-close="outside">
 
                             <?= !empty($os_filter) ? $os_filter : 'Operating System' ?>
 
                         </button>
 
-                        <ul class="dropdown-menu dropdown-scroll">
+                        <ul class="dropdown-menu dropdown-scroll p-2">
+
+                            <!-- APPLY BUTTON TOP -->
+                            <li class="mb-2">
+                                <button type="button" class="btn btn-primary w-100">
+                                    Apply
+                                </button>
+                            </li>
 
                             <?php
                             $operatingSystems = [
@@ -412,8 +430,10 @@ $result = $stmt->get_result();
                             ?>
                                 <li>
                                     <label class="dropdown-item">
-                                        <input type="radio" name="os" value="<?= $os ?>"
-                                            onchange="document.getElementById('filterForm').submit();" <?= $os_filter == $os ? 'checked' : '' ?>>
+                                        <input type="checkbox"
+                                            name="os"
+                                            value="<?= $os ?>"
+                                            <?= $os_filter == $os ? 'checked' : '' ?>>
 
                                         <?= $os ?>
                                     </label>
@@ -424,17 +444,25 @@ $result = $stmt->get_result();
 
                     </div>
 
+
                     <!-- OFFICE APPLICATION DROPDOWN -->
                     <div class="dropdown">
 
-                        <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                            data-bs-auto-close="outside">
+                        <button class="btn filter-btn dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" data-bs-auto-close="outside">
 
                             <?= !empty($office_filter) ? $office_filter : 'Office Application' ?>
 
                         </button>
 
-                        <ul class="dropdown-menu dropdown-scroll">
+                        <ul class="dropdown-menu dropdown-scroll p-2">
+
+                            <!-- APPLY BUTTON TOP -->
+                            <li class="mb-2">
+                                <button type="button" class="btn btn-primary w-100">
+                                    Apply
+                                </button>
+                            </li>
 
                             <?php
                             $officeApps = [
@@ -452,8 +480,9 @@ $result = $stmt->get_result();
                             ?>
                                 <li>
                                     <label class="dropdown-item">
-                                        <input type="radio" name="office_application" value="<?= $office ?>"
-                                            onchange="document.getElementById('filterForm').submit();"
+                                        <input type="checkbox"
+                                            name="office_application"
+                                            value="<?= $office ?>"
                                             <?= $office_filter == $office ? 'checked' : '' ?>>
 
                                         <?= $office ?>

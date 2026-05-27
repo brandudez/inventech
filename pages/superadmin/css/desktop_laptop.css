@@ -65,8 +65,10 @@ body {
 
 /* DROPDOWN BOX */
 .dropdown-menu.dropdown-scroll {
-  max-height: 280px;
-  overflow-y: auto;
+  min-width: 320px;
+  max-width: 450px;
+  white-space: nowrap;
+  overflow-x: auto;
   border-radius: 12px;
   border: none;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
