@@ -1,5 +1,4 @@
 <?php
-
 session_start();
 
 if (!isset($_SESSION['user'])) {
@@ -12,17 +11,51 @@ if ($_SESSION['user']['role_id'] != 1) {
     exit();
 }
 
-
 include("../../config/db.php");
+
+/* =========================
+   HELPER: PREVIOUS HANDLERS
+========================= */
+function getPreviousOwnersNames($conn, $json)
+{
+    if (empty($json)) return 'N/A';
+
+    $ids = json_decode($json, true);
+    if (!is_array($ids) || empty($ids)) return 'N/A';
+
+    $ids = array_map('intval', $ids);
+    $in = implode(',', $ids);
+
+    $sql = "
+        SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name
+        FROM personnels p
+        LEFT JOIN ranks r ON p.rank_id = r.id
+        WHERE p.id IN ($in)
+    ";
+
+    $result = mysqli_query($conn, $sql);
+    if (!$result) return 'N/A';
+
+    $names = [];
+
+    while ($row = mysqli_fetch_assoc($result)) {
+        $names[] = trim(
+            ($row['rank'] ?? '') . ' ' .
+            $row['first_name'] . ' ' .
+            $row['middle_name'] . ' ' .
+            $row['last_name']
+        );
+    }
+
+    return !empty($names) ? implode("<br>", $names) : 'N/A';
+}
 
 /* =========================
    PAGINATION
 ========================= */
 $limit = 10;
-
-$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $page = max(1, $page);
-
 $offset = ($page - 1) * $limit;
 
 /* =========================
@@ -31,21 +64,17 @@ $offset = ($page - 1) * $limit;
 $search = trim($_GET['search'] ?? '');
 $division = trim($_GET['division'] ?? '');
 
-/* =========================
-   WHERE CONDITIONS
-========================= */
 $where = [];
 $params = [];
 $types = '';
 
 if (!empty($search)) {
-
     $where[] = "(
         h.brand LIKE ? OR
         h.model LIKE ? OR
         h.serial_no LIKE ? OR
         h.acquisition_details LIKE ? OR
-        CONCAT(per.first_name, ' ', per.middle_name, ' ', per.last_name) LIKE ?
+        CONCAT(per.first_name,' ',per.middle_name,' ',per.last_name) LIKE ?
     )";
 
     $searchValue = "%$search%";
@@ -57,9 +86,7 @@ if (!empty($search)) {
 }
 
 if (!empty($division)) {
-
     $where[] = "d.division = ?";
-
     $params[] = $division;
     $types .= 's';
 }
@@ -67,7 +94,7 @@ if (!empty($division)) {
 $whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
 
 /* =========================
-   COUNT
+   COUNT QUERY
 ========================= */
 $countSQL = "
     SELECT COUNT(*) as total
@@ -85,19 +112,24 @@ if (!empty($params)) {
 
 $countStmt->execute();
 $totalDevices = $countStmt->get_result()->fetch_assoc()['total'];
-
 $totalPages = ceil($totalDevices / $limit);
 
 /* =========================
-   FETCH
+   MAIN QUERY
 ========================= */
 $sql = "
     SELECT 
         h.*,
-        CONCAT(per.first_name, ' ', per.middle_name, ' ', per.last_name) AS fullname,
+        CONCAT(
+            COALESCE(r.rank,''),' ',
+            per.first_name,' ',
+            per.middle_name,' ',
+            per.last_name
+        ) AS fullname,
         d.division
     FROM headsets h
     LEFT JOIN personnels per ON h.personnel_id = per.id
+    LEFT JOIN ranks r ON per.rank_id = r.id
     LEFT JOIN divisions d ON h.division_id = d.id
     $whereSQL
     ORDER BY h.id DESC
@@ -109,14 +141,12 @@ $stmt = $conn->prepare($sql);
 if (!empty($params)) {
 
     $bindTypes = $types . 'ii';
-
     $params[] = $offset;
     $params[] = $limit;
 
     $stmt->bind_param($bindTypes, ...$params);
 
 } else {
-
     $stmt->bind_param("ii", $offset, $limit);
 }
 
@@ -252,67 +282,158 @@ $result = $stmt->get_result();
                 </div>
 
                 <!-- Body -->
-                <div class="modal-body">
-                    <form>
+               <div class="modal-body">
+                    <form action="add_headsets.php" method="POST">
 
                         <div class="row g-3">
 
-                            <div class="col-md-6">
-                                <label class="form-label">Personnel</label>
-                                <input type="text" class="form-control" name="personnel">
-                            </div>
+                        <div class="col-md-6">
+                        <select name="personnel_id" class="form-select" required>
+                            <option disabled selected>Select Personnel</option>
+                            <?php
+                            $p = mysqli_query($conn,"SELECT p.id,r.rank,p.first_name,p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id=r.id");
+                            while($r=mysqli_fetch_assoc($p)){
+                            echo "<option value='{$r['id']}'>{$r['rank']} {$r['first_name']} {$r['last_name']}</option>";
+                            }
+                            ?>
+                        </select>
+                        </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Division</label>
-                                <input type="text" class="form-control" name="division">
-                            </div>
-
+                        <select name="division_id" class="form-select" required>
+                             <option disabled selected>Select Division</option>
+                            <?php
+                            $d=mysqli_query($conn,"SELECT * FROM divisions");
+                            while($r=mysqli_fetch_assoc($d)){
+                            echo "<option value='{$r['id']}'>{$r['division']}</option>";
+                            }
+                            ?>
+                        </select>
+                        </div>
                             <div class="col-md-6">
                                 <label class="form-label">Brand</label>
-                                <input type="text" class="form-control" name="brand">
+                                <input type="text" class="form-control" name="brand" required>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Model</label>
-                                <input type="text" class="form-control" name="model">
+                                <input type="text" class="form-control" name="model"required>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Serial No</label>
-                                <input type="text" class="form-control" name="serial_no">
+                                <label class="form-label">Serial Number</label>
+                                <input type="text" class="form-control" name="serial_number"required>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Acquisition Details</label>
-                                <input type="text" class="form-control" name="acquisition_details">
+                                <input type="text" class="form-control" name="acquisition_details" required>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Acquisition Date</label>
-                                <input type="date" class="form-control" name="acquisition_date">
+                                <input type="date" class="form-control" name="acquisition_date" required>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Previous Owners</label>
-                                <input type="text" class="form-control" name="previous_owners">
-                            </div>
+        <label class="form-label">Previous Handler/s</label>
 
-                            <div class="col-md-6">
-                                <label class="form-label">Created Date</label>
-                                <input type="date" class="form-control" name="created_date">
-                            </div>
+        <div class="dropdown w-100">
+
+            <button
+                class="form-select text-start"
+                type="button"
+                data-bs-toggle="dropdown">
+
+                Select Previous Handler/s
+
+            </button>
+
+            <div class="dropdown-menu w-100 p-2"
+                style="max-height: 250px; overflow-y: auto;">
+
+                <?php
+                $handlerQuery = mysqli_query($conn, "
+                    SELECT
+                        p.id,
+                        r.rank,
+                        p.first_name,
+                        p.middle_name,
+                        p.last_name,
+                        p.rank_id
+                    FROM personnels p
+                    LEFT JOIN ranks r
+                        ON p.rank_id = r.id
+                    ORDER BY p.rank_id DESC
+                ");
+
+                while ($handler = mysqli_fetch_assoc($handlerQuery)):
+
+                    $fullName = trim(
+                        ($handler['rank'] ?? '') . ' ' .
+                        ($handler['last_name'] ?? '') . ' ' .
+                        ($handler['first_name'] ?? '') . ' ' .
+                        ($handler['middle_name'] ?? '')
+                    );
+                ?>
+
+                    <div class="form-check">
+
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            name="previous_handlers_id[]"
+                            value="<?php echo $handler['id'] ?>"
+                            id="ph<?php echo $handler['id'] ?>">
+
+                        <label
+                            class="form-check-label"
+                            for="ph<?php echo $handler['id'] ?>">
+
+                            <?php echo htmlspecialchars($fullName) ?>
+
+                        </label>
+
+                    </div>
+
+                <?php endwhile; ?>
+
+            </div>
+        </div>
+
+        <small class="text-muted">
+            You can select multiple handlers
+        </small>
+    </div>
+
+                        <div class="col-md-6">
+        <label class="form-label">Created Date</label>
+
+        <input
+            type="date"
+            name="created_date"
+            class="form-control"
+            value="<?= date('Y-m-d') ?>" required>
+    </div>
 
                         </div>
+                        <!-- FOOTER -->
+                        <div class="modal-footer mt-4">
 
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+
+                                Close
+
+                            </button>
+
+                            <button type="submit" name="save_headset" class="btn save-btn">
+
+                                Save Camera
+
+                            </button>
+
+                        </div>
                     </form>
-                </div>
-
-                <!-- Footer -->
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">
-                        Save
-                    </button>
                 </div>
 
             </div>
@@ -350,26 +471,42 @@ $result = $stmt->get_result();
                         <?php while ($row = $result->fetch_assoc()): ?>
 
                             <tr>
-                                <td><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></td>
+                                 <td><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['division'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['brand']) ?></td>
                                 <td><?= htmlspecialchars($row['model']) ?></td>
+
+                                <!-- FIXED COLUMN -->
                                 <td><?= htmlspecialchars($row['serial_no'] ?? 'N/A') ?></td>
+
                                 <td><?= htmlspecialchars($row['acquisition_details']) ?></td>
                                 <td><?= htmlspecialchars($row['acquisition_date']) ?></td>
-                                <td><?= htmlspecialchars($row['previous_owners_id'] ?? 'N/A') ?></td>
-                                <td><?= htmlspecialchars($row['created_date']) ?></td>
+                                <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?></td>
+                                <td><?= !empty($row['created_date']) 
+                                            ? date('Y-m-d', strtotime($row['created_date'])) 
+                                            : 'N/A' ?>
+                                    </td>
 
                                 <!-- BUTTON -->
                                 <td>
                                     <button 
-                                        class="btn btn-primary btn-sm"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#editHeadsetModal">
+                                    class="btn btn-primary btn-sm editBtn"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editHeadsetModal"
 
-                                        <i class="bi bi-gear-fill"></i>
+                                    data-id="<?= $row['id'] ?>"
+                                    data-personnel="<?= $row['personnel_id'] ?>"
+                                    data-division="<?= $row['division_id'] ?>"
+                                    data-brand="<?= $row['brand'] ?>"
+                                    data-model="<?= $row['model'] ?>"
+                                    data-serial="<?= $row['serial_no'] ?>"
+                                    data-acquisition="<?= $row['acquisition_details'] ?>"
+                                    data-date="<?= $row['acquisition_date'] ?>"
+                                    data-created="<?= $row['created_date'] ?>"
+                                    data-handlers='<?= htmlspecialchars($row["previous_owners_id"] ?? "[]", ENT_QUOTES) ?>'>
 
-                                    </button>
+                                    <i class="bi bi-gear-fill"></i>
+                                </button>
                                 </td>
 
                                 <!-- EDIT HEADSET MODAL -->
@@ -393,78 +530,150 @@ $result = $stmt->get_result();
                                             <!-- Body -->
                                             <div class="modal-body">
 
-                                                <div class="row g-3">
+                <form action="edit_headsets.php" method="POST">
 
-                                                    <!-- Personnel -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Personnel</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Personnel">
-                                                    </div>
+                    <input type="hidden" name="id" id="edit_id">
 
-                                                    <!-- Division -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Division</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Division">
-                                                    </div>
+                    <div class="row g-3">
 
-                                                    <!-- Brand -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Brand</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Brand">
-                                                    </div>
+                        <!-- PERSONNEL -->
+                        <div class="col-md-6">
+                            <label class="form-label">Personnel</label>
 
-                                                    <!-- Model -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Model</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Model">
-                                                    </div>
+                            <select name="personnel_id" id="edit_personnel" class="form-select" required>
 
-                                                    <!-- Serial No -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Serial No</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Serial No">
-                                                    </div>
+                                <?php
+                                $personnelQuery = mysqli_query($conn, "
+                                    SELECT p.id, r.rank, p.first_name, p.last_name
+                                    FROM personnels p
+                                    LEFT JOIN ranks r ON p.rank_id = r.id
+                                ");
 
-                                                    <!-- Acquisition Details -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Acquisition Details</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Acquisition Details">
-                                                    </div>
+                                while ($p = mysqli_fetch_assoc($personnelQuery)):
+                                    $name = trim(($p['rank'] ?? '') . ' ' . $p['last_name'] . ' ' . $p['first_name']);
+                                ?>
+                                    <option value="<?= $p['id'] ?>">
+                                        <?= htmlspecialchars($name) ?>
+                                    </option>
+                                <?php endwhile; ?>
 
-                                                    <!-- Acquisition Date -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Acquisition Date</label>
-                                                        <input type="date" class="form-control">
-                                                    </div>
+                            </select>
+                        </div>
 
-                                                    <!-- Previous Owners -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Previous Owners</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Previous Owners">
-                                                    </div>
+                        <!-- DIVISION -->
+                        <div class="col-md-6">
+                            <label class="form-label">Division</label>
 
-                                                    <!-- Created Date -->
-                                                    <div class="col-md-12">
-                                                        <label class="form-label">Created Date</label>
-                                                        <input type="date" class="form-control">
-                                                    </div>
+                            <select name="division_id" id="edit_division" class="form-select" required>
 
-                                                </div>
+                                <?php
+                                $divisionQuery = mysqli_query($conn, "SELECT * FROM divisions");
+                                while ($d = mysqli_fetch_assoc($divisionQuery)):
+                                ?>
+                                    <option value="<?= $d['id'] ?>">
+                                        <?= htmlspecialchars($d['division']) ?>
+                                    </option>
+                                <?php endwhile; ?>
 
-                                            </div>
+                            </select>
+                        </div>
 
-                                            <!-- Footer -->
-                                            <div class="modal-footer">
+                        <!-- BRAND -->
+                        <div class="col-md-6">
+                            <label class="form-label">Brand</label>
+                            <input type="text" name="brand" id="edit_brand" class="form-control" required>
+                        </div>
 
-                                                <button type="button" class="btn cancelBtn" data-bs-dismiss="modal">
-                                                    Cancel
-                                                </button>
+                        <!-- MODEL -->
+                        <div class="col-md-6">
+                            <label class="form-label">Model</label>
+                            <input type="text" name="model" id="edit_model" class="form-control"required>
+                        </div>
 
-                                                <button type="button" class="btn saveBtn">
-                                                    Save Changes
-                                                </button>
+                        <!-- SERIAL -->
+                        <div class="col-md-6">
+                            <label class="form-label">PAR Serial Number</label>
+                            <input type="text" name="serial_no" id="edit_serial" class="form-control"required>
+                        </div>
 
-                                            </div>
+                        <!-- ACQUISITION -->
+                        <div class="col-md-6">
+                            <label class="form-label">Acquisition Details</label>
+                            <input type="text" name="acquisition_details" id="edit_acquisition" class="form-control"required>
+                        </div>
+
+                        <!-- DATE -->
+                        <div class="col-md-6">
+                            <label class="form-label">Acquisition Date</label>
+                            <input type="date" name="acquisition_date" id="edit_acq_date" class="form-control"required>
+                        </div>
+
+                        <!-- PREVIOUS HANDLERS -->
+                        <div class="col-md-6">
+                            <label class="form-label">Previous Handlers</label>
+
+                            <div class="dropdown w-100">
+
+                                <button class="form-select text-start" type="button" data-bs-toggle="dropdown">
+                                    Select Handlers
+                                </button>
+
+                                <div class="dropdown-menu w-100 p-2" style="max-height:250px;overflow-y:auto;">
+
+                                    <?php
+                                    $handlerQuery = mysqli_query($conn, "
+                                        SELECT p.id, r.rank, p.first_name, p.last_name
+                                        FROM personnels p
+                                        LEFT JOIN ranks r ON p.rank_id = r.id
+                                    ");
+
+                                    while ($h = mysqli_fetch_assoc($handlerQuery)):
+
+                                        $name = trim(($h['rank'] ?? '') . ' ' . $h['last_name'] . ' ' . $h['first_name']);
+                                    ?>
+
+                                        <div class="form-check">
+                                            <input class="form-check-input edit-handler"
+                                                type="checkbox"
+                                                name="previous_handlers_id[]"
+                                                value="<?= $h['id'] ?>"
+                                                id="edit_h<?= $h['id'] ?>">
+
+                                            <label class="form-check-label" for="edit_h<?= $h['id'] ?>">
+                                                <?= htmlspecialchars($name) ?>
+                                            </label>
+                                        </div>
+
+                                    <?php endwhile; ?>
+
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- CREATED -->
+                        <div class="col-md-6">
+                            <label class="form-label">Created Date</label>
+                            <input type="date" name="created_date" id="edit_created" class="form-control" disabled>
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer mt-3">
+
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+
+                        <button type="submit" class="btn btn-primary">
+                            Update
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
 
                                         </div>
 
@@ -537,7 +746,71 @@ $result = $stmt->get_result();
         </div>
 
     </div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
 
+    const editButtons = document.querySelectorAll(".editBtn");
+
+    editButtons.forEach(btn => {
+        btn.addEventListener("click", function () {
+
+            document.getElementById("edit_id").value = this.dataset.id;
+            document.getElementById("edit_personnel").value = this.dataset.personnel;
+            document.getElementById("edit_division").value = this.dataset.division;
+            document.getElementById("edit_brand").value = this.dataset.brand;
+            document.getElementById("edit_model").value = this.dataset.model;
+            document.getElementById("edit_serial").value = this.dataset.serial;
+            document.getElementById("edit_acquisition").value = this.dataset.acquisition;
+            document.getElementById("edit_acq_date").value = this.dataset.date;
+           document.getElementById("edit_created").value =
+                    (this.dataset.created || '').split(' ')[0];
+
+            document.querySelectorAll(".edit-handler").forEach(cb => cb.checked = false);
+
+            let handlers = [];
+            try {
+                handlers = JSON.parse(this.dataset.handlers || "[]");
+            } catch (e) {
+                handlers = [];
+            }
+
+            handlers.forEach(id => {
+                let cb = document.querySelector("#edit_h" + id);
+                if (cb) cb.checked = true;
+            });
+
+        });
+    });
+
+    // EDIT VALIDATION
+    const editForm = document.querySelector("#editHeadsetModal form");
+    if (editForm) {
+        editForm.addEventListener("submit", function (e) {
+            let checked = document.querySelectorAll(".edit-handler:checked");
+            if (checked.length === 0) {
+                e.preventDefault();
+                alert("Please select at least one Previous Handler.");
+            }
+        });
+    }
+
+    // ADD VALIDATION
+    const addForm = document.querySelector("#addHeadsetModal form");
+    if (addForm) {
+        addForm.addEventListener("submit", function (e) {
+            let checked = document.querySelectorAll(
+                '#addHeadsetModal input[name="previous_handlers_id[]"]:checked'
+            );
+
+            if (checked.length === 0) {
+                e.preventDefault();
+                alert("Please select at least one Previous Handler.");
+            }
+        });
+    }
+
+});
+</script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

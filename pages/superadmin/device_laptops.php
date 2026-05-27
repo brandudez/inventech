@@ -1577,15 +1577,15 @@ $result = $stmt->get_result();
                                     </div>
 
                                     <!-- STATUS -->
-                                    <div class="col-md-3">
-                                        <label class="form-label">Is Remote Accessible?</label>
-                                        <select name="is_remote_acc" class="form-select" required>
-                                            <option>Select</option>
-                                            <option value="Yes">Yes</option>
-                                            <option value="No">No</option>
-                                        </select>
-                                    </div>
+<div class="col-md-3">
+    <label class="form-label">Is Remote Accessible?</label>
 
+    <select name="is_remote_acc" class="form-select" required>
+        <option value="">Select</option>
+        <option value="1">Yes</option>
+        <option value="0">No</option>
+    </select>
+</div>
                                     <div class="col-md-3">
                                         <label class="form-label">Is Active?</label>
                                         <select name="is_active" class="form-select" required>

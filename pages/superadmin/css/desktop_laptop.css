@@ -311,6 +311,11 @@ body {
 .users-table thead {
   background: #0d6ea8;
 }
+.users-table {
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+}
 
 .users-table thead th {
   color: white;

@@ -178,9 +178,11 @@
   margin-top: 35px;
   border-radius: 16px;
   transition: all 0.3s ease;
+  overflow: visible; /* ✅ important fix */
+}
+.table-container {
   overflow-x: auto;
 }
-
 /* sidebar collapsed */
 .sidebar.collapsed ~ .contenttable {
   margin-left: var(--sidebar-collapsed);
@@ -246,10 +248,24 @@
   white-space: nowrap;
 }
 
+/* ALTERNATING ROWS */
+.users-table tbody tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+.users-table tbody tr:nth-child(even) {
+  background-color: #dedcdc;
+}
+
 /* ROW HOVER */
 .users-table tbody tr:hover {
-  background: #f5f9fc;
+  background-color: #dfe6e9;
   transition: 0.2s ease;
+}
+.users-table {
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
 }
 
 /* ====EDIT MODAL =====*/

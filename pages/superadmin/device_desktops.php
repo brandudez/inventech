@@ -1012,22 +1012,21 @@ $result = $stmt->get_result();
                                                                 You can select multiple handlers
                                                             </small>
                                                         </div>
-
                                                         <div class="col-md-3">
-                                                            <label class="form-label">Is Remotely Accessible?</label>
-                                                            <select class="form-select" name="is_remote_acc" required>
-                                                                <option>Select</option>
-                                                                <option>Yes</option>
-                                                                <option>No</option>
+                                                            <label class="form-label">Is Remote Accessible?</label>
+
+                                                            <select name="is_remote_acc" class="form-select" required>
+                                                                <option value="">Select</option>
+                                                                <option value="1">Yes</option>
+                                                                <option value="0">No</option>
                                                             </select>
                                                         </div>
-
                                                         <div class="col-md-3">
                                                             <label class="form-label">Is Active?</label>
                                                             <select class="form-select" name="is_active" required>
-                                                                <option>Select</option>
-                                                                <option>Yes</option>
-                                                                <option>No</option>
+                                                                 <option value="">Select</option>
+                                                                <option value="1">Yes</option>
+                                                                <option value="0">No</option>
                                                             </select>
                                                         </div>
 
