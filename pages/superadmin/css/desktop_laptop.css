@@ -82,6 +82,22 @@ body {
   cursor: pointer;
   padding: 8px 12px;
 }
+.form-check-input {
+  color: #000000;
+  width: 18px;
+  height: 18px;
+  font-weight: lighter;
+  cursor: pointer;
+}
+
+.form-check-input:checked {
+  background-color: #000;
+  border-color: #e0e0e0;
+}
+
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.15rem rgba(0, 0, 0, 0.15);
+}
 
 /* HOVER */
 .dropdown-item:hover {
@@ -112,14 +128,6 @@ body {
 .dropdown-menu.dropdown-scroll::-webkit-scrollbar-thumb {
   background: #0d6ea8;
   border-radius: 10px;
-}
-
-/* items */
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
 }
 
 /* BUTTON STYLE (Desktop + Laptop unified) */

@@ -359,22 +359,40 @@ $result = $stmt->get_result();
 
                         </button>
 
-                        <ul class="dropdown-menu dropdown-scroll p-2">
+                        <ul class="dropdown-menu p-3 dropdown-scroll wide-dropdown">
 
-                            <!-- APPLY BUTTON TOP -->
+                            <!-- APPLY BUTTON (TOP) -->
                             <li class="mb-2">
                                 <button type="button" class="btn btn-primary w-100">
                                     Apply
                                 </button>
                             </li>
 
+                            <!-- ALL OPTION -->
+                            <li class="mb-2">
+                                <div class="form-check">
+
+                                    <input class="form-check-input division-checkbox"
+                                        type="checkbox"
+                                        value=""
+                                        id="allDivision"
+                                        <?= empty($division_filter) ? 'checked' : '' ?>>
+
+                                    <label class="form-check-label" for="allDivision">
+                                        All
+                                    </label>
+
+                                </div>
+                            </li>
+
                             <?php
                             $divisions = [];
 
                             $divisionQuery = mysqli_query($conn, "
-                                    SELECT division
-                                    FROM divisions
-                                    ORDER BY id ASC");
+                                SELECT division
+                                FROM divisions
+                                ORDER BY id ASC
+                            ");
 
                             while ($row = mysqli_fetch_assoc($divisionQuery)) {
                                 $divisions[] = $row['division'];
@@ -382,15 +400,21 @@ $result = $stmt->get_result();
 
                             foreach ($divisions as $division):
                             ?>
-                                <li>
-                                    <label class="dropdown-item">
-                                        <input type="checkbox"
+                                <li class="mb-2">
+                                    <div class="form-check">
+
+                                        <input class="form-check-input division-checkbox"
+                                            type="checkbox"
                                             name="division"
-                                            value="<?= $division ?>"
+                                            value="<?= htmlspecialchars($division) ?>"
+                                            id="division_<?= md5($division) ?>"
                                             <?= $division_filter == $division ? 'checked' : '' ?>>
 
-                                        <?= $division ?>
-                                    </label>
+                                        <label class="form-check-label" for="division_<?= md5($division) ?>">
+                                            <?= htmlspecialchars($division) ?>
+                                        </label>
+
+                                    </div>
                                 </li>
                             <?php endforeach; ?>
 
@@ -409,13 +433,30 @@ $result = $stmt->get_result();
 
                         </button>
 
-                        <ul class="dropdown-menu dropdown-scroll p-2">
+                        <ul class="dropdown-menu p-3 dropdown-scroll wide-dropdown">
 
                             <!-- APPLY BUTTON TOP -->
                             <li class="mb-2">
                                 <button type="button" class="btn btn-primary w-100">
                                     Apply
                                 </button>
+                            </li>
+
+                            <!-- ALL OPTION -->
+                            <li class="mb-2">
+                                <div class="form-check">
+
+                                    <input class="form-check-input os-checkbox"
+                                        type="checkbox"
+                                        value=""
+                                        id="allOS"
+                                        <?= empty($os_filter) ? 'checked' : '' ?>>
+
+                                    <label class="form-check-label" for="allOS">
+                                        All
+                                    </label>
+
+                                </div>
                             </li>
 
                             <?php
@@ -428,15 +469,21 @@ $result = $stmt->get_result();
 
                             foreach ($operatingSystems as $os):
                             ?>
-                                <li>
-                                    <label class="dropdown-item">
-                                        <input type="checkbox"
+                                <li class="mb-2">
+                                    <div class="form-check">
+
+                                        <input class="form-check-input os-checkbox"
+                                            type="checkbox"
                                             name="os"
-                                            value="<?= $os ?>"
+                                            value="<?= htmlspecialchars($os) ?>"
+                                            id="os_<?= md5($os) ?>"
                                             <?= $os_filter == $os ? 'checked' : '' ?>>
 
-                                        <?= $os ?>
-                                    </label>
+                                        <label class="form-check-label" for="os_<?= md5($os) ?>">
+                                            <?= htmlspecialchars($os) ?>
+                                        </label>
+
+                                    </div>
                                 </li>
                             <?php endforeach; ?>
 
@@ -455,13 +502,30 @@ $result = $stmt->get_result();
 
                         </button>
 
-                        <ul class="dropdown-menu dropdown-scroll p-2">
+                        <ul class="dropdown-menu p-3 dropdown-scroll wide-dropdown">
 
                             <!-- APPLY BUTTON TOP -->
                             <li class="mb-2">
                                 <button type="button" class="btn btn-primary w-100">
                                     Apply
                                 </button>
+                            </li>
+
+                            <!-- ALL OPTION -->
+                            <li class="mb-2">
+                                <div class="form-check">
+
+                                    <input class="form-check-input office-checkbox"
+                                        type="checkbox"
+                                        value=""
+                                        id="allOffice"
+                                        <?= empty($office_filter) ? 'checked' : '' ?>>
+
+                                    <label class="form-check-label" for="allOffice">
+                                        All
+                                    </label>
+
+                                </div>
                             </li>
 
                             <?php
@@ -478,24 +542,27 @@ $result = $stmt->get_result();
 
                             foreach ($officeApps as $office):
                             ?>
-                                <li>
-                                    <label class="dropdown-item">
-                                        <input type="checkbox"
+                                <li class="mb-2">
+                                    <div class="form-check">
+
+                                        <input class="form-check-input office-checkbox"
+                                            type="checkbox"
                                             name="office_application"
-                                            value="<?= $office ?>"
+                                            value="<?= htmlspecialchars($office) ?>"
+                                            id="office_<?= md5($office) ?>"
                                             <?= $office_filter == $office ? 'checked' : '' ?>>
 
-                                        <?= $office ?>
-                                    </label>
+                                        <label class="form-check-label" for="office_<?= md5($office) ?>">
+                                            <?= htmlspecialchars($office) ?>
+                                        </label>
+
+                                    </div>
                                 </li>
                             <?php endforeach; ?>
 
                         </ul>
 
                     </div>
-                </form>
-
-            </div>
 
             <!-- ADD LAPTOP BUTTON -->
             <button type="button" class="btn add-laptop-btn" data-bs-toggle="modal" data-bs-target="#addLaptopModal">

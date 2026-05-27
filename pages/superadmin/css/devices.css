@@ -150,6 +150,23 @@
   border-radius: 10px;
 }
 
+.form-check-input {
+  width: 18px;
+  height: 18px;
+  font-weight: lighter;
+  cursor: pointer;
+}
+
+/* CHECKED STATE */
+.form-check-input:checked {
+  background-color: #000;
+  border-color: #e0e0e0;
+}
+
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.15rem rgba(0, 0, 0, 0.15);
+}
+
 /* =========================
    ADD BUTTON
 ========================= */
