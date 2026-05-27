@@ -127,10 +127,12 @@
    DROPDOWN
 ========================= */
 .dropdown-menu {
-  border-radius: 12px;
-  min-width: 220px;
-
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  min-width: 320px;
+  max-width: 450px;
+  width: max-content;
+  white-space: nowrap;
+  max-height: 350px;
+  overflow-y: auto;
 }
 
 .dropdown-menu.dropdown-scroll {
@@ -146,6 +148,23 @@
 .dropdown-menu.dropdown-scroll::-webkit-scrollbar-thumb {
   background: #0d6ea8;
   border-radius: 10px;
+}
+
+.form-check-input {
+  width: 18px;
+  height: 18px;
+  font-weight: lighter;
+  cursor: pointer;
+}
+
+/* CHECKED STATE */
+.form-check-input:checked {
+  background-color: #000;
+  border-color: #e0e0e0;
+}
+
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.15rem rgba(0, 0, 0, 0.15);
 }
 
 /* =========================

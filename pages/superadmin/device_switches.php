@@ -290,26 +290,43 @@ $result = $stmt->get_result();
 
                 <ul class="dropdown-menu p-3 dropdown-scroll">
 
-                    <!-- ALL -->
-                    <li>
-                        <a class="dropdown-item"
-                            href="?search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
-                            All
-                        </a>
+                    <!-- APPLY BUTTON (TOP) -->
+                    <li class="mb-2">
+                        <button type="button" class="btn btn-primary w-100">
+                            Apply
+                        </button>
                     </li>
 
+                    <!-- ALL -->
+                    <li class="mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="allDivision">
+                            <label class="form-check-label" for="allDivision">
+                                All
+                            </label>
+                        </div>
+                    </li>
+
+                    <!-- DIVISIONS -->
                     <?php foreach ($divisions as $id => $name): ?>
-                        <li>
-                            <a class="dropdown-item"
-                                href="?division_id=<?= $id ?>&search=<?= urlencode($search) ?>&is_active=<?= urlencode($is_active) ?>">
-                                <?= htmlspecialchars($name) ?>
-                            </a>
+                        <li class="mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input division-checkbox"
+                                    type="checkbox"
+                                    value="<?= htmlspecialchars($id) ?>"
+                                    id="division_<?= $id ?>">
+
+                                <label class="form-check-label" for="division_<?= $id ?>">
+                                    <?= htmlspecialchars($name) ?>
+                                </label>
+                            </div>
                         </li>
                     <?php endforeach; ?>
 
                 </ul>
 
             </div>
+
 
             <!-- IS ACTIVE FILTER -->
             <div class="dropdown">
@@ -320,25 +337,38 @@ $result = $stmt->get_result();
 
                 <ul class="dropdown-menu p-3">
 
-                    <li>
-                        <a class="dropdown-item"
-                            href="?division_id=<?= urlencode($division_id) ?>&search=<?= urlencode($search) ?>">
-                            All
-                        </a>
+                    <!-- APPLY BUTTON (TOP) -->
+                    <li class="mb-2">
+                        <button type="button" class="btn btn-primary w-100">
+                            Apply
+                        </button>
                     </li>
 
-                    <li>
-                        <a class="dropdown-item"
-                            href="?is_active=1&division_id=<?= urlencode($division_id) ?>&search=<?= urlencode($search) ?>">
-                            YES
-                        </a>
+                    <li class="mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="active_all">
+                            <label class="form-check-label" for="active_all">
+                                All
+                            </label>
+                        </div>
                     </li>
 
-                    <li>
-                        <a class="dropdown-item"
-                            href="?is_active=0&division_id=<?= urlencode($division_id) ?>&search=<?= urlencode($search) ?>">
-                            NO
-                        </a>
+                    <li class="mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="active_yes">
+                            <label class="form-check-label" for="active_yes">
+                                YES
+                            </label>
+                        </div>
+                    </li>
+
+                    <li class="mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="active_no">
+                            <label class="form-check-label" for="active_no">
+                                NO
+                            </label>
+                        </div>
                     </li>
 
                 </ul>

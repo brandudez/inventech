@@ -218,16 +218,23 @@ $result = $stmt->get_result();
             <!-- DIVISION FILTER -->
             <div class="filters">
 
-                <div class="dropdown">
+               <div class="dropdown">
 
-                    <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                        data-bs-auto-close="outside">
+                    <button class="btn filter-btn dropdown-toggle" type="button"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside">
 
                         <?php echo !empty($division) ? htmlspecialchars($division) : 'Division'; ?>
 
                     </button>
 
-                    <ul class="dropdown-menu p-3 dropdown-scroll">
+                    <ul class="dropdown-menu p-3 dropdown-scroll wide-dropdown">
+
+                        <!-- APPLY BUTTON (TOP) -->
+                        <li class="mb-2">
+                            <button type="button" class="btn btn-primary w-100">
+                                Apply
+                            </button>
+                        </li>
 
                         <!-- ALL OPTION -->
                         <li class="mb-2">
@@ -249,7 +256,7 @@ $result = $stmt->get_result();
                         while ($div = mysqli_fetch_assoc($divisionQuery)):
 
                             $checked = ($division == $div['division']) ? 'checked' : '';
-                            ?>
+                        ?>
 
                             <li class="mb-2">
 
@@ -257,7 +264,8 @@ $result = $stmt->get_result();
 
                                     <input class="form-check-input division-checkbox" type="checkbox"
                                         value="<?php echo htmlspecialchars($div['division']); ?>"
-                                        id="division_<?php echo $div['id']; ?>" <?php echo $checked; ?>>
+                                        id="division_<?php echo $div['id']; ?>"
+                                        <?php echo $checked; ?>>
 
                                     <label class="form-check-label" for="division_<?php echo $div['id']; ?>">
                                         <?php echo htmlspecialchars($div['division']); ?>
