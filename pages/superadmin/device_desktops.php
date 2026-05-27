@@ -1038,7 +1038,7 @@ $result = $stmt->get_result();
                                                         </button>
 
                                                         <button type="submit" class="btn btn-primary">
-                                                            Save Desktop
+                                                            Save 
                                                         </button>
                                                     </div>
 

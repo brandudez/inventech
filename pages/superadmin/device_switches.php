@@ -15,11 +15,60 @@ if ($_SESSION['user']['role_id'] != 1) {
 include("../../config/db.php");
 
 /* =========================
+   HELPER: PREVIOUS HANDLERS
+========================= */
+function getPreviousOwnersNames($conn, $json)
+{
+    if (empty($json)) return 'N/A';
+
+    $ids = json_decode($json, true);
+
+    if (!is_array($ids) || empty($ids)) {
+        return 'N/A';
+    }
+
+    $ids = array_map('intval', $ids);
+    $in = implode(',', $ids);
+
+    $sql = "
+        SELECT 
+            p.id,
+            r.rank,
+            p.first_name,
+            p.middle_name,
+            p.last_name
+        FROM personnels p
+        LEFT JOIN ranks r ON p.rank_id = r.id
+        WHERE p.id IN ($in)
+    ";
+
+    $result = mysqli_query($conn, $sql);
+
+    if (!$result) return 'N/A';
+
+    $names = [];
+
+    while ($row = mysqli_fetch_assoc($result)) {
+
+        $names[] = trim(
+            ($row['rank'] ?? '') . ' ' .
+            $row['first_name'] . ' ' .
+            $row['middle_name'] . ' ' .
+            $row['last_name']
+        );
+    }
+
+    return !empty($names)
+        ? implode("<br>", $names)
+        : 'N/A';
+}
+
+/* =========================
    PAGINATION
 ========================= */
 $limit = 10;
 
-$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $page = max(1, $page);
 
 $offset = ($page - 1) * $limit;
@@ -30,9 +79,8 @@ $offset = ($page - 1) * $limit;
 $search = trim($_GET['search'] ?? '');
 $division_id = trim($_GET['division_id'] ?? '');
 $is_active = trim($_GET['is_active'] ?? '');
-
 /* =========================
-    DIVISIONS
+   DIVISIONS
 ========================= */
 $divisions = [];
 
@@ -46,10 +94,6 @@ while ($row = mysqli_fetch_assoc($divisionQuery)) {
     $divisions[$row['id']] = $row['division'];
 }
 
-
-/* =========================
-   FILTER FUNCTION (REUSABLE)
-========================= */
 function addFilter(&$where, &$params, &$types, $condition, $value, $type)
 {
     $where[] = $condition;
@@ -75,39 +119,47 @@ if (!empty($search)) {
         s.firmware_version LIKE ? OR
         s.remote_connection_details LIKE ? OR
         s.remarks LIKE ? OR
-        CONCAT(per.last_name, ' ', per.first_name) LIKE ? OR
+        s.acquisition_details LIKE ? OR
+        CONCAT(per.first_name, ' ', per.last_name) LIKE ? OR
         d.division LIKE ?
     )";
 
     $searchValue = "%$search%";
 
-    for ($i = 0; $i < 9; $i++) {
+    for ($i = 0; $i < 10; $i++) {
         $params[] = $searchValue;
         $types .= 's';
     }
 }
 
-/* DIVISION FILTER (HARD CODED ID) */
+/* DIVISION FILTER */
 if (!empty($division_id) && isset($divisions[$division_id])) {
-    addFilter($where, $params, $types, "d.id = ?", $division_id, "i");
+    addFilter($where, $params, $types, "s.division_id = ?", $division_id, "i");
 }
 
 /* ACTIVE FILTER */
 if ($is_active !== '') {
     addFilter($where, $params, $types, "s.is_active = ?", $is_active, "i");
 }
-
 /* WHERE SQL */
-$whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+$whereSQL = !empty($where)
+    ? "WHERE " . implode(" AND ", $where)
+    : "";
 
 /* =========================
    COUNT QUERY
 ========================= */
 $countSQL = "
     SELECT COUNT(*) as total
+
     FROM switches s
-    LEFT JOIN personnels per ON s.personnel_id = per.id
-    LEFT JOIN divisions d ON per.division_id = d.id
+
+    LEFT JOIN personnels per 
+        ON s.personnel_id = per.id
+
+    LEFT JOIN divisions d
+        ON s.division_id = d.id
+
     $whereSQL
 ";
 
@@ -118,7 +170,10 @@ if (!empty($params)) {
 }
 
 $countStmt->execute();
-$totalSwitches = $countStmt->get_result()->fetch_assoc()['total'];
+
+$totalSwitches = $countStmt
+    ->get_result()
+    ->fetch_assoc()['total'];
 
 $totalPages = ceil($totalSwitches / $limit);
 
@@ -128,33 +183,57 @@ $totalPages = ceil($totalSwitches / $limit);
 $sql = "
     SELECT 
         s.*,
-        CONCAT(per.last_name, ', ', per.first_name, ' ', per.middle_name) AS fullname,
+
+        CONCAT(
+            COALESCE(r.rank, ''), ' ',
+            per.first_name, ' ',
+            per.middle_name, ' ',
+            per.last_name
+        ) AS fullname,
+
         d.division
+
     FROM switches s
-    LEFT JOIN personnels per ON s.personnel_id = per.id
-    LEFT JOIN divisions d ON per.division_id = d.id
+
+    LEFT JOIN personnels per 
+        ON s.personnel_id = per.id
+
+    LEFT JOIN ranks r
+        ON per.rank_id = r.id
+
+    LEFT JOIN divisions d
+        ON s.division_id = d.id
+
     $whereSQL
+
     ORDER BY s.id DESC
+
     LIMIT ?, ?
 ";
 
 $stmt = $conn->prepare($sql);
 
-/* bind params */
+/* =========================
+   BIND PARAMETERS
+========================= */
 if (!empty($params)) {
 
     $bindTypes = $types . 'ii';
+
     $params[] = $offset;
     $params[] = $limit;
 
     $stmt->bind_param($bindTypes, ...$params);
 
 } else {
+
     $stmt->bind_param("ii", $offset, $limit);
 }
 
 $stmt->execute();
+
 $result = $stmt->get_result();
+
 ?>
 
 <!DOCTYPE html>
@@ -282,157 +361,261 @@ $result = $stmt->get_result();
 
                 <!-- Header -->
                 <div class="modal-header text-white" style="background-color:#0d6ea8;">
-                    <h5 class="modal-title" id="addSwitchModalLabel">Add Switch</h5>
+                    <h5 class="modal-title" id="addSwitchModalLabel">Add Switches</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
 
                 <!-- Body -->
                 <div class="modal-body">
-                    <form>
+                    <form action="add_switches.php" method="POST">
                         <div class="row g-3">
 
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label">Personnel</label>
-                                <input type="text" class="form-control" name="personnel">
+
+                                <select name="personnel_id" class="form-select" required>
+
+                                    <option value="" disabled selected hidden>
+                                        Select Personnel
+                                    </option>
+
+                                    <?php
+                                    $personnelQuery = mysqli_query($conn, "
+                                            SELECT
+                                                p.id,
+                                                r.rank,
+                                                p.first_name,
+                                                p.middle_name,
+                                                p.last_name,
+                                                p.rank_id
+                                            FROM personnels p
+                                            LEFT JOIN ranks r
+                                                ON p.rank_id = r.id
+                                            ORDER BY p.rank_id DESC
+                                        ");
+
+                                    while ($personnel = mysqli_fetch_assoc($personnelQuery)):
+
+                                        $fullName = trim(
+                                            ($personnel['rank'] ?? '') . ' ' .
+                                                ($personnel['last_name'] ?? '') . ' ' .
+                                                ($personnel['first_name'] ?? '') . ' ' .
+                                                ($personnel['middle_name'] ?? '')
+                                        );
+                                    ?>
+
+                                        <option value="<?php echo $personnel['id'] ?>">
+                                            <?php echo htmlspecialchars($fullName) ?>
+                                        </option>
+
+                                    <?php endwhile; ?>
+
+                                </select>
                             </div>
 
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label">Division</label>
-                                <input type="text" class="form-control" name="division">
+
+                                <select name="division_id" class="form-select" required>
+
+                                    <option value="" disabled selected hidden>
+                                        Select Division
+                                    </option>
+
+                                    <?php
+                                    $divisionQuery = mysqli_query($conn, "
+                                            SELECT id, division
+                                            FROM divisions
+                                            ORDER BY id ASC
+                                        ");
+
+                                    while ($division = mysqli_fetch_assoc($divisionQuery)):
+                                    ?>
+                                        <option value="<?php echo $division['id'] ?>">
+                                            <?php echo htmlspecialchars($division['division']) ?>
+                                        </option>
+
+                                    <?php endwhile; ?>
+
+                                </select>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Manufacturer</label>
-                                <input type="text" class="form-control" name="manufacturer">
+                                <input type="text" class="form-control" name="manufacturer" required>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Model</label>
-                                <input type="text" class="form-control" name="model">
+                                <input type="text" class="form-control" name="model" required>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">PAR Serial No</label>
-                                <input type="text" class="form-control" name="par_serial_no">
+                                <input type="text" class="form-control" name="par_serial_no" required>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Ports</label>
-                                <input type="number" class="form-control" name="ports">
+                                <input type="number" class="form-control" name="no_of_ports" required>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Active Ports</label>
-                                <input type="number" class="form-control" name="active_ports">
+                                <input type="number" class="form-control" name="active_ports" required>
                             </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">Managed</label>
-                                <select class="form-control" name="managed">
-                                    <option value="">Select</option>
-                                    <option value="yes">Yes</option>
-                                    <option value="no">No</option>
-                                </select>
+                              <div class="col-md-6">
+                                <label class="form-label"># Managed Ports</label>
+                                <input type="number" class="form-control" name="no_of_managed" required>
                             </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">Unmanaged</label>
-                                <select class="form-control" name="unmanaged">
-                                    <option value="">Select</option>
-                                    <option value="yes">Yes</option>
-                                    <option value="no">No</option>
-                                </select>
+                              <div class="col-md-6">
+                                <label class="form-label"># of Unmanaged Ports</label>
+                                <input type="number" class="form-control" name="no_of_unmanaged" required>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Firmware</label>
-                                <input type="text" class="form-control" name="firmware">
+                                <input type="text" class="form-control" name="firmware" required>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">VLAN Supported</label>
-                                <select class="form-control" name="vlan_supported">
+                                <select class="form-control" name="vlan_supported" required>
                                     <option value="">Select</option>
-                                    <option value="yes">Yes</option>
-                                    <option value="no">No</option>
+                                    <option value="1">Yes</option>
+                                    <option value="0">No</option>
                                 </select>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Location</label>
-                                <input type="text" class="form-control" name="location">
+                                <input type="text" class="form-control" name="location" required>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Remote Accessible?</label>
-                                <select class="form-control" name="remote_access">
+                                <select class="form-control" name="remote_access" required>
                                     <option value="">Select</option>
-                                    <option value="yes">Yes</option>
-                                    <option value="no">No</option>
+                                    <option value="1">Yes</option>
+                                    <option value="0">No</option>
                                 </select>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Remote Details</label>
-                                <input type="text" class="form-control" name="remote_details">
+                                <input type="text" class="form-control" name="remote_details" required>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Remarks</label>
-                                <input type="text" class="form-control" name="remarks">
+                                <input type="text" class="form-control" name="remarks"required>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">PNP Focal</label>
-                                <input type="text" class="form-control" name="pnp_focal">
+                                <input type="text" class="form-control" name="pnp_focal"required>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Contact</label>
-                                <input type="text" class="form-control" name="contact">
+                                <input type="text" class="form-control" name="contact"required>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Acquisition Date</label>
-                                <input type="date" class="form-control" name="acq_date">
+                                <input type="date" class="form-control" name="acq_date" required>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Acquisition Type</label>
-                                <input type="text" class="form-control" name="acq_type">
+                                <input type="text" class="form-control" name="acq_type" required>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Acquisition Details</label>
-                                <input type="text" class="form-control" name="acq_details">
+                                <input type="text" class="form-control" name="acq_details" required>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Previous Handlers</label>
-                                <input type="text" class="form-control" name="previous_handlers">
+                                <label class="form-label">Previous Handler/s</label>
+
+                                <div class="dropdown w-100">
+
+                                    <button class="form-select text-start" type="button" data-bs-toggle="dropdown">
+                                        Select Previous Handler/s
+                                    </button>
+
+                                    <div class="dropdown-menu w-100 p-2" style="max-height: 250px; overflow-y: auto;">
+
+                                        <?php
+                                        $handlerQuery = mysqli_query($conn, "
+                                            SELECT
+                                                p.id,
+                                                r.rank,
+                                                p.first_name,
+                                                p.middle_name,
+                                                p.last_name,
+                                                p.rank_id
+                                            FROM personnels p
+                                            LEFT JOIN ranks r ON p.rank_id = r.id
+                                            ORDER BY p.rank_id DESC
+                                        ");
+
+                                        while ($handler = mysqli_fetch_assoc($handlerQuery)):
+
+                                            $fullName = trim(
+                                                ($handler['rank'] ?? '') . ' ' .
+                                                    ($handler['last_name'] ?? '') . ' ' .
+                                                    ($handler['first_name'] ?? '') . ' ' .
+                                                    ($handler['middle_name'] ?? '')
+                                            );
+                                        ?>
+
+                                            <div class="form-check">
+                                                <input
+                                                    class="form-check-input"
+                                                    type="checkbox"
+                                                    name="previous_owners_id[]"
+                                                    value="<?php echo $handler['id'] ?>"
+                                                    id="ph<?php echo $handler['id'] ?>">
+
+                                                <label class="form-check-label" for="ph<?php echo $handler['id'] ?>">
+                                                    <?php echo htmlspecialchars($fullName) ?>
+                                                </label>
+                                            </div>
+
+                                        <?php endwhile; ?>
+
+                                    </div>
+                                </div>
+
+                                <small class="text-muted">
+                                    You can select multiple handlers
+                                </small>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Is Active?</label>
-                                <select class="form-control" name="is_active">
+                                <select class="form-control" name="is_active" required>
                                     <option value="">Select</option>
-                                    <option value="yes">Yes</option>
-                                    <option value="no">No</option>
+                                    <option value="1">Yes</option>
+                                    <option value="0">No</option>
                                 </select>
                             </div>
 
                         </div>
-                    </form>
-                </div>
-
-                <!-- Footer -->
+                        <!-- Footer -->
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">
-                        Save
+                        Save 
                     </button>
                 </div>
+                    </form>
+                </div>
+
+                
 
             </div>
         </div>
@@ -484,45 +667,33 @@ $result = $stmt->get_result();
 
                                 <td><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['division'] ?? 'N/A') ?></td>
-
                                 <td><?= htmlspecialchars($row['manufacturer']) ?></td>
                                 <td><?= htmlspecialchars($row['model']) ?></td>
                                 <td><?= htmlspecialchars($row['serial_no']) ?></td>
-
                                 <td><?= $row['no_of_ports'] ?></td>
                                 <td><?= $row['no_of_active_ports'] ?></td>
                                 <td><?= $row['no_of_managed'] ?></td>
                                 <td><?= $row['no_of_unmanaged'] ?></td>
-
                                 <td><?= htmlspecialchars($row['firmware_version']) ?></td>
-
                                 <td>
                                     <?= $row['is_vlan_supported']
                                         ? '<span class="text-success fw-bold">YES</span>'
                                         : '<span class="text-danger fw-bold">NO</span>' ?>
                                 </td>
-
                                 <td><?= htmlspecialchars($row['location']) ?></td>
-
-
                                 <td>
                                     <?= $row['is_remote_access']
                                         ? '<span class="text-success fw-bold">YES</span>'
                                         : '<span class="text-danger fw-bold">NO</span>' ?>
                                 </td>
-
                                 <td><?= htmlspecialchars($row['remote_connection_details']) ?></td>
                                 <td><?= htmlspecialchars($row['remarks']) ?></td>
-
                                 <td><?= htmlspecialchars($row['pnp_focal_person']) ?></td>
                                 <td><?= htmlspecialchars($row['contact_details']) ?></td>
-
                                 <td><?= htmlspecialchars($row['acquisition_date']) ?></td>
                                 <td><?= htmlspecialchars($row['acquisition_type']) ?></td>
                                 <td><?= htmlspecialchars($row['acquisition_details']) ?></td>
-
-                                <td><?= htmlspecialchars($row['previous_owners_id']) ?></td>
-
+                               <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?></td>
                                 <td>
                                     <?= $row['is_active']
                                         ? '<span class="text-success fw-bold">YES</span>'
@@ -530,116 +701,298 @@ $result = $stmt->get_result();
                                 </td>
                                 <!-- BUTTON -->
                                 <td>
-                                    <button 
-                                        class="btn btn-primary btn-sm"
+                                <button class="btn btn-primary btn-sm"
                                         data-bs-toggle="modal"
-                                        data-bs-target="#editSwitchesModal">
-
-                                        <i class="bi bi-gear-fill"></i>
-
-                                    </button>
+                                        data-bs-target="#editSwitchesModal<?= $row['id'] ?>">
+                                    <i class="bi bi-gear-fill"></i>
+                                </button>
                                 </td>
 
                                 
-                                <!-- EDIT SWITCHES MODAL -->
-                                <div class="modal fade editModal" id="editSwitchesModal" tabindex="-1" aria-labelledby="editSwitchesModalLabel" aria-hidden="true">
+               <!-- EDIT SWITCHES MODAL (ONE ONLY) -->
+<div class="modal fade"
+     id="editSwitchesModal<?= $row['id'] ?>"
+     tabindex="-1"
+     aria-labelledby="editSwitchesModalLabel<?= $row['id'] ?>"
+     aria-hidden="true">
 
-                                    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
 
-                                        <div class="modal-content">
+        <div class="modal-content">
 
-                                            <!-- Header -->
-                                            <div class="modal-header">
+            <!-- HEADER -->
+            <div class="modal-header">
+                <h5 class="modal-title" id="editSwitchesModalLabel<?= $row['id'] ?>">
+                    Edit Switches
+                </h5>
 
-                                                <h5 class="modal-title" id="editSwitchesModalLabel">
-                                                    Edit Switches
-                                                </h5>
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="modal"></button>
+            </div>
 
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <!-- BODY -->
+            <div class="modal-body">
 
-                                            </div>
+                <form action="edit_switches.php" method="POST">
 
-                                            <!-- Body -->
-                                            <div class="modal-body">
+                    <input type="hidden"
+                           name="id"
+                           value="<?= $row['id'] ?>">
 
-                                                <div class="row g-3">
+                    <div class="row g-3">
 
-                                                    <!-- Personnel -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Personnel</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Personnel">
-                                                    </div>
+                        <!-- PERSONNEL -->
+                        <div class="col-md-4">
+                            <label class="form-label">Personnel</label>
+                            <select name="personnel_id" class="form-select" required>
 
-                                                    <!-- Division -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Division</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Division">
-                                                    </div>
+                                <?php
+                                $personnelQuery = mysqli_query($conn,"
+                                    SELECT p.id, r.rank, p.first_name, p.last_name
+                                    FROM personnels p
+                                    LEFT JOIN ranks r ON p.rank_id = r.id
+                                ");
 
-                                                    <!-- Brand -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Brand</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Brand">
-                                                    </div>
+                                while ($p = mysqli_fetch_assoc($personnelQuery)):
 
-                                                    <!-- Model -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Model</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Model">
-                                                    </div>
+                                    $name = trim(($p['rank'] ?? '') . ' ' . $p['first_name'] . ' ' . $p['last_name']);
+                                ?>
 
-                                                    <!-- Serial No -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Serial No</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Serial No">
-                                                    </div>
+                                    <option value="<?= $p['id'] ?>"
+                                        <?= ($p['id'] == $row['personnel_id']) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($name) ?>
+                                    </option>
 
-                                                    <!-- Acquisition Details -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Acquisition Details</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Acquisition Details">
-                                                    </div>
+                                <?php endwhile; ?>
 
-                                                    <!-- Acquisition Date -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Acquisition Date</label>
-                                                        <input type="date" class="form-control">
-                                                    </div>
+                            </select>
+                        </div>
 
-                                                    <!-- Previous Owners -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Previous Owners</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Previous Owners">
-                                                    </div>
+                        <!-- DIVISION -->
+                        <div class="col-md-4">
+                            <label class="form-label">Division</label>
+                            <select name="division_id" class="form-select" required>
 
-                                                    <!-- Created Date -->
-                                                    <div class="col-md-12">
-                                                        <label class="form-label">Created Date</label>
-                                                        <input type="date" class="form-control">
-                                                    </div>
+                                <?php
+                                $divisionQuery = mysqli_query($conn,"SELECT id, division FROM divisions");
 
-                                                </div>
+                                while ($d = mysqli_fetch_assoc($divisionQuery)):
+                                ?>
 
-                                            </div>
+                                    <option value="<?= $d['id'] ?>"
+                                        <?= ($d['id'] == $row['division_id']) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($d['division']) ?>
+                                    </option>
 
-                                            <!-- Footer -->
-                                            <div class="modal-footer">
+                                <?php endwhile; ?>
 
-                                                <button type="button" class="btn cancelBtn" data-bs-dismiss="modal">
-                                                    Cancel
-                                                </button>
+                            </select>
+                        </div>
 
-                                                <button type="button" class="btn saveBtn">
-                                                    Save Changes
-                                                </button>
+                        <!-- BASIC -->
+                        <div class="col-md-6">
+                            <label class="form-label">Manufacturer</label>
+                            <input type="text" name="manufacturer"
+                                   class="form-control"
+                                   value="<?= htmlspecialchars($row['manufacturer']) ?>">
+                        </div>
 
-                                            </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Model</label>
+                            <input type="text" name="model"
+                                   class="form-control"
+                                   value="<?= htmlspecialchars($row['model']) ?>">
+                        </div>
 
+                        <div class="col-md-6">
+                            <label class="form-label">Serial No</label>
+                            <input type="text" name="par_serial_no"
+                                   class="form-control"
+                                   value="<?= htmlspecialchars($row['serial_no'] ?? '') ?>">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Ports</label>
+                            <input type="number" name="no_of_ports"
+                                   class="form-control"
+                                   value="<?= $row['no_of_ports'] ?>">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Active Ports</label>
+                            <input type="number" name="no_of_active_ports"
+                                class="form-control"
+                                value="<?= $row['no_of_active_ports'] ?>">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label"># Managed Ports</label>
+                            <input type="number" name="no_of_managed"
+                                class="form-control"
+                                value="<?= $row['no_of_managed'] ?>">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label"># of Unmanaged Ports</label>
+                            <input type="number" name="no_of_unmanaged"
+                                class="form-control"
+                                value="<?= $row['no_of_unmanaged'] ?>">
+                        </div>
+
+                    
+
+                        <div class="col-md-6">
+                            <label class="form-label">Firmware</label>
+                            <input type="text" name="firmware"
+                                   class="form-control"
+                                   value="<?= htmlspecialchars($row['firmware_version']) ?>">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">VLAN Supported</label>
+                            <select name="vlan_supported" class="form-select">
+                                <option value="1" <?= $row['is_vlan_supported']?'selected':'' ?>>Yes</option>
+                                <option value="0" <?= !$row['is_vlan_supported']?'selected':'' ?>>No</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Location</label>
+                            <input type="text" name="location"
+                                   class="form-control"
+                                   value="<?= htmlspecialchars($row['location']) ?>">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Remote Access</label>
+                            <select name="remote_access" class="form-select">
+                                <option value="1" <?= $row['is_remote_access']?'selected':'' ?>>Yes</option>
+                                <option value="0" <?= !$row['is_remote_access']?'selected':'' ?>>No</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Remote Details</label>
+                            <input type="text" name="remote_details"
+                                   class="form-control"
+                                   value="<?= htmlspecialchars($row['remote_connection_details']) ?>">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Remarks</label>
+                            <input type="text" name="remarks"
+                                   class="form-control"
+                                   value="<?= htmlspecialchars($row['remarks']) ?>">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">PNP Focal</label>
+                            <input type="text" name="pnp_focal"
+                                   class="form-control"
+                                   value="<?= htmlspecialchars($row['pnp_focal_person']) ?>">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Contact</label>
+                            <input type="text" name="contact"
+                                   class="form-control"
+                                   value="<?= htmlspecialchars($row['contact_details']) ?>">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Acq Date</label>
+                            <input type="date" name="acq_date"
+                                   class="form-control"
+                                   value="<?= $row['acquisition_date'] ?>">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Acq Type</label>
+                            <input type="text" name="acq_type"
+                                   class="form-control"
+                                   value="<?= htmlspecialchars($row['acquisition_type']) ?>">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Acq Details</label>
+                            <input type="text" name="acq_details"
+                                   class="form-control"
+                                   value="<?= htmlspecialchars($row['acquisition_details']) ?>">
+                        </div>
+
+                        <!-- PREVIOUS HANDLERS -->
+                        <div class="col-md-6">
+                            <label class="form-label">Previous Handlers</label>
+
+                            <div class="dropdown w-100">
+                                <button class="form-select text-start"
+                                        type="button"
+                                        data-bs-toggle="dropdown">
+                                    Select Handlers
+                                </button>
+
+                                <div class="dropdown-menu w-100 p-2"
+                                     style="max-height:250px;overflow-y:auto;">
+
+                                    <?php
+                                    $selected = json_decode($row['previous_owners_id'] ?? '[]', true);
+                                    if (!is_array($selected)) $selected = [];
+
+                                    $handlerQuery = mysqli_query($conn,"
+                                        SELECT p.id, r.rank, p.first_name, p.last_name
+                                        FROM personnels p
+                                        LEFT JOIN ranks r ON p.rank_id = r.id
+                                    ");
+
+                                    while ($h = mysqli_fetch_assoc($handlerQuery)):
+
+                                        $full = trim(($h['rank'] ?? '') . ' ' . $h['first_name'] . ' ' . $h['last_name']);
+                                    ?>
+
+                                        <div class="form-check">
+                                            <input class="form-check-input"
+                                                   type="checkbox"
+                                                   name="previous_owners_id[]"
+                                                   value="<?= $h['id'] ?>"
+                                                   <?= in_array($h['id'],$selected)?'checked':'' ?>>
+
+                                            <label class="form-check-label">
+                                                <?= htmlspecialchars($full) ?>
+                                            </label>
                                         </div>
 
-                                    </div>
+                                    <?php endwhile; ?>
 
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- ACTIVE -->
+                        <div class="col-md-6">
+                            <label class="form-label">Is Active</label>
+                            <select name="is_active" class="form-select">
+                                <option value="1" <?= $row['is_active']?'selected':'' ?>>Yes</option>
+                                <option value="0" <?= !$row['is_active']?'selected':'' ?>>No</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer mt-3">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            Update
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
 
                             </tr>
 
@@ -702,6 +1055,16 @@ $result = $stmt->get_result();
 
     </div>
 
+<script>
+const editModal = document.getElementById('editSwitchesModal');
+
+editModal.addEventListener('hide.bs.modal', function () {
+    // remove focus from any active element inside modal
+    if (document.activeElement) {
+        document.activeElement.blur();
+    }
+});
+</script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
