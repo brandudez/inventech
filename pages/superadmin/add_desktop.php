@@ -69,7 +69,7 @@ $authorized_software = $_POST['authorized_software'] ?? null;
 $unauthorized_software = $_POST['unauthorized_software'] ?? null;
 
 $office_application = $_POST['office_application'] ?? '';
-$is_office_licensed = ($_POST['is_office_licensed'] ?? 0) == "1" ? 1 : 0;
+$is_office_licensed = ($_POST['is_office_licensed'] ?? 1) == "1" ? 1 : 0;
 
 $os_license_key = $_POST['os_license_key'] ?? '';
 $office_license_key = $_POST['office_license_key'] ?? '';
@@ -166,8 +166,11 @@ $stmt->bind_param(
    EXECUTE LAST
 ========================= */
 if ($stmt->execute()) {
-    header("Location: device_desktops.php?success=1");
+
+    // clear filters after save
+    header("Location: device_desktops.php");
     exit();
+
 } else {
     die("SQL ERROR: " . $stmt->error);
 }
