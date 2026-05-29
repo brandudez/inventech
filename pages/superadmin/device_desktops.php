@@ -106,7 +106,7 @@ $search = trim($_GET['search'] ?? '');
 /* =========================
    FILTERS
 ========================= */
-$division_filter = $_GET['division'] ?? [];
+$division_filter = trim($_GET['division'] ?? '');
 $os_filter       = trim($_GET['os'] ?? '');
 $office_filter   = trim($_GET['office_application'] ?? '');
 $active_filter   = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
@@ -138,24 +138,10 @@ if (! empty($search)) {
 }
 
 /* DIVISION */
-if (!empty($division_filter)) {
-
-    if (is_array($division_filter)) {
-
-        $placeholders = implode(',', array_fill(0, count($division_filter), '?'));
-        $where[] = "dv.division IN ($placeholders)";
-
-        foreach ($division_filter as $val) {
-            $params[] = $val;
-            $types .= 's';
-        }
-
-    } else {
-
-        $where[] = "dv.division = ?";
-        $params[] = $division_filter;
-        $types .= 's';
-    }
+if (! empty($division_filter)) {
+    $where[]   = "dv.division = ?";
+    $params[]  = $division_filter;
+    $types    .= 's';
 }
 
 /* OS */
@@ -365,13 +351,7 @@ $result = $stmt->get_result();
         <div class="search-container">
             <form class="search-form" method="GET">
 
-                <?php if (is_array($division_filter)): ?>
-                    <?php foreach ($division_filter as $div): ?>
-                        <input type="hidden" name="division[]" value="<?php echo htmlspecialchars($div) ?>">
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <input type="hidden" name="division[]" value="<?php echo htmlspecialchars($division_filter) ?>">
-                <?php endif; ?>
+                <input type="hidden" name="division" value="<?php echo htmlspecialchars($division_filter) ?>">
                 <input type="hidden" name="os" value="<?php echo htmlspecialchars($os_filter) ?>">
                 <input type="hidden" name="office_application" value="<?php echo htmlspecialchars($office_filter) ?>">
                 <input type="text" name="search" class="search-input" placeholder="Search desktops..."
@@ -397,235 +377,123 @@ $result = $stmt->get_result();
                     <!-- DIVISION DROPDOWN -->
                     <div class="dropdown">
 
-                    <button class="btn filter-btn dropdown-toggle" type="button"
-                        data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                        <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside">
 
-                        <?php
-                        if (empty($division_filter)) {
-                            echo 'Division';
-                        } elseif (is_array($division_filter)) {
-                            echo count($division_filter) . ' selected';
-                        } else {
-                            echo $division_filter;
-                        }
-                        ?>
+                            <?php echo ! empty($division_filter) ? $division_filter : 'Division' ?>
 
-                    </button>
+                        </button>
 
-                    <ul class="dropdown-menu p-3 dropdown-scroll wide-dropdown">
+                        <ul class="dropdown-menu dropdown-scroll">
 
-                        <!-- APPLY BUTTON (TOP) -->
-                        <li class="mb-2">
-                            <button type="button" class="btn btn-primary w-100" id="applyDivisionBtn">
-                                Apply
-                            </button>
-                        </li>
+                            <?php
+                            $divisions = [];
 
-                        <!-- ALL OPTION -->
-                        <li class="mb-2">
-                            <div class="form-check">
+                            $divisionQuery = mysqli_query($conn, "
+                                    SELECT division
+                                    FROM divisions
+                                    ORDER BY id ASC");
+                            while ($row = mysqli_fetch_assoc($divisionQuery)) {
+                                $divisions[] = $row['division'];
+                            }
+                            foreach ($divisions as $division):
+                            ?>
+                                <li>
+                                    <label class="dropdown-item">
+                                        <input type="radio" name="division" value="<?php echo $division ?>"
+                                            onchange="document.getElementById('filterForm').submit();"
+                                            <?php echo $division_filter == $division ? 'checked' : '' ?>>
 
-                                <input class="form-check-input division-checkbox"
-                                    type="checkbox"
-                                    value=""
-                                    id="allDivision"
-                                    <?php
-                                    $allChecked = empty($division_filter) || (is_array($division_filter) && in_array('all', $division_filter));
-                                    echo $allChecked ? 'checked' : '';
-                                    ?>
-
-                                <label class="form-check-label" for="allDivision">
-                                    All
-                                </label>
-
-                            </div>
-                        </li>
-
-                        <?php
-                        $divisions = [];
-
-                        $divisionQuery = mysqli_query($conn, "
-                                SELECT division
-                                FROM divisions
-                                ORDER BY id ASC");
-
-                        while ($row = mysqli_fetch_assoc($divisionQuery)) {
-                            $divisions[] = $row['division'];
-                        }
-
-                        foreach ($divisions as $div):
-                        ?>
-                            <li class="mb-2">
-                                <div class="form-check">
-
-                                    <input class="form-check-input division-checkbox"
-                                        type="checkbox"
-                                        name="division[]"
-                                        value="<?php echo htmlspecialchars($div); ?>"
-                                        id="division_<?php echo md5($div); ?>"
-                                        <?php
-                                        $isChecked =
-                                            empty($division_filter)
-                                            || (is_array($division_filter) && in_array($div, $division_filter));
-
-                                        echo $isChecked ? 'checked' : '';
-                                        ?>
-
-                                    <label class="form-check-label"
-                                        for="division_<?php echo md5($div); ?>">
-                                        <?php echo htmlspecialchars($div); ?>
+                                        <?php echo $division ?>
                                     </label>
+                                </li>
+                            <?php endforeach; ?>
 
-                                </div>
-                            </li>
-                        <?php endforeach; ?>
+                        </ul>
 
-                    </ul>
+                    </div>
 
-                </div>
+                    <!-- OPERATING SYSTEM DROPDOWN -->
+                    <div class="dropdown">
 
+                        <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside">
 
-                <!-- OPERATING SYSTEM DROPDOWN -->
-                <div class="dropdown">
+                            <?php echo ! empty($os_filter) ? $os_filter : 'Operating System' ?>
 
-                    <button class="btn filter-btn dropdown-toggle" type="button"
-                        data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                        </button>
 
-                        <?php echo !empty($os_filter) ? $os_filter : 'Operating System' ?>
+                        <ul class="dropdown-menu dropdown-scroll">
 
-                    </button>
+                            <?php
+                            $operatingSystems = [
+                                "Windows 10",
+                                "Windows 10 Pro",
+                                "Windows 11",
+                                "Windows 11 Pro",
+                            ];
 
-                    <ul class="dropdown-menu p-3 dropdown-scroll wide-dropdown">
+                            foreach ($operatingSystems as $os):
+                            ?>
+                                <li>
+                                    <label class="dropdown-item">
+                                        <input type="radio" name="os" value="<?php echo $os ?>"
+                                            onchange="document.getElementById('filterForm').submit();" <?php echo $os_filter == $os ? 'checked' : '' ?>>
 
-                        <!-- APPLY BUTTON TOP -->
-                        <li class="mb-2">
-                            <button type="button" class="btn btn-primary w-100">
-                                Apply
-                            </button>
-                        </li>
-
-                        <!-- ALL OPTION -->
-                        <li class="mb-2">
-                            <div class="form-check">
-
-                                <input class="form-check-input os-checkbox"
-                                    type="checkbox"
-                                    value=""
-                                    id="allOS"
-                                    <?php echo empty($os_filter) ? 'checked' : ''; ?>>
-
-                                <label class="form-check-label" for="allOS">
-                                    All
-                                </label>
-
-                            </div>
-                        </li>
-
-                        <?php
-                        $operatingSystems = [
-                            "Windows 10",
-                            "Windows 10 Pro",
-                            "Windows 11",
-                            "Windows 11 Pro",
-                        ];
-
-                        foreach ($operatingSystems as $os):
-                        ?>
-                            <li class="mb-2">
-                                <div class="form-check">
-
-                                    <input class="form-check-input os-checkbox"
-                                        type="checkbox"
-                                        name="os"
-                                        value="<?php echo htmlspecialchars($os); ?>"
-                                        id="os_<?php echo md5($os); ?>"
-                                        <?php echo $os_filter == $os ? 'checked' : ''; ?>>
-
-                                    <label class="form-check-label" for="os_<?php echo md5($os); ?>">
-                                        <?php echo htmlspecialchars($os); ?>
+                                        <?php echo $os ?>
                                     </label>
+                                </li>
+                            <?php endforeach; ?>
 
-                                </div>
-                            </li>
-                        <?php endforeach; ?>
+                        </ul>
 
-                    </ul>
+                    </div>
 
-                </div>
+                    <!-- OFFICE APPLICATION DROPDOWN -->
+                    <div class="dropdown">
 
-                <!-- OFFICE APPLICATION DROPDOWN -->
-                <div class="dropdown">
+                        <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside">
 
-                    <button class="btn filter-btn dropdown-toggle" type="button"
-                        data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                            <?php echo ! empty($office_filter) ? $office_filter : 'Office Application' ?>
 
-                        <?php echo !empty($office_filter) ? $office_filter : 'Office Application' ?>
+                        </button>
 
-                    </button>
+                        <ul class="dropdown-menu dropdown-scroll">
 
-                    <ul class="dropdown-menu p-3 dropdown-scroll wide-dropdown">
+                            <?php
+                            $officeApps = [
+                                "Microsoft 365 (M365)",
+                                "Microsoft Office 2021 Professional",
+                                "WPS Office",
+                                "Microsoft Word",
+                                "Google Docs",
+                                "Microsoft Excel",
+                                "Google Sheets",
+                                "Microsoft PowerPoint",
+                            ];
 
-                        <!-- APPLY BUTTON TOP -->
-                        <li class="mb-2">
-                            <button type="button" class="btn btn-primary w-100">
-                                Apply
-                            </button>
-                        </li>
+                            foreach ($officeApps as $office):
+                            ?>
+                                <li>
+                                    <label class="dropdown-item">
+                                        <input type="radio" name="office_application" value="<?php echo $office ?>"
+                                            onchange="document.getElementById('filterForm').submit();"
+                                            <?php echo $office_filter == $office ? 'checked' : '' ?>>
 
-                        <!-- ALL OPTION -->
-                        <li class="mb-2">
-                            <div class="form-check">
-
-                                <input class="form-check-input office-checkbox"
-                                    type="checkbox"
-                                    value=""
-                                    id="allOffice"
-                                    <?php echo empty($office_filter) ? 'checked' : ''; ?>>
-
-                                <label class="form-check-label" for="allOffice">
-                                    All
-                                </label>
-
-                            </div>
-                        </li>
-
-                        <?php
-                        $officeApps = [
-                            "Microsoft 365 (M365)",
-                            "Microsoft Office 2021 Professional",
-                            "WPS Office",
-                            "Microsoft Word",
-                            "Google Docs",
-                            "Microsoft Excel",
-                            "Google Sheets",
-                            "Microsoft PowerPoint",
-                        ];
-
-                        foreach ($officeApps as $office):
-                        ?>
-                            <li class="mb-2">
-                                <div class="form-check">
-
-                                    <input class="form-check-input office-checkbox"
-                                        type="checkbox"
-                                        name="office_application"
-                                        value="<?php echo htmlspecialchars($office); ?>"
-                                        id="office_<?php echo md5($office); ?>"
-                                        <?php echo $office_filter == $office ? 'checked' : ''; ?>>
-
-                                    <label class="form-check-label" for="office_<?php echo md5($office); ?>">
-                                        <?php echo htmlspecialchars($office); ?>
+                                        <?php echo $office ?>
                                     </label>
+                                </li>
+                            <?php endforeach; ?>
 
-                                </div>
-                            </li>
-                        <?php endforeach; ?>
+                        </ul>
 
-                    </ul>
+                    </div>
+                </form>
 
-                </div>
             </div>
-            
+
+
             <!-- ADD DESKTOP BUTTON -->
             <button type="button" class="btn add-desktop-btn" data-bs-toggle="modal" data-bs-target="#addDesktopModal">
                 Add Desktop
@@ -889,9 +757,9 @@ $result = $stmt->get_result();
                                                             <label class="form-label">Is OS Licensed?</label>
 
                                                             <select name="os_licensed" class="form-select" required>
-                                                                 <option value="">Select</option>
-                                                                <option value="1">Yes</option>
-                                                                <option value="0">No</option>
+                                                                <option value="" disabled selected hidden>Select OS License</option>
+                                                                <option value="Yes">Yes</option>
+                                                                <option value="No">No</option>
                                                             </select>
                                                         </div>
 
@@ -972,9 +840,9 @@ $result = $stmt->get_result();
                                                         <div class="col-md-6">
                                                             <label class="form-label">Is Office Licensed?</label>
                                                             <select name="is_office_licensed" class="form-select" required>
-                                                                <option value="">Select</option>
-                                                                <option value="1">Yes</option>
-                                                                <option value="0">No</option>
+                                                                <option>Select</option>
+                                                                <option>Yes</option>
+                                                                <option>No</option>
                                                             </select>
                                                         </div>
 
@@ -1144,21 +1012,22 @@ $result = $stmt->get_result();
                                                                 You can select multiple handlers
                                                             </small>
                                                         </div>
-                                                        <div class="col-md-3">
-                                                            <label class="form-label">Is Remote Accessible?</label>
 
-                                                            <select name="is_remote_acc" class="form-select" required>
-                                                                <option value="">Select</option>
-                                                                <option value="1">Yes</option>
-                                                                <option value="0">No</option>
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">Is Remotely Accessible?</label>
+                                                            <select class="form-select" name="is_remote_acc" required>
+                                                                <option>Select</option>
+                                                                <option>Yes</option>
+                                                                <option>No</option>
                                                             </select>
                                                         </div>
+
                                                         <div class="col-md-3">
                                                             <label class="form-label">Is Active?</label>
                                                             <select class="form-select" name="is_active" required>
-                                                                 <option value="">Select</option>
-                                                                <option value="1">Yes</option>
-                                                                <option value="0">No</option>
+                                                                <option>Select</option>
+                                                                <option>Yes</option>
+                                                                <option>No</option>
                                                             </select>
                                                         </div>
 
@@ -1170,7 +1039,7 @@ $result = $stmt->get_result();
                                                         </button>
 
                                                         <button type="submit" class="btn btn-primary">
-                                                            Save 
+                                                            Save Desktop
                                                         </button>
                                                     </div>
 
@@ -1841,86 +1710,24 @@ $result = $stmt->get_result();
 
         </div>
         <script>
-        
-document.addEventListener('DOMContentLoaded', function () {
+            document.querySelector("form").addEventListener("submit", function(e) {
 
-    const form = document.getElementById('filterForm');
+                const ep = document.querySelectorAll("input[name='endpoint_security[]']:checked");
+                const ph = document.querySelectorAll("input[name='previous_owners_id[]']:checked");
 
-    const allDivision = document.getElementById('allDivision');
-    const divisionCheckboxes = document.querySelectorAll('.division-checkbox:not(#allDivision)');
-
-    const applyBtn = document.getElementById('applyDivisionBtn');
-
-    /* =========================
-       ALL TOGGLE
-    ========================= */
-    if (allDivision) {
-        allDivision.addEventListener('change', function () {
-
-            divisionCheckboxes.forEach(cb => {
-                cb.checked = this.checked;
-            });
-
-        });
-    }
-
-    /* =========================
-       INDIVIDUAL CHECK -> UPDATE ALL STATE
-    ========================= */
-    divisionCheckboxes.forEach(cb => {
-        cb.addEventListener('change', function () {
-
-            const allChecked = Array.from(divisionCheckboxes).every(c => c.checked);
-
-            if (allDivision) {
-                allDivision.checked = allChecked;
-            }
-
-        });
-    });
-
-    /* =========================
-       APPLY BUTTON
-    ========================= */
-    if (applyBtn) {
-        applyBtn.addEventListener('click', function () {
-
-            // remove old inputs
-            document.querySelectorAll('input[name="division[]"]').forEach(el => el.remove());
-
-            const selected = [];
-
-            divisionCheckboxes.forEach(cb => {
-                if (cb.checked) {
-                    selected.push(cb.value);
+                if (ep.length === 0) {
+                    e.preventDefault();
+                    alert("Select at least one Endpoint Security");
+                    return;
                 }
+
+                if (ph.length === 0) {
+                    e.preventDefault();
+                    alert("Select at least one Previous Handler");
+                    return;
+                }
+
             });
-
-            // if ALL is checked OR nothing selected
-            if (allDivision.checked || selected.length === 0) {
-
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'division[]';
-                input.value = '';
-                form.appendChild(input);
-
-            } else {
-
-                selected.forEach(val => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'division[]';
-                    input.value = val;
-                    form.appendChild(input);
-                });
-            }
-
-            form.submit();
-        });
-    }
-
-});
         </script>
 
         <?php if (! empty($_SESSION['toast_error'])): ?>
