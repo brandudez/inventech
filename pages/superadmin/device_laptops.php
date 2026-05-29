@@ -591,7 +591,7 @@ while ($r = mysqli_fetch_assoc($q)) $addHandlerRows[] = $r;
 
                             <div class="col-md-4">
                                 <label class="form-label">Is OS Licensed?</label>
-                                <select name="os_licensed" class="form-select" required>
+                                <select name="is_os_licensed" class="form-select" required>
                                     <option value="" disabled selected hidden>Select</option>
                                     <option value="1">Yes</option>
                                     <option value="0">No</option>
