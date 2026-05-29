@@ -197,10 +197,11 @@
   margin-top: 35px;
   border-radius: 16px;
   transition: all 0.3s ease;
-  overflow: visible; /* ✅ important fix */
+  overflow: visible;
 }
 .table-container {
   overflow-x: auto;
+  white-space: nowrap;
 }
 /* sidebar collapsed */
 .sidebar.collapsed ~ .contenttable {

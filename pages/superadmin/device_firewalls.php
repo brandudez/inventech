@@ -335,92 +335,167 @@ $result = $stmt->get_result();
 
 
     <!-- ADD FIREWALL MODAL -->
-    <div class="modal fade" id="addFirewallModal" tabindex="-1" aria-labelledby="addFirewallModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
+<div class="modal fade" id="addFirewallModal" tabindex="-1" aria-labelledby="addFirewallModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
 
-                <!-- Header -->
-                <div class="modal-header text-white" style="background-color:#0d6ea8;">
-                    <h5 class="modal-title" id="addFirewallModalLabel">Add Firewall</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
-
-                <!-- Body -->
-                <div class="modal-body">
-                    <form>
-                        <div class="row g-3">
-
-                            <div class="col-md-6">
-                                <label class="form-label">Personnel</label>
-                                <input type="text" class="form-control" name="personnel">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">Division</label>
-                                <input type="text" class="form-control" name="division">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">Manufacturer</label>
-                                <input type="text" class="form-control" name="manufacturer">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">Model</label>
-                                <input type="text" class="form-control" name="model">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">Serial No</label>
-                                <input type="text" class="form-control" name="serial_no">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">No of Ports</label>
-                                <input type="number" class="form-control" name="no_of_ports">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">Active Ports</label>
-                                <input type="number" class="form-control" name="active_ports">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">Firmware</label>
-                                <input type="text" class="form-control" name="firmware">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">Location</label>
-                                <input type="text" class="form-control" name="location">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">Is Active?</label>
-                                <select class="form-control" name="is_active">
-                                    <option value="">Select</option>
-                                    <option value="yes">Yes</option>
-                                    <option value="no">No</option>
-                                </select>
-                            </div>
-
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Footer -->
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">
-                        Save
-                    </button>
-                </div>
-
+            <!-- HEADER -->
+            <div class="modal-header text-white" style="background-color:#0d6ea8;">
+                <h5 class="modal-title" id="addFirewallModalLabel">Add Firewall</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
+
+            <!-- BODY -->
+            <div class="modal-body">
+                <form method="POST" action="save_firewall.php">
+                    <div class="row g-3">
+
+                        <!-- Personnel -->
+                        <div class="col-md-6">
+                            <label class="form-label">Personnel</label>
+                            <input type="text" class="form-control" name="personnel">
+                        </div>
+
+                        <!-- Division -->
+                        <div class="col-md-6">
+                            <label class="form-label">Division</label>
+                            <input type="text" class="form-control" name="division">
+                        </div>
+
+                        <!-- Manufacturer -->
+                        <div class="col-md-6">
+                            <label class="form-label">Manufacturer</label>
+                            <input type="text" class="form-control" name="manufacturer">
+                        </div>
+
+                        <!-- Model -->
+                        <div class="col-md-6">
+                            <label class="form-label">Model</label>
+                            <input type="text" class="form-control" name="model">
+                        </div>
+
+                        <!-- Serial -->
+                        <div class="col-md-6">
+                            <label class="form-label">Serial No</label>
+                            <input type="text" class="form-control" name="serial_no">
+                        </div>
+
+                        <!-- Ports -->
+                        <div class="col-md-6">
+                            <label class="form-label">No of Ports</label>
+                            <input type="number" class="form-control" name="no_of_ports">
+                        </div>
+
+                        <!-- Active Ports -->
+                        <div class="col-md-6">
+                            <label class="form-label">Active Ports</label>
+                            <input type="number" class="form-control" name="no_of_active_ports">
+                        </div>
+
+                        <!-- Firmware -->
+                        <div class="col-md-6">
+                            <label class="form-label">Firmware Version</label>
+                            <input type="text" class="form-control" name="firmware_version">
+                        </div>
+
+                        <!-- Management Interface -->
+                        <div class="col-md-6">
+                            <label class="form-label">Management Interface Type</label>
+                            <input type="text" class="form-control" name="management_interface_type">
+                        </div>
+
+                        <!-- Location -->
+                        <div class="col-md-6">
+                            <label class="form-label">Location</label>
+                            <input type="text" class="form-control" name="location">
+                        </div>
+
+                        <!-- Is Active -->
+                        <div class="col-md-6">
+                            <label class="form-label">Is Active?</label>
+                            <select class="form-control" name="is_active">
+                                <option value="">Select</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+
+                        <!-- Remote Access -->
+                        <div class="col-md-6">
+                            <label class="form-label">Is Remotely Accessible?</label>
+                            <select class="form-control" name="is_remotely_accessible">
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+                        </div>
+
+                        <!-- Remote Details -->
+                        <div class="col-md-6">
+                            <label class="form-label">Remote Connection Details</label>
+                            <input type="text" class="form-control" name="remote_connection_details">
+                        </div>
+
+                        <!-- Focal Person -->
+                        <div class="col-md-6">
+                            <label class="form-label">PNP Focal Person</label>
+                            <input type="text" class="form-control" name="pnp_focal_person">
+                        </div>
+
+                        <!-- Contact -->
+                        <div class="col-md-6">
+                            <label class="form-label">Contact Details</label>
+                            <input type="text" class="form-control" name="contact_details">
+                        </div>
+
+                        <!-- Acquisition Date -->
+                        <div class="col-md-6">
+                            <label class="form-label">Acquisition Date</label>
+                            <input type="date" class="form-control" name="acquisition_date">
+                        </div>
+
+                        <!-- Acquisition Type -->
+                        <div class="col-md-6">
+                            <label class="form-label">Acquisition Type</label>
+                            <input type="text" class="form-control" name="acquisition_type">
+                        </div>
+
+                        <!-- Acquisition Details -->
+                        <div class="col-md-12">
+                            <label class="form-label">Acquisition Details</label>
+                            <input type="text" class="form-control" name="acquisition_details">
+                        </div>
+
+                        <!-- Remarks -->
+                        <div class="col-md-12">
+                            <label class="form-label">Remarks</label>
+                            <textarea class="form-control" name="remarks"></textarea>
+                        </div>
+
+                        <!-- Previous Handlers -->
+                        <div class="col-md-12">
+                            <label class="form-label">Previous Handlers</label>
+                            <input type="text" class="form-control" name="previous_handlers">
+                        </div>
+
+                    </div>
+
+                    <!-- FOOTER -->
+                    <div class="mt-3 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Close
+                        </button>
+
+                        <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">
+                            Save Firewall
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
         </div>
     </div>
+</div>
 
     <!-- TABLE -->
     <div class="contenttable">
@@ -439,8 +514,18 @@ $result = $stmt->get_result();
                         <th>NO OF PORTS</th>
                         <th>ACTIVE PORTS</th>
                         <th>FIRMWARE</th>
+                        <th>MGMT INTERFACE</th>
                         <th>LOCATION</th>
-                        <th>IS ACTIVE</th>
+                        <th>ACTIVE</th>
+                        <th>REMOTE ACCESS</th>
+                        <th>REMOTE DETAILS</th>
+                        <th>REMARKS</th>
+                        <th>FOCAL PERSON</th>
+                        <th>CONTACT</th>
+                        <th>ACQUISITION DATE</th>
+                        <th>ACQUISITION TYPE</th>
+                        <th>ACQUISITION DETAILS</th>
+                        <th>PREVIOUS HANDLERS</th>
                         <th>ACTION</th>
                     </tr>
                 </thead>
@@ -467,6 +552,30 @@ $result = $stmt->get_result();
                                         : '<span class="text-danger fw-bold">NO</span>' ?>
                                 </td>
 
+                                <td><?= htmlspecialchars($row['management_interface_type'] ?? 'N/A') ?></td>
+
+                                <td>
+                                    <?= $row['is_remotely_accessible']
+                                        ? '<span class="text-success fw-bold">YES</span>'
+                                        : '<span class="text-danger fw-bold">NO</span>' ?>
+                                </td>
+
+                                <td><?= htmlspecialchars($row['remote_connection_details'] ?? 'N/A') ?></td>
+
+                                <td><?= htmlspecialchars($row['remarks'] ?? 'N/A') ?></td>
+
+                                <td><?= htmlspecialchars($row['pnp_focal_person'] ?? 'N/A') ?></td>
+
+                                <td><?= htmlspecialchars($row['contact_details'] ?? 'N/A') ?></td>
+
+                                <td><?= htmlspecialchars($row['acquisition_date'] ?? 'N/A') ?></td>
+
+                                <td><?= htmlspecialchars($row['acquisition_type'] ?? 'N/A') ?></td>
+
+                                <td><?= htmlspecialchars($row['acquisition_details'] ?? 'N/A') ?></td>
+
+                                <td><?= htmlspecialchars($row['previous_handlers'] ?? 'N/A') ?></td>
+
                                 <!-- BUTTON -->
                                 <td>
                                     <button 
@@ -479,105 +588,7 @@ $result = $stmt->get_result();
                                     </button>
                                 </td>
 
-                                <!-- EDIT FIREWALL MODAL -->
-                                <div class="modal fade editModal" id="editFirewallModal" tabindex="-1" aria-labelledby="editFirewallModalLabel" aria-hidden="true">
-
-                                    <div class="modal-dialog modal-lg modal-dialog-centered">
-
-                                        <div class="modal-content">
-
-                                            <!-- Header -->
-                                            <div class="modal-header">
-
-                                                <h5 class="modal-title" id="editFirewallModalLabel">
-                                                    Edit Firewall
-                                                </h5>
-
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-
-                                            </div>
-
-                                            <!-- Body -->
-                                            <div class="modal-body">
-
-                                                <div class="row g-3">
-
-                                                    <!-- Personnel -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Personnel</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Personnel">
-                                                    </div>
-
-                                                    <!-- Division -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Division</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Division">
-                                                    </div>
-
-                                                    <!-- Brand -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Brand</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Brand">
-                                                    </div>
-
-                                                    <!-- Model -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Model</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Model">
-                                                    </div>
-
-                                                    <!-- Serial No -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Serial No</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Serial No">
-                                                    </div>
-
-                                                    <!-- Acquisition Details -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Acquisition Details</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Acquisition Details">
-                                                    </div>
-
-                                                    <!-- Acquisition Date -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Acquisition Date</label>
-                                                        <input type="date" class="form-control">
-                                                    </div>
-
-                                                    <!-- Previous Owners -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Previous Owners</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Previous Owners">
-                                                    </div>
-
-                                                    <!-- Created Date -->
-                                                    <div class="col-md-12">
-                                                        <label class="form-label">Created Date</label>
-                                                        <input type="date" class="form-control">
-                                                    </div>
-
-                                                </div>
-
-                                            </div>
-
-                                            <!-- Footer -->
-                                            <div class="modal-footer">
-
-                                                <button type="button" class="btn cancelBtn" data-bs-dismiss="modal">
-                                                    Cancel
-                                                </button>
-
-                                                <button type="button" class="btn saveBtn">
-                                                    Save Changes
-                                                </button>
-
-                                            </div>
-
-                                        </div>
-
-                                    </div>
-
-                                </div>
+                                
                             </tr>
 
                         <?php endwhile; ?>
