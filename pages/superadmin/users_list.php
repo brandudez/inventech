@@ -11,7 +11,6 @@ if ($_SESSION['user']['role_id'] != 1) {
     exit();
 }
 
-
 include("../../config/db.php");
 
 /* =========================
@@ -23,14 +22,12 @@ $page = max(1, $page);
 $offset = ($page - 1) * $limit;
 
 /* =========================
-   SEARCH
+   SEARCH + FILTERS
 ========================= */
 $search = trim($_GET['search'] ?? '');
 $msg = $_GET['msg'] ?? '';
 $error = $_GET['error'] ?? '';
-/* =========================
-   FILTERS
-========================= */
+
 $roleFilters = $_GET['roles'] ?? [];
 $rankFilters = $_GET['ranks'] ?? [];
 $divisionFilters = $_GET['divisions'] ?? [];
@@ -98,38 +95,29 @@ if (!empty($search)) {
 }
 
 /* =========================
-   ROLE FILTER
+   FILTERS
 ========================= */
 if (!empty($roleFilters)) {
     $placeholders = implode(',', array_fill(0, count($roleFilters), '?'));
     $sql .= " AND u.role_id IN ($placeholders)";
-
     foreach ($roleFilters as $role) {
         $params[] = (int)$role;
         $types .= "i";
     }
 }
 
-/* =========================
-   RANK FILTER
-========================= */
 if (!empty($rankFilters)) {
     $placeholders = implode(',', array_fill(0, count($rankFilters), '?'));
     $sql .= " AND u.rank_id IN ($placeholders)";
-
     foreach ($rankFilters as $rank) {
         $params[] = (int)$rank;
         $types .= "i";
     }
 }
 
-/* =========================
-   DIVISION FILTER
-========================= */
 if (!empty($divisionFilters)) {
     $placeholders = implode(',', array_fill(0, count($divisionFilters), '?'));
     $sql .= " AND u.division_id IN ($placeholders)";
-
     foreach ($divisionFilters as $div) {
         $params[] = (int)$div;
         $types .= "i";
@@ -137,9 +125,9 @@ if (!empty($divisionFilters)) {
 }
 
 /* =========================
-   COUNT QUERY
+   COUNT TOTAL (PAGINATED RESULT ONLY)
 ========================= */
-$countSql = "SELECT COUNT(*) as total FROM ($sql) as t";
+$countSql = "SELECT COUNT(*) as total FROM ($sql) t";
 $countStmt = $conn->prepare($countSql);
 
 if (!empty($params)) {
@@ -151,7 +139,7 @@ $totalUsers = $countStmt->get_result()->fetch_assoc()['total'];
 $totalPages = ceil($totalUsers / $limit);
 
 /* =========================
-   FINAL QUERY (SORT BY ROLE)
+   FINAL QUERY (PAGINATION)
 ========================= */
 $sql .= "
 ORDER BY 
@@ -174,92 +162,23 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 /* =========================
-   ACTIVE COUNT
+   TABLE ROWS + STATS (BASED ON TABLE)
 ========================= */
-$activeSql = "
-SELECT COUNT(*) as total
-FROM users u
-LEFT JOIN divisions d ON u.division_id = d.id
-LEFT JOIN ranks r ON u.rank_id = r.id
-LEFT JOIN roles rl ON u.role_id = rl.id
-WHERE u.is_active = 1
-";
+$rows = [];
+$activeCount = 0;
+$inactiveCount = 0;
 
-$activeParams = [];
-$activeTypes = "";
+while ($row = $result->fetch_assoc()) {
+    $rows[] = $row;
 
-if (!empty($search)) {
-
-    $activeSql .= " AND (
-        u.first_name LIKE ?
-        OR u.middle_name LIKE ?
-        OR u.last_name LIKE ?
-        OR u.email LIKE ?
-        OR d.division LIKE ?
-        OR r.rank LIKE ?
-        OR rl.role_name LIKE ?
-    )";
-
-    $searchValue = "%$search%";
-
-    for ($i = 0; $i < 7; $i++) {
-        $activeParams[] = $searchValue;
-        $activeTypes .= "s";
+    if ($row['is_active']) {
+        $activeCount++;
+    } else {
+        $inactiveCount++;
     }
 }
 
-$activeStmt = $conn->prepare($activeSql);
-
-if (!empty($activeParams)) {
-    $activeStmt->bind_param($activeTypes, ...$activeParams);
-}
-
-$activeStmt->execute();
-$activeCount = $activeStmt->get_result()->fetch_assoc()['total'];
-
-/* =========================
-   INACTIVE COUNT
-========================= */
-$inactiveSql = "
-SELECT COUNT(*) as total
-FROM users u
-LEFT JOIN divisions d ON u.division_id = d.id
-LEFT JOIN ranks r ON u.rank_id = r.id
-LEFT JOIN roles rl ON u.role_id = rl.id
-WHERE u.is_active = 0
-";
-
-$inactiveParams = [];
-$inactiveTypes = "";
-
-if (!empty($search)) {
-
-    $inactiveSql .= " AND (
-        u.first_name LIKE ?
-        OR u.middle_name LIKE ?
-        OR u.last_name LIKE ?
-        OR u.email LIKE ?
-        OR d.division LIKE ?
-        OR r.rank LIKE ?
-        OR rl.role_name LIKE ?
-    )";
-
-    $searchValue = "%$search%";
-
-    for ($i = 0; $i < 7; $i++) {
-        $inactiveParams[] = $searchValue;
-        $inactiveTypes .= "s";
-    }
-}
-
-$inactiveStmt = $conn->prepare($inactiveSql);
-
-if (!empty($inactiveParams)) {
-    $inactiveStmt->bind_param($inactiveTypes, ...$inactiveParams);
-}
-
-$inactiveStmt->execute();
-$inactiveCount = $inactiveStmt->get_result()->fetch_assoc()['total'];
+$totalUsers = count($rows);
 
 /* =========================
    FILTER OPTIONS
@@ -474,7 +393,7 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
 
                     <?php if ($result->num_rows > 0) { ?>
 
-                        <?php while ($row = $result->fetch_assoc()) { ?>
+                        <?php foreach ($rows as $row) { ?>
 
                             <tr>
 

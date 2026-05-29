@@ -185,11 +185,80 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 /* =========================
-   STATS
+   STATS (FILTERED)
 ========================= */
-$activeCount = $conn->query("SELECT COUNT(*) as total FROM personnels WHERE is_active = 1")->fetch_assoc()['total'];
-$inactiveCount = $conn->query("SELECT COUNT(*) as total FROM personnels WHERE is_active = 0")->fetch_assoc()['total'];
 
+$statsSql = "
+SELECT 
+    COUNT(*) as totalUsers,
+    SUM(CASE WHEN p.is_active = 1 THEN 1 ELSE 0 END) as activeCount,
+    SUM(CASE WHEN p.is_active = 0 THEN 1 ELSE 0 END) as inactiveCount
+FROM personnels p
+LEFT JOIN divisions d ON p.division_id = d.id
+LEFT JOIN ranks r ON p.rank_id = r.id
+LEFT JOIN users u ON p.created_by = u.id
+LEFT JOIN roles rl ON u.role_id = rl.id
+WHERE 1=1
+";
+
+$statsParams = [];
+$statsTypes = "";
+
+/* SEARCH */
+if (!empty($search)) {
+    $statsSql .= "
+    AND (
+        p.first_name LIKE ?
+        OR p.middle_name LIKE ?
+        OR p.last_name LIKE ?
+        OR d.division LIKE ?
+        OR r.rank LIKE ?
+        OR u.username LIKE ?
+    )";
+
+    $searchValue = "%$search%";
+
+    for ($i = 0; $i < 6; $i++) {
+        $statsParams[] = $searchValue;
+        $statsTypes .= "s";
+    }
+}
+
+/* RANK FILTER */
+if (!empty($rankFilters)) {
+    $placeholders = implode(',', array_fill(0, count($rankFilters), '?'));
+    $statsSql .= " AND p.rank_id IN ($placeholders)";
+
+    foreach ($rankFilters as $rank) {
+        $statsParams[] = (int)$rank;
+        $statsTypes .= "i";
+    }
+}
+
+/* DIVISION FILTER */
+if (!empty($divisionFilters)) {
+    $placeholders = implode(',', array_fill(0, count($divisionFilters), '?'));
+    $statsSql .= " AND p.division_id IN ($placeholders)";
+
+    foreach ($divisionFilters as $div) {
+        $statsParams[] = (int)$div;
+        $statsTypes .= "i";
+    }
+}
+
+/* EXECUTE STATS */
+$statsStmt = $conn->prepare($statsSql);
+
+if (!empty($statsParams)) {
+    $statsStmt->bind_param($statsTypes, ...$statsParams);
+}
+
+$statsStmt->execute();
+$stats = $statsStmt->get_result()->fetch_assoc();
+
+$totalUsers   = $stats['totalUsers'];
+$activeCount  = $stats['activeCount'];
+$inactiveCount = $stats['inactiveCount'];
 /* =========================
    FILTER OPTIONS (DYNAMIC)
 ========================= */
