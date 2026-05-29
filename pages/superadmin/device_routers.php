@@ -11,32 +11,17 @@ if ($_SESSION['user']['role_id'] != 1) {
     exit();
 }
 
-include("../../config/db.php");
+include "../../config/db.php";
 
 /* =========================
-   PAGINATION
-========================= */
-$limit = 10;
-$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
-$page = max(1, $page);
-$offset = ($page - 1) * $limit;
-
-/* =========================
-   FILTER INPUTS
-========================= */
-$search = trim($_GET['search'] ?? '');
-$division_id = trim($_GET['division_id'] ?? '');
-$is_active = trim($_GET['is_active'] ?? '');
-
-/* =========================
-   DIVISIONS
+   DIVISIONS (FIX ADDED)
 ========================= */
 $divisions = [];
 
 $divisionQuery = mysqli_query($conn, "
     SELECT id, division
     FROM divisions
-    ORDER BY id ASC
+    ORDER BY division ASC
 ");
 
 while ($row = mysqli_fetch_assoc($divisionQuery)) {
@@ -44,26 +29,79 @@ while ($row = mysqli_fetch_assoc($divisionQuery)) {
 }
 
 /* =========================
-   FILTER BUILDER
+   HELPER: PREVIOUS HANDLERS
 ========================= */
-function addFilter(&$where, &$params, &$types, $condition, $value, $type)
+function getPreviousOwnersNames($conn, $json)
 {
-    $where[] = $condition;
-    $params[] = $value;
-    $types .= $type;
+    if (empty($json)) return 'N/A';
+
+    $ids = json_decode($json, true);
+
+    if (!is_array($ids) || empty($ids)) {
+        return 'N/A';
+    }
+
+    $ids = array_map('intval', $ids);
+    $in = implode(',', $ids);
+
+    $sql = "
+        SELECT 
+            p.id,
+            r.rank,
+            p.first_name,
+            p.middle_name,
+            p.last_name
+        FROM personnels p
+        LEFT JOIN ranks r ON p.rank_id = r.id
+        WHERE p.id IN ($in)
+    ";
+
+    $result = mysqli_query($conn, $sql);
+
+    if (!$result) return 'N/A';
+
+    $names = [];
+
+    while ($row = mysqli_fetch_assoc($result)) {
+        $names[] = trim(
+            ($row['rank'] ?? '') . ' ' .
+            $row['first_name'] . ' ' .
+            $row['middle_name'] . ' ' .
+            $row['last_name']
+        );
+    }
+
+    return !empty($names) ? implode("<br>", $names) : 'N/A';
 }
 
 /* =========================
-   BASE FILTERS (IMPORTANT FIX)
+   PAGINATION
 ========================= */
-$baseWhere = [];
-$baseParams = [];
-$baseTypes = '';
+$limit = 10;
+
+$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+$page = max(1, $page);
+
+$offset = ($page - 1) * $limit;
+
+/* =========================
+   SEARCH + FILTERS
+========================= */
+$search = trim($_GET['search'] ?? '');
+$division_filter = trim($_GET['division_id'] ?? '');
+$active_filter   = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
+
+/* =========================
+   WHERE
+========================= */
+$where  = [];
+$params = [];
+$types  = '';
 
 /* SEARCH */
 if (!empty($search)) {
 
-    $baseWhere[] = "(
+    $where[] = "(
         r.manufacturer LIKE ? OR
         r.model LIKE ? OR
         r.serial_no LIKE ? OR
@@ -71,82 +109,82 @@ if (!empty($search)) {
         r.firmware_version LIKE ? OR
         r.remote_connection_details LIKE ? OR
         r.remarks LIKE ? OR
-        CONCAT(per.first_name, ' ', per.last_name) LIKE ? OR
-        d.division LIKE ?
+        CONCAT(p.first_name,' ',p.middle_name,' ',p.last_name) LIKE ? OR
+        dv.division LIKE ?
     )";
 
     $searchValue = "%$search%";
 
     for ($i = 0; $i < 9; $i++) {
-        $baseParams[] = $searchValue;
+        $params[] = $searchValue;
+        $types .= 's';
     }
-
-    $baseTypes .= str_repeat('s', 9);
 }
 
-/* DIVISION FILTER */
-if (!empty($division_id) && isset($divisions[$division_id])) {
-    addFilter($baseWhere, $baseParams, $baseTypes, "d.id = ?", $division_id, "i");
+/* DIVISION */
+if (!empty($division_filter)) {
+    $where[] = "dv.id = ?";
+    $params[] = $division_filter;
+    $types .= 'i';
 }
 
-/* ACTIVE FILTER */
-if ($is_active !== '') {
-    addFilter($baseWhere, $baseParams, $baseTypes, "r.is_active = ?", $is_active, "i");
+/* ACTIVE */
+if ($active_filter !== '') {
+    $where[] = "r.is_active = ?";
+    $params[] = $active_filter;
+    $types .= 'i';
 }
 
-/* FINAL WHERE */
-$whereSQL = !empty($baseWhere) ? "WHERE " . implode(" AND ", $baseWhere) : "";
+$whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
 
 /* =========================
-   COUNT QUERY
+   TOTAL
 ========================= */
-$countSQL = "
+$totalQuery = "
     SELECT COUNT(*) as total
     FROM routers r
-    LEFT JOIN personnels per ON r.personnel_id = per.id
-    LEFT JOIN divisions d ON per.division_id = d.id
+    LEFT JOIN personnels p ON r.personnel_id = p.id
+    LEFT JOIN divisions dv ON p.division_id = dv.id
     $whereSQL
 ";
 
-$countStmt = $conn->prepare($countSQL);
+$stmtTotal = $conn->prepare($totalQuery);
 
-if (!empty($baseParams)) {
-    $countStmt->bind_param($baseTypes, ...$baseParams);
+if (!empty($params)) {
+    $stmtTotal->bind_param($types, ...$params);
 }
 
-$countStmt->execute();
-$totalRouters = $countStmt->get_result()->fetch_assoc()['total'];
+$stmtTotal->execute();
+$totalRouters = $stmtTotal->get_result()->fetch_assoc()['total'] ?? 0;
+
 $totalPages = ceil($totalRouters / $limit);
 
 /* =========================
-   MAIN QUERY (FIXED BINDING)
+   MAIN DATA
 ========================= */
-$sql = "
+$query = "
     SELECT
         r.*,
-        CONCAT(per.last_name, ', ', per.first_name, ' ', per.middle_name) AS fullname,
-        d.division
+        CONCAT(rk.rank,' ',p.last_name,', ',p.first_name,' ',p.middle_name) AS fullname,
+        dv.division
     FROM routers r
-    LEFT JOIN personnels per ON r.personnel_id = per.id
-    LEFT JOIN divisions d ON per.division_id = d.id
+    LEFT JOIN personnels p ON r.personnel_id = p.id
+    LEFT JOIN ranks rk ON p.rank_id = rk.id
+    LEFT JOIN divisions dv ON p.division_id = dv.id
     $whereSQL
     ORDER BY r.id DESC
     LIMIT ?, ?
 ";
 
-$stmt = $conn->prepare($sql);
+$stmt = $conn->prepare($query);
 
-/* COPY BASE FILTERS (IMPORTANT FIX) */
-$mainParams = $baseParams;
-$mainTypes = $baseTypes;
+$finalParams = $params;
+$finalTypes  = $types . 'ii';
 
-/* ADD LIMIT PARAMS */
-$mainParams[] = $offset;
-$mainParams[] = $limit;
-$mainTypes .= "ii";
+$finalParams[] = $offset;
+$finalParams[] = $limit;
 
-/* SAFE BIND */
-$stmt->bind_param($mainTypes, ...$mainParams);
+$stmt->bind_param($finalTypes, ...$finalParams);
 
 $stmt->execute();
 $result = $stmt->get_result();
@@ -154,9 +192,9 @@ $result = $stmt->get_result();
 /* =========================
    ACTIVE COUNT
 ========================= */
-$activeWhere = $baseWhere;
-$activeParams = $baseParams;
-$activeTypes = $baseTypes;
+$activeWhere = $where;
+$activeParams = $params;
+$activeTypes = $types;
 
 $activeWhere[] = "r.is_active = 1";
 
@@ -165,8 +203,8 @@ $activeSQL = "WHERE " . implode(" AND ", $activeWhere);
 $activeQuery = "
     SELECT COUNT(*) AS total
     FROM routers r
-    LEFT JOIN personnels per ON r.personnel_id = per.id
-    LEFT JOIN divisions d ON per.division_id = d.id
+    LEFT JOIN personnels p ON r.personnel_id = p.id
+    LEFT JOIN divisions dv ON p.division_id = dv.id
     $activeSQL
 ";
 
@@ -182,9 +220,9 @@ $activeRouters = $stmtActive->get_result()->fetch_assoc()['total'] ?? 0;
 /* =========================
    INACTIVE COUNT
 ========================= */
-$inactiveWhere = $baseWhere;
-$inactiveParams = $baseParams;
-$inactiveTypes = $baseTypes;
+$inactiveWhere = $where;
+$inactiveParams = $params;
+$inactiveTypes = $types;
 
 $inactiveWhere[] = "r.is_active = 0";
 
@@ -193,8 +231,8 @@ $inactiveSQL = "WHERE " . implode(" AND ", $inactiveWhere);
 $inactiveQuery = "
     SELECT COUNT(*) AS total
     FROM routers r
-    LEFT JOIN personnels per ON r.personnel_id = per.id
-    LEFT JOIN divisions d ON per.division_id = d.id
+    LEFT JOIN personnels p ON r.personnel_id = p.id
+    LEFT JOIN divisions dv ON p.division_id = dv.id
     $inactiveSQL
 ";
 
@@ -206,6 +244,7 @@ if (!empty($inactiveParams)) {
 
 $stmtInactive->execute();
 $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
+
 ?>
 
 <!DOCTYPE html>
@@ -234,8 +273,8 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
 
             <form method="GET" class="search-form">
 
-                <input type="hidden" name="division_id" value="<?= htmlspecialchars($division_id) ?>">
-                <input type="hidden" name="is_active" value="<?= htmlspecialchars($is_active) ?>">
+                <input type="hidden" name="division_id" value="<?= htmlspecialchars($division_filter) ?>">
+                <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
 
                 <input type="text" name="search" class="search-input" placeholder="Search routers..."
                     value="<?= htmlspecialchars($search) ?>">
@@ -255,8 +294,8 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
             <div class="dropdown">
 
                 <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
-                    <?= (!empty($division_id) && isset($divisions[$division_id]))
-                        ? $divisions[$division_id]
+                    <?= (!empty($division_filter) && isset($divisions[$division_filter]))
+                        ? $divisions[$division_filter]
                         : 'Division' ?>
                 </button>
 
@@ -287,14 +326,14 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
             <div class="dropdown">
 
                 <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
-                    <?= $is_active === '' ? 'Is Active?' : ($is_active == 1 ? 'YES' : 'NO') ?>
+                    <?= $active_filter === '' ? 'Is Active?' : ($active_filter == 1 ? 'YES' : 'NO') ?>
                 </button>
 
                 <ul class="dropdown-menu p-3">
 
                     <li>
                         <a class="dropdown-item"
-                            href="?division_id=<?= urlencode($division_id) ?>&search=<?= urlencode($search) ?>">
+                            href="?division_id=<?= urlencode($division_filter) ?>&search=<?= urlencode($search) ?>">
                             All
                         </a>
                     </li>
@@ -342,19 +381,81 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
 
                 <!-- Body -->
                 <div class="modal-body">
-                    <form>
+                    <form action="add_routers.php" method="POST">
                         <div class="row g-3">
 
+                            <!-- PERSONNEL -->
                             <div class="col-md-6">
                                 <label class="form-label">Personnel</label>
-                                <input type="text" class="form-control" name="personnel">
+
+                                <select name="personnel_id" class="form-select" required>
+
+                                    <option value="" disabled selected hidden>
+                                        Select Personnel
+                                    </option>
+
+                                    <?php
+                                    $personnelQuery = mysqli_query($conn, "
+                                        SELECT
+                                            p.id,
+                                            r.rank,
+                                            p.first_name,
+                                            p.middle_name,
+                                            p.last_name,
+                                            p.rank_id
+                                        FROM personnels p
+                                        LEFT JOIN ranks r
+                                            ON p.rank_id = r.id
+                                        ORDER BY p.rank_id DESC
+                                    ");
+
+                                    while ($personnel = mysqli_fetch_assoc($personnelQuery)):
+
+                                        $fullName = trim(
+                                            ($personnel['rank'] ?? '') . ' ' .
+                                            ($personnel['last_name'] ?? '') . ' ' .
+                                            ($personnel['first_name'] ?? '') . ' ' .
+                                            ($personnel['middle_name'] ?? '')
+                                        );
+                                    ?>
+
+                                        <option value="<?php echo $personnel['id'] ?>">
+                                            <?php echo htmlspecialchars($fullName) ?>
+                                        </option>
+
+                                    <?php endwhile; ?>
+
+                                </select>
                             </div>
 
+                            <!-- DIVISION -->
                             <div class="col-md-6">
                                 <label class="form-label">Division</label>
-                                <input type="text" class="form-control" name="division">
-                            </div>
 
+                                <select name="division_id" class="form-select" required>
+
+                                    <option value="" disabled selected hidden>
+                                        Select Division
+                                    </option>
+
+                                    <?php
+                                    $divisionQuery = mysqli_query($conn, "
+                                        SELECT id, division
+                                        FROM divisions
+                                        ORDER BY id ASC
+                                    ");
+
+                                    while ($division = mysqli_fetch_assoc($divisionQuery)):
+                                    ?>
+
+                                        <option value="<?php echo $division['id'] ?>">
+                                            <?php echo htmlspecialchars($division['division']) ?>
+                                        </option>
+
+                                    <?php endwhile; ?>
+
+                                </select>
+                            </div>
                             <div class="col-md-6">
                                 <label class="form-label">Manufacturer</label>
                                 <input type="text" class="form-control" name="manufacturer">
@@ -399,8 +500,8 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
                                 <label class="form-label">Active</label>
                                 <select class="form-control" name="active">
                                     <option value="">Select</option>
-                                    <option value="yes">Yes</option>
-                                    <option value="no">No</option>
+                                    <option value="1">Yes</option>
+                                    <option value="0">No</option>
                                 </select>
                             </div>
 
@@ -408,8 +509,8 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
                                 <label class="form-label">Remote Access</label>
                                 <select class="form-control" name="remote_access">
                                     <option value="">Select</option>
-                                    <option value="yes">Yes</option>
-                                    <option value="no">No</option>
+                                    <option value="1">Yes</option>
+                                    <option value="0">No</option>
                                 </select>
                             </div>
 
@@ -443,22 +544,92 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
                                 <input type="text" class="form-control" name="acq_type">
                             </div>
 
+                            <!-- PREVIOUS HANDLERS -->
                             <div class="col-md-6">
-                                <label class="form-label">Previous Handlers</label>
-                                <input type="text" class="form-control" name="previous_handlers">
+                                <label class="form-label">Previous Handler/s</label>
+
+                                <div class="dropdown w-100">
+
+                                    <button
+                                        class="form-select text-start"
+                                        type="button"
+                                        data-bs-toggle="dropdown">
+
+                                        Select Previous Handler/s
+
+                                    </button>
+
+                                    <div class="dropdown-menu w-100 p-2"
+                                        style="max-height: 250px; overflow-y: auto;">
+
+                                        <?php
+                                        $handlerQuery = mysqli_query($conn, "
+                                            SELECT
+                                                p.id,
+                                                r.rank,
+                                                p.first_name,
+                                                p.middle_name,
+                                                p.last_name,
+                                                p.rank_id
+                                            FROM personnels p
+                                            LEFT JOIN ranks r
+                                                ON p.rank_id = r.id
+                                            ORDER BY p.rank_id DESC
+                                        ");
+
+                                        while ($handler = mysqli_fetch_assoc($handlerQuery)):
+
+                                            $fullName = trim(
+                                                ($handler['rank'] ?? '') . ' ' .
+                                                ($handler['last_name'] ?? '') . ' ' .
+                                                ($handler['first_name'] ?? '') . ' ' .
+                                                ($handler['middle_name'] ?? '')
+                                            );
+                                        ?>
+
+                                            <div class="form-check">
+
+                                                <input
+                                                    class="form-check-input"
+                                                    type="checkbox"
+                                                    name="previous_handlers_id[]"
+                                                    value="<?php echo $handler['id'] ?>"
+                                                    id="ph<?php echo $handler['id'] ?>">
+
+                                                <label
+                                                    class="form-check-label"
+                                                    for="ph<?php echo $handler['id'] ?>">
+
+                                                    <?php echo htmlspecialchars($fullName) ?>
+
+                                                </label>
+
+                                            </div>
+
+                                        <?php endwhile; ?>
+
+                                    </div>
+                                </div>
+
+                                <small class="text-muted">
+                                    You can select multiple handlers
+                                </small>
                             </div>
 
                         </div>
+
+                        <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    Close
+                                </button>
+
+                                <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">
+                                    Save
+                                </button>
+                            </div>
                     </form>
                 </div>
 
-                <!-- Footer -->
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">
-                        Save
-                    </button>
-                </div>
 
             </div>
         </div>
@@ -483,7 +654,6 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
                         <th>IP RANGE</th>
                         <th>FIRMWARE</th>
                         <th>LOCATION</th>
-                        <th>ACTIVE</th>
                         <th>REMOTE ACCESS</th>
                         <th>REMOTE DETAILS</th>
                         <th>REMARKS</th>
@@ -492,6 +662,7 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
                         <th>ACQ DATE</th>
                         <th>ACQ TYPE</th>
                         <th>PREVIOUS HANDLERS</th>
+                        <th>ACTIVE</th>
                         <th>ACTIONS</th>
                     </tr>
                 </thead>
@@ -516,12 +687,6 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
                                 <td><?= htmlspecialchars($row['location']) ?></td>
 
                                 <td>
-                                    <?= $row['is_active']
-                                        ? '<span style="color:green;font-weight:bold;">YES</span>'
-                                        : '<span style="color:red;font-weight:bold;">NO</span>' ?>
-                                </td>
-
-                                <td>
                                     <?= $row['is_remotely_accessible']
                                         ? '<span style="color:green;font-weight:bold;">YES</span>'
                                         : '<span style="color:red;font-weight:bold;">NO</span>' ?>
@@ -533,14 +698,20 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
                                 <td><?= htmlspecialchars($row['contact_details']) ?></td>
                                 <td><?= htmlspecialchars($row['acquisition_date']) ?></td>
                                 <td><?= htmlspecialchars($row['acquisition_type']) ?></td>
-                                <td><?= htmlspecialchars($row['previous_owners_id']) ?></td>
-
+                                 <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?></td>
+                                <td>
+                                    <?= $row['is_active']
+                                        ? '<span style="color:green;font-weight:bold;">YES</span>'
+                                        : '<span style="color:red;font-weight:bold;">NO</span>' ?>
+                                </td>
                                 <!-- BUTTON -->
                                 <td>
                                     <button 
                                         class="btn btn-primary btn-sm"
                                         data-bs-toggle="modal"
-                                        data-bs-target="#editRouterModal">
+                                       data-bs-target="#editRouterModal<?= $row['id'] ?>"
+                                       id="editRouter<?= $row['id'] ?>"
+                                       >
 
                                         <i class="bi bi-gear-fill"></i>
 
@@ -548,104 +719,272 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
                                 </td>
 
                                 <!-- EDIT ROUTER MODAL -->
-                                <div class="modal fade editModal" id="editRouterModal" tabindex="-1" aria-labelledby="editRouterModalLabel" aria-hidden="true">
+<div class="modal fade" id="editRouterModal<?= $row['id'] ?>" tabindex="-1">
 
-                                    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
 
-                                        <div class="modal-content">
+            <form method="POST" action="edit_router.php">
 
-                                            <!-- Header -->
-                                            <div class="modal-header">
+                <input type="hidden" name="id" value="<?= $row['id'] ?>">
 
-                                                <h5 class="modal-title" id="editRouterModalLabel">
-                                                    Edit Router
-                                                </h5>
+                <!-- HEADER -->
+                <div class="modal-header text-white" style="background-color:#0d6ea8;">
+                    <h5 class="modal-title">Edit Router</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
 
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <!-- BODY -->
+                <div class="modal-body">
+                    <div class="row g-3">
 
-                                            </div>
+                        <!-- PERSONNEL -->
+                        <div class="col-md-6">
+                            <label class="form-label">Personnel</label>
+                            <select name="personnel_id" class="form-select" required>
 
-                                            <!-- Body -->
-                                            <div class="modal-body">
+                                <?php
+                                $personnelQuery = mysqli_query($conn, "
+                                    SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name
+                                    FROM personnels p
+                                    LEFT JOIN ranks r ON p.rank_id = r.id
+                                    ORDER BY p.rank_id DESC
+                                ");
 
-                                                <div class="row g-3">
+                                while ($personnel = mysqli_fetch_assoc($personnelQuery)):
 
-                                                    <!-- Personnel -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Personnel</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Personnel">
-                                                    </div>
+                                    $fullName = trim(
+                                        ($personnel['rank'] ?? '') . ' ' .
+                                        ($personnel['last_name'] ?? '') . ' ' .
+                                        ($personnel['first_name'] ?? '') . ' ' .
+                                        ($personnel['middle_name'] ?? '')
+                                    );
+                                ?>
 
-                                                    <!-- Division -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Division</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Division">
-                                                    </div>
+                                    <option value="<?= $personnel['id'] ?>"
+                                        <?= ($row['personnel_id'] ?? '') == $personnel['id'] ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($fullName) ?>
+                                    </option>
 
-                                                    <!-- Brand -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Brand</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Brand">
-                                                    </div>
+                                <?php endwhile; ?>
 
-                                                    <!-- Model -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Model</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Model">
-                                                    </div>
+                            </select>
+                        </div>
 
-                                                    <!-- Serial No -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Serial No</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Serial No">
-                                                    </div>
+                        <!-- DIVISION -->
+                        <div class="col-md-6">
+                            <label class="form-label">Division</label>
+                            <select name="division_id" class="form-select" required>
 
-                                                    <!-- Acquisition Details -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Acquisition Details</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Acquisition Details">
-                                                    </div>
+                                <?php
+                                $divisionQuery = mysqli_query($conn, "SELECT * FROM divisions ORDER BY id ASC");
 
-                                                    <!-- Acquisition Date -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Acquisition Date</label>
-                                                        <input type="date" class="form-control">
-                                                    </div>
+                                while ($division = mysqli_fetch_assoc($divisionQuery)):
+                                ?>
 
-                                                    <!-- Previous Owners -->
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Previous Owners</label>
-                                                        <input type="text" class="form-control" placeholder="Enter Previous Owners">
-                                                    </div>
+                                    <option value="<?= $division['id'] ?>"
+                                        <?= ($row['division_id'] ?? '') == $division['id'] ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($division['division']) ?>
+                                    </option>
 
-                                                    <!-- Created Date -->
-                                                    <div class="col-md-12">
-                                                        <label class="form-label">Created Date</label>
-                                                        <input type="date" class="form-control">
-                                                    </div>
+                                <?php endwhile; ?>
 
-                                                </div>
+                            </select>
+                        </div>
 
-                                            </div>
+                        <!-- MANUFACTURER -->
+                        <div class="col-md-6">
+                            <label class="form-label">Manufacturer</label>
+                            <input type="text" name="manufacturer" class="form-control"
+                                value="<?= htmlspecialchars($row['manufacturer'] ?? '') ?>">
+                        </div>
 
-                                            <!-- Footer -->
-                                            <div class="modal-footer">
+                        <!-- MODEL -->
+                        <div class="col-md-6">
+                            <label class="form-label">Model</label>
+                            <input type="text" name="model" class="form-control"
+                                value="<?= htmlspecialchars($row['model'] ?? '') ?>">
+                        </div>
 
-                                                <button type="button" class="btn cancelBtn" data-bs-dismiss="modal">
-                                                    Cancel
-                                                </button>
+                        <!-- SERIAL -->
+                        <div class="col-md-6">
+                            <label class="form-label">Serial No</label>
+                            <input type="text" name="serial_no" class="form-control"
+                                value="<?= htmlspecialchars($row['serial_no'] ?? '') ?>">
+                        </div>
 
-                                                <button type="button" class="btn saveBtn">
-                                                    Save Changes
-                                                </button>
+                        <!-- PORTS -->
+                        <div class="col-md-6">
+                            <label class="form-label">Ports</label>
+                            <input type="number" name="ports" class="form-control"
+                                value="<?= htmlspecialchars($row['no_of_ports'] ?? '') ?>">
+                        </div>
 
-                                            </div>
+                        <!-- ACTIVE PORTS -->
+                        <div class="col-md-6">
+                            <label class="form-label">Active Ports</label>
+                            <input type="number" name="active_ports" class="form-control"
+                                value="<?= htmlspecialchars($row['no_of_active_ports'] ?? '') ?>">
+                        </div>
 
-                                        </div>
+                        <!-- IP RANGE -->
+                        <div class="col-md-6">
+                            <label class="form-label">IP Range</label>
+                            <input type="text" name="ip_range" class="form-control"
+                                value="<?= htmlspecialchars($row['active_port_ip_address_range'] ?? '') ?>">
+                        </div>
 
-                                    </div>
+                        <!-- FIRMWARE -->
+                        <div class="col-md-6">
+                            <label class="form-label">Firmware</label>
+                            <input type="text" name="firmware" class="form-control"
+                                value="<?= htmlspecialchars($row['firmware_version'] ?? '') ?>">
+                        </div>
 
-                                </div>
+                        <!-- LOCATION -->
+                        <div class="col-md-6">
+                            <label class="form-label">Location</label>
+                            <input type="text" name="location" class="form-control"
+                                value="<?= htmlspecialchars($row['location'] ?? '') ?>">
+                        </div>
+
+                            <div class="col-md-6">
+                            <label class="form-label">Active</label>
+
+                            <select name="is_active" class="form-select">
+
+                                <option value="1" <?= ((int)$row['is_active'] === 1) ? 'selected' : '' ?>>
+                                    Yes
+                                </option>
+
+                                <option value="0" <?= ((int)$row['is_active'] === 0) ? 'selected' : '' ?>>
+                                    No
+                                </option>
+
+                            </select>
+                        </div>
+
+                        <!-- REMOTE ACCESS -->
+                        <div class="col-md-6">
+                            <label class="form-label">Remote Access</label>
+                           <select name="remote_access" class="form-select">
+                                <option value="1" <?= ($row['is_remotely_accessible'] ?? 0) == 1 ? 'selected' : '' ?>>Yes</option>
+                                <option value="0" <?= ($row['is_remotely_accessible'] ?? 0) == 0 ? 'selected' : '' ?>>No</option>
+                            </select>
+                        </div>
+
+                        <!-- REMOTE DETAILS -->
+                        <div class="col-md-6">
+                            <label class="form-label">Remote Details</label>
+                            <input type="text" name="remote_details" class="form-control"
+                                value="<?= htmlspecialchars($row['remote_connection_details'] ?? '') ?>">
+                        </div>
+
+                        <!-- REMARKS -->
+                        <div class="col-md-6">
+                            <label class="form-label">Remarks</label>
+                            <input type="text" name="remarks" class="form-control"
+                                value="<?= htmlspecialchars($row['remarks'] ?? '') ?>">
+                        </div>
+
+                        <!-- PNP FOCAL -->
+                        <div class="col-md-6">
+                            <label class="form-label">PNP Focal</label>
+                            <input type="text" name="pnp_focal" class="form-control"
+                                value="<?= htmlspecialchars($row['pnp_focal_person'] ?? '') ?>">
+                        </div>
+
+                        <!-- CONTACT -->
+                        <div class="col-md-6">
+                            <label class="form-label">Contact</label>
+                            <input type="text" name="contact" class="form-control"
+                                value="<?= htmlspecialchars($row['contact_details'] ?? '') ?>">
+                        </div>
+
+                        <!-- ACQ DATE -->
+                        <div class="col-md-6">
+                            <label class="form-label">Acquisition Date</label>
+                            <input type="date" name="acq_date" class="form-control"
+                                value="<?= htmlspecialchars($row['acq_date'] ?? '') ?>">
+                        </div>
+
+                        <!-- ACQ TYPE -->
+                        <div class="col-md-6">
+                            <label class="form-label">Acquisition Type</label>
+                            <input type="text" name="acq_type" class="form-control"
+                                value="<?= htmlspecialchars($row['acquisition_type'] ?? '') ?>">
+                        </div>
+
+                        <!-- PREVIOUS HANDLERS -->
+                        <div class="col-md-6">
+    <label class="form-label">Previous Handlers</label>
+
+    <?php
+    // decode saved values safely
+    $selected = json_decode($row['previous_owners_id'] ?? '[]', true);
+    if (!is_array($selected)) $selected = [];
+    ?>
+
+    <div class="dropdown w-100">
+        <button class="form-select text-start" type="button" data-bs-toggle="dropdown">
+            Select Handlers
+        </button>
+
+        <div class="dropdown-menu w-100 p-2" style="max-height:250px; overflow-y:auto;">
+
+            <?php
+            $handlerQuery = mysqli_query($conn, "
+                SELECT p.id, r.rank, p.first_name, p.last_name
+                FROM personnels p
+                LEFT JOIN ranks r ON p.rank_id = r.id
+                ORDER BY p.last_name ASC
+            ");
+
+            while ($h = mysqli_fetch_assoc($handlerQuery)):
+
+                $full = trim(
+                    ($h['rank'] ?? '') . ' ' .
+                    $h['first_name'] . ' ' .
+                    $h['last_name']
+                );
+            ?>
+
+                <div class="form-check">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           name="previous_owners_id[]"
+                           value="<?= $h['id'] ?>"
+                           <?= in_array($h['id'], $selected) ? 'checked' : '' ?>>
+
+                    <label class="form-check-label">
+                        <?= htmlspecialchars($full) ?>
+                    </label>
+                </div>
+
+            <?php endwhile; ?>
+
+        </div>
+    </div>
+
+    <small class="text-muted">You can select multiple handlers</small>
+</div>
+
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">
+                        Save Changes
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
                             </tr>
 
                         <?php endwhile; ?>
@@ -710,7 +1049,7 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
 
                     <?php if ($page > 1): ?>
                         <a
-                            href="?page=<?= $page - 1 ?>&search=<?= urlencode($search) ?>&division_id=<?= urlencode($division_id) ?>&is_active=<?= urlencode($is_active) ?>">Prev</a>
+                            href="?page=<?= $page - 1 ?>&search=<?= urlencode($search) ?>&division_id=<?= urlencode($division_filter) ?>&is_active=<?= urlencode($active_filter) ?>">Prev</a>
                     <?php endif; ?>
 
                     <?php
@@ -719,7 +1058,7 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
 
                     for ($i = $start; $i <= $end; $i++):
                         ?>
-                        <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&division_id=<?= urlencode($division_id) ?>&is_active=<?= urlencode($is_active) ?>"
+                        <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&division_id=<?= urlencode($division_filter) ?>&is_active=<?= urlencode($active_filter) ?>"
                             class="<?= ($i == $page ? 'active-page' : '') ?>">
                             <?= $i ?>
                         </a>
@@ -727,7 +1066,7 @@ $inactiveRouters = $stmtInactive->get_result()->fetch_assoc()['total'] ?? 0;
 
                     <?php if ($page < $totalPages): ?>
                         <a
-                            href="?page=<?= $page + 1 ?>&search=<?= urlencode($search) ?>&division_id=<?= urlencode($division_id) ?>&is_active=<?= urlencode($is_active) ?>">Next</a>
+                            href="?page=<?= $page + 1 ?>&search=<?= urlencode($search) ?>&division_id=<?= urlencode($division_filter) ?>&is_active=<?= urlencode($active_filter) ?>">Next</a>
                     <?php endif; ?>
 
                 </div>
