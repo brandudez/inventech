@@ -1,905 +1,348 @@
 <?php
 session_start();
-
-if (!isset($_SESSION['user'])) {
-    header("Location: ../../index.php");
-    exit();
-}
-
-if ($_SESSION['user']['role_id'] != 1) {
-    header("Location: ../../index.php");
-    exit();
-}
-
+if (!isset($_SESSION['user'])) { header("Location: ../../index.php"); exit(); }
+if ($_SESSION['user']['role_id'] != 1) { header("Location: ../../index.php"); exit(); }
 include("../../config/db.php");
 
-/* =========================
-   HELPER: PREVIOUS HANDLERS
-========================= */
-function getPreviousOwnersNames($conn, $json)
-{
+function getPreviousOwnersNames($conn, $json) {
     if (empty($json)) return 'N/A';
-
     $ids = json_decode($json, true);
-
-    if (!is_array($ids) || empty($ids)) {
-        return 'N/A';
-    }
-
-    $ids = array_map('intval', $ids);
-    $in = implode(',', $ids);
-
-    $sql = "
-        SELECT 
-            p.id,
-            r.rank,
-            p.first_name,
-            p.middle_name,
-            p.last_name
-        FROM personnels p
-        LEFT JOIN ranks r ON p.rank_id = r.id
-        WHERE p.id IN ($in)
-    ";
-
-    $result = mysqli_query($conn, $sql);
-
+    if (!is_array($ids) || empty($ids)) return 'N/A';
+    $in = implode(',', array_map('intval', $ids));
+    $result = mysqli_query($conn, "SELECT r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.id IN ($in)");
     if (!$result) return 'N/A';
-
     $names = [];
-
-    while ($row = mysqli_fetch_assoc($result)) {
-
-        $names[] = trim(
-            ($row['rank'] ?? '') . ' ' .
-            $row['first_name'] . ' ' .
-            $row['middle_name'] . ' ' .
-            $row['last_name']
-        );
-    }
-
+    while ($row = mysqli_fetch_assoc($result))
+        $names[] = trim(($row['rank'] ?? '') . ' ' . $row['first_name'] . ' ' . $row['middle_name'] . ' ' . $row['last_name']);
     return !empty($names) ? implode("<br>", $names) : 'N/A';
 }
 
-/* =========================
-   PAGINATION
-========================= */
-$limit = 10;
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$page = max(1, $page);
-
+$limit  = 10;
+$page   = max(1, (int)($_GET['page'] ?? 1));
 $offset = ($page - 1) * $limit;
 
-/* =========================
-   SEARCH + FILTER
-========================= */
 $search = trim($_GET['search'] ?? '');
-$division = trim($_GET['division'] ?? '');
+$division_filter_raw = $_GET['division'] ?? [];
+$division_filter = is_array($division_filter_raw) ? array_filter(array_map('trim', $division_filter_raw)) : [];
+$active_filter = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
 
-$where = [];
-$params = [];
-$types = '';
+$allDivisions = [];
+$dq = mysqli_query($conn, "SELECT id, division FROM divisions ORDER BY id ASC");
+while ($r = mysqli_fetch_assoc($dq)) $allDivisions[] = $r;
 
+$allPersonnel = [];
+$pq = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id ORDER BY p.rank_id DESC");
+while ($r = mysqli_fetch_assoc($pq)) $allPersonnel[] = $r;
+
+$where = []; $params = []; $types = '';
 if (!empty($search)) {
-
-    $where[] = "(
-        p.brand LIKE ? OR
-        p.model LIKE ? OR
-        p.serial_no LIKE ? OR
-        p.acquisition_details LIKE ? OR
-        CONCAT(per.first_name, ' ', per.last_name) LIKE ?
-    )";
-
-    $searchValue = "%$search%";
-
-    for ($i = 0; $i < 5; $i++) {
-        $params[] = $searchValue;
-        $types .= 's';
-    }
+    $where[] = "(p.brand LIKE ? OR p.model LIKE ? OR p.serial_no LIKE ? OR p.acquisition_details LIKE ? OR CONCAT(per.first_name,' ',per.middle_name,' ',per.last_name) LIKE ?)";
+    $sp = "%$search%";
+    for ($i = 0; $i < 5; $i++) { $params[] = $sp; $types .= 's'; }
 }
-
-if (!empty($division)) {
-    $where[] = "d.division = ?";
-    $params[] = $division;
-    $types .= 's';
+if (!empty($division_filter)) {
+    $ph = implode(',', array_fill(0, count($division_filter), '?'));
+    $where[] = "d.division IN ($ph)";
+    foreach ($division_filter as $v) { $params[] = $v; $types .= 's'; }
 }
+if ($active_filter !== '') { $where[] = "p.is_active = ?"; $params[] = $active_filter; $types .= 'i'; }
 
 $whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+$baseJoin = "FROM printers p LEFT JOIN personnels per ON p.personnel_id = per.id LEFT JOIN ranks r ON per.rank_id = r.id LEFT JOIN divisions d ON p.division_id = d.id";
 
-/* =========================
-   COUNT QUERY
-========================= */
-$countSQL = "
-    SELECT COUNT(*) as total
-    FROM printers p
-    LEFT JOIN personnels per ON p.personnel_id = per.id
-    LEFT JOIN divisions d ON p.division_id = d.id
-    $whereSQL
-";
+$st = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $whereSQL");
+if (!empty($params)) $st->bind_param($types, ...$params); $st->execute();
+$totalDevices = $st->get_result()->fetch_assoc()['total'] ?? 0;
+$totalPages   = ceil($totalDevices / $limit);
 
-$countStmt = $conn->prepare($countSQL);
+$aw = $where; $aw[] = "p.is_active = 1"; $aSQL = "WHERE " . implode(" AND ", $aw);
+$sa = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $aSQL");
+if (!empty($params)) $sa->bind_param($types, ...$params); $sa->execute();
+$activeDevices = $sa->get_result()->fetch_assoc()['total'] ?? 0;
 
-if (!empty($params)) {
-    $countStmt->bind_param($types, ...$params);
-}
+$iw = $where; $iw[] = "p.is_active = 0"; $iSQL = "WHERE " . implode(" AND ", $iw);
+$si = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $iSQL");
+if (!empty($params)) $si->bind_param($types, ...$params); $si->execute();
+$inactiveDevices = $si->get_result()->fetch_assoc()['total'] ?? 0;
 
-$countStmt->execute();
-$totalDevices = $countStmt->get_result()->fetch_assoc()['total'];
-
-$totalPages = ceil($totalDevices / $limit);
-
-/* =========================
-   MAIN QUERY
-========================= */
-$sql = "
-     SELECT 
-        p.*,
-        CONCAT(
-            COALESCE(r.rank, ''), ' ',
-            per.first_name, ' ',
-            per.middle_name, ' ',
-            per.last_name
-        ) AS fullname,
-        d.division
-    FROM printers p
-    LEFT JOIN personnels per ON p.personnel_id = per.id
-    LEFT JOIN ranks r ON per.rank_id = r.id
-    LEFT JOIN divisions d ON p.division_id = d.id
-    $whereSQL
-    ORDER BY p.id DESC
-    LIMIT ?, ?
-";
-
-$stmt = $conn->prepare($sql);
-
-/* =========================
-   BIND PARAMETERS
-========================= */
-if (!empty($params)) {
-
-    $bindTypes = $types . 'ii';
-    $params[] = $offset;
-    $params[] = $limit;
-
-    $stmt->bind_param($bindTypes, ...$params);
-
-} else {
-    $stmt->bind_param("ii", $offset, $limit);
-}
-
-$stmt->execute();
+$stmt = $conn->prepare("SELECT p.*, CONCAT(COALESCE(r.rank,''),' ',per.first_name,' ',per.middle_name,' ',per.last_name) AS fullname, d.division AS division_name $baseJoin $whereSQL ORDER BY p.id DESC LIMIT ?,?");
+$fp = $params; $ft = $types . 'ii'; $fp[] = $offset; $fp[] = $limit;
+$stmt->bind_param($ft, ...$fp); $stmt->execute();
 $result = $stmt->get_result();
-
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Printer Devices</title>
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../superadmin/css/devices.css">
     <link rel="stylesheet" href="css/superadmin_navbar.css">
     <link rel="stylesheet" href="./css/superadmin_sidebar.css">
-    <link rel="stylesheet" href="../superadmin/css/devices.css">
 </head>
-
 <body>
+<?php include 'superadmin_sidebar.php'; ?>
+<?php include 'superadmin_navbar.php'; ?>
 
-    <?php include 'superadmin_sidebar.php'; ?>
-    <?php include 'superadmin_navbar.php'; ?>
-
-    <!-- TOP BAR -->
-    <div class="top-bar">
-
-        <!-- LEFT SIDE: SEARCH -->
-        <div class="search-container">
-
-            <form class="search-form" method="GET">
-
-                <input type="hidden" name="division" value="<?php echo htmlspecialchars($division); ?>">
-
-                <input type="text" name="search" class="search-input" placeholder="Search cameras..."
-                    value="<?php echo htmlspecialchars($search); ?>">
-
-                <button type="submit" class="search-btn">
-                    <i class="bi bi-search"></i>
-                </button>
-
-            </form>
-
-        </div>
-
-        <!-- RIGHT SIDE -->
-        <div class="right-side">
-
-            <!-- DIVISION FILTER -->
-            <div class="filters">
-
-               <div class="dropdown">
-
-                    <button class="btn filter-btn dropdown-toggle" type="button"
-                        data-bs-toggle="dropdown" data-bs-auto-close="outside">
-
-                        <?php echo !empty($division) ? htmlspecialchars($division) : 'Division'; ?>
-
-                    </button>
-
+<div class="top-bar">
+    <div class="search-container">
+        <form class="search-form" method="GET" action="device_printers.php">
+            <?php foreach ($division_filter as $v): ?><input type="hidden" name="division[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
+            <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
+            <input type="text" name="search" class="search-input" placeholder="Search printers..." value="<?= htmlspecialchars($search) ?>">
+            <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
+        </form>
+    </div>
+    <div class="right-side">
+        <div class="filters">
+            <form method="GET" action="device_printers.php" id="filterForm">
+                <input type="hidden" name="search" value="<?= htmlspecialchars($search) ?>">
+                <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
+                <div class="dropdown">
+                    <?php $divLabel = empty($division_filter) ? 'Division' : (count($division_filter) === 1 ? $division_filter[0] : count($division_filter) . ' Divisions selected'); ?>
+                    <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"><?= htmlspecialchars($divLabel) ?></button>
                     <ul class="dropdown-menu p-3 dropdown-scroll wide-dropdown">
-
-                        <!-- APPLY BUTTON (TOP) -->
-                        <li class="mb-2">
-                            <button type="button" class="btn btn-primary w-100">
-                                Apply
-                            </button>
-                        </li>
-
-                        <!-- ALL OPTION -->
+                        <li class="mb-2"><button type="submit" class="btn btn-primary w-100">Apply</button></li>
                         <li class="mb-2">
                             <div class="form-check">
-
-                                <input class="form-check-input division-checkbox" type="checkbox" value=""
-                                    id="allDivision" <?php echo empty($division) ? 'checked' : ''; ?>>
-
-                                <label class="form-check-label" for="allDivision">
-                                    All
-                                </label>
-
+                                <input class="form-check-input division-all-checkbox" type="checkbox" value="" id="allDivision" <?= empty($division_filter) ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="allDivision">All</label>
                             </div>
                         </li>
-
-                        <?php
-                        $divisionQuery = mysqli_query($conn, "SELECT * FROM divisions ORDER BY division ASC");
-
-                        while ($div = mysqli_fetch_assoc($divisionQuery)):
-
-                            $checked = ($division == $div['division']) ? 'checked' : '';
-                        ?>
-
+                        <?php foreach ($allDivisions as $div): ?>
                             <li class="mb-2">
-
                                 <div class="form-check">
-
-                                    <input class="form-check-input division-checkbox" type="checkbox"
-                                        value="<?php echo htmlspecialchars($div['division']); ?>"
-                                        id="division_<?php echo $div['id']; ?>"
-                                        <?php echo $checked; ?>>
-
-                                    <label class="form-check-label" for="division_<?php echo $div['id']; ?>">
-                                        <?php echo htmlspecialchars($div['division']); ?>
-                                    </label>
-
+                                    <input class="form-check-input division-checkbox" type="checkbox" name="division[]" value="<?= htmlspecialchars($div['division']) ?>" id="div_<?= $div['id'] ?>" <?= in_array($div['division'], $division_filter) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="div_<?= $div['id'] ?>"><?= htmlspecialchars($div['division']) ?></label>
                                 </div>
-
                             </li>
-
-                        <?php endwhile; ?>
-
+                        <?php endforeach; ?>
                     </ul>
-
                 </div>
-
-            </div>
-
-            <!-- ADD BUTTON -->
-            <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addModal">
-                Add Printer
-            </button>
-
+            </form>
         </div>
-
-    </div>
-
-
-    <!-- ADD PRINTER MODAL -->
-    <div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
-
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
-
-            <div class="modal-content custom-modal">
-
-                <!-- HEADER -->
-                <div class="modal-header custom-header">
-                    <h5 class="modal-title text-white">
-                        Add Printer
-                    </h5>
-
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">
-                    </button>
-                </div>
-
-                <!-- BODY -->
-                <div class="modal-body">
-
-                    <form action="add_printer.php" method="POST">
-
-                       <div class="row g-3">
-
-    <!-- PERSONNEL -->
-    <div class="col-md-6">
-        <label class="form-label">Personnel</label>
-
-        <select name="personnel_id" class="form-select" required>
-
-            <option value="" disabled selected hidden>
-                Select Personnel
-            </option>
-
-            <?php
-            $personnelQuery = mysqli_query($conn, "
-                SELECT
-                    p.id,
-                    r.rank,
-                    p.first_name,
-                    p.middle_name,
-                    p.last_name,
-                    p.rank_id
-                FROM personnels p
-                LEFT JOIN ranks r
-                    ON p.rank_id = r.id
-                ORDER BY p.rank_id DESC
-            ");
-
-            while ($personnel = mysqli_fetch_assoc($personnelQuery)):
-
-                $fullName = trim(
-                    ($personnel['rank'] ?? '') . ' ' .
-                    ($personnel['last_name'] ?? '') . ' ' .
-                    ($personnel['first_name'] ?? '') . ' ' .
-                    ($personnel['middle_name'] ?? '')
-                );
-            ?>
-
-                <option value="<?php echo $personnel['id'] ?>">
-                    <?php echo htmlspecialchars($fullName) ?>
-                </option>
-
-            <?php endwhile; ?>
-
-        </select>
-    </div>
-
-    <!-- DIVISION -->
-    <div class="col-md-6">
-        <label class="form-label">Division</label>
-
-        <select name="division_id" class="form-select" required>
-
-            <option value="" disabled selected hidden>
-                Select Division
-            </option>
-
-            <?php
-            $divisionQuery = mysqli_query($conn, "
-                SELECT id, division
-                FROM divisions
-                ORDER BY id ASC
-            ");
-
-            while ($division = mysqli_fetch_assoc($divisionQuery)):
-            ?>
-
-                <option value="<?php echo $division['id'] ?>">
-                    <?php echo htmlspecialchars($division['division']) ?>
-                </option>
-
-            <?php endwhile; ?>
-
-        </select>
-    </div>
-
-    <!-- BRAND -->
-    <div class="col-md-6">
-        <label class="form-label">Brand</label>
-        <input type="text" name="brand" class="form-control" required>
-    </div>
-
-    <!-- MODEL -->
-    <div class="col-md-6">
-        <label class="form-label">Model</label>
-        <input type="text" name="model" class="form-control" required>
-    </div>
-
-    <!-- PAR SERIAL NUMBER -->
-    <div class="col-md-6">
-        <label class="form-label">PAR Serial Number</label>
-        <input type="text" name="par_serial_number" class="form-control" required>
-    </div>
-
-    <!-- ACQUISITION DETAILS -->
-    <div class="col-md-6">
-        <label class="form-label">Acquisition Details</label>
-        <input type="text" name="acquisition_details" class="form-control" required>
-    </div>
-
-    <!-- ACQUISITION DATE -->
-    <div class="col-md-6">
-        <label class="form-label">Acquisition Date</label>
-        <input type="date" name="acquisition_date" class="form-control" required>
-    </div>
-
-    <!-- PREVIOUS HANDLERS -->
-    <div class="col-md-6">
-        <label class="form-label">Previous Handler/s</label>
-
-        <div class="dropdown w-100">
-
-            <button
-                class="form-select text-start"
-                type="button"
-                data-bs-toggle="dropdown">
-
-                Select Previous Handler/s
-
-            </button>
-
-            <div class="dropdown-menu w-100 p-2"
-                style="max-height: 250px; overflow-y: auto;">
-
-                <?php
-                $handlerQuery = mysqli_query($conn, "
-                    SELECT
-                        p.id,
-                        r.rank,
-                        p.first_name,
-                        p.middle_name,
-                        p.last_name,
-                        p.rank_id
-                    FROM personnels p
-                    LEFT JOIN ranks r
-                        ON p.rank_id = r.id
-                    ORDER BY p.rank_id DESC
-                ");
-
-                while ($handler = mysqli_fetch_assoc($handlerQuery)):
-
-                    $fullName = trim(
-                        ($handler['rank'] ?? '') . ' ' .
-                        ($handler['last_name'] ?? '') . ' ' .
-                        ($handler['first_name'] ?? '') . ' ' .
-                        ($handler['middle_name'] ?? '')
-                    );
-                ?>
-
-                    <div class="form-check">
-
-                        <input
-                            class="form-check-input"
-                            type="checkbox"
-                            name="previous_handlers_id[]"
-                            value="<?php echo $handler['id'] ?>"
-                            id="ph<?php echo $handler['id'] ?>">
-
-                        <label
-                            class="form-check-label"
-                            for="ph<?php echo $handler['id'] ?>">
-
-                            <?php echo htmlspecialchars($fullName) ?>
-
-                        </label>
-
-                    </div>
-
-                <?php endwhile; ?>
-
-            </div>
+        <div class="dropdown">
+            <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown"><?= $active_filter === '' ? 'Is Active?' : ($active_filter == 1 ? 'YES' : 'NO') ?></button>
+            <ul class="dropdown-menu p-3">
+                <?php $base = '?search=' . urlencode($search) . '&' . http_build_query(['division' => $division_filter]); ?>
+                <li><a class="dropdown-item" href="<?= $base ?>">All</a></li>
+                <li><a class="dropdown-item" href="<?= $base ?>&is_active=1">YES</a></li>
+                <li><a class="dropdown-item" href="<?= $base ?>&is_active=0">NO</a></li>
+            </ul>
         </div>
-
-        <small class="text-muted">
-            You can select multiple handlers
-        </small>
+        <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addPrinterModal">Add Printer</button>
     </div>
-
-    <!-- CREATED DATE -->
-    <div class="col-md-6">
-        <label class="form-label">Created Date</label>
-
-        <input
-            type="date"
-            name="created_date"
-            class="form-control"
-            value="<?= date('Y-m-d') ?>" required>
-    </div>
-
 </div>
 
-                        <!-- FOOTER -->
-                        <div class="modal-footer mt-4">
-
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-
-                                Close
-
-                            </button>
-
-                            <button type="submit" name="save_printer" class="btn save-btn">
-
-                                Save Printer
-
-                            </button>
-
-                        </div>
-
-                    </form>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- TABLE -->
-    <div class="contenttable">
-
-        <div class="table-container">
-
-            <table class="users-table">
-
-                <thead>
-                    <tr>
-                        <th>PERSONNEL</th>
-                        <th>DIVISION</th>
-                        <th>BRAND</th>
-                        <th>MODEL</th>
-                        <th>PAR SERIAL NUMBER</th>
-                        <th>ACQUISITION DETAILS</th>
-                        <th>ACQUISITION DATE</th>
-                        <th>PREVIOUS HANDLERS</th>
-                        <th>CREATED DATE</th>
-                        <th>ACTION</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    <?php if ($result->num_rows > 0): ?>
-
-                        <?php while ($row = $result->fetch_assoc()): ?>
-
-                            <tr>
-                               <td><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></td>
-                                <td><?= htmlspecialchars($row['division'] ?? 'N/A') ?></td>
-                                <td><?= htmlspecialchars($row['brand'] ?? 'N/A') ?></td>
-                                <td><?= htmlspecialchars($row['model'] ?? 'N/A') ?></td>
-                                <td><?= htmlspecialchars($row['serial_no'] ?? 'N/A') ?></td>
-                                <td><?= htmlspecialchars($row['acquisition_details'] ?? 'N/A') ?></td>
-                                <td><?= htmlspecialchars($row['acquisition_date'] ?? 'N/A') ?></td>
-                              <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?></td>
-                                <td><?= htmlspecialchars($row['created_date'] ?? 'N/A') ?></td>
-                                <td>
-                                    <button 
-                                    class="btn btn-primary btn-sm editBtn"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#editPrinterModal"
-
-                                    data-id="<?= $row['id'] ?>"
-                                    data-personnel="<?= $row['personnel_id'] ?>"
-                                    data-division="<?= $row['division_id'] ?>"
-                                    data-brand="<?= $row['brand'] ?>"
-                                    data-model="<?= $row['model'] ?>"
-                                    data-serial="<?= $row['serial_no'] ?>"
-                                    data-acquisition="<?= $row['acquisition_details'] ?>"
-                                    data-date="<?= $row['acquisition_date'] ?>"
-                                    data-created="<?= $row['created_date'] ?>"
-                                    data-handlers='<?= htmlspecialchars($row["previous_owners_id"] ?? "[]", ENT_QUOTES) ?>'>
-
-                                    <i class="bi bi-gear-fill"></i>
-                                </button>
-                                </td>
-           <!-- Edit Printer Modal -->
-     <div class="modal fade" id="editPrinterModal" tabindex="-1" aria-hidden="true">
-
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-
+<!-- ADD MODAL -->
+<div class="modal fade" id="addPrinterModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
         <div class="modal-content">
-
-            <!-- HEADER -->
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Printer</h5>
+            <div class="modal-header text-white" style="background-color:#0d6ea8;">
+                <h5 class="modal-title">Add Printer</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-
-            <!-- BODY -->
             <div class="modal-body">
-
-                <form action="edit_printers.php" method="POST">
-
-                    <input type="hidden" name="id" id="edit_id">
-
+                <form action="add_printer.php" method="POST">
+                    <input type="hidden" name="save_printer" value="1">
                     <div class="row g-3">
-
-                        <!-- PERSONNEL -->
                         <div class="col-md-6">
                             <label class="form-label">Personnel</label>
-
-                            <select name="personnel_id" id="edit_personnel" class="form-select" required>
-
-                                <?php
-                                $personnelQuery = mysqli_query($conn, "
-                                    SELECT p.id, r.rank, p.first_name, p.last_name
-                                    FROM personnels p
-                                    LEFT JOIN ranks r ON p.rank_id = r.id
-                                ");
-
-                                while ($p = mysqli_fetch_assoc($personnelQuery)):
-                                    $name = trim(($p['rank'] ?? '') . ' ' . $p['last_name'] . ' ' . $p['first_name']);
-                                ?>
-                                    <option value="<?= $p['id'] ?>">
-                                        <?= htmlspecialchars($name) ?>
-                                    </option>
-                                <?php endwhile; ?>
-
+                            <select name="personnel_id" class="form-select" required>
+                                <option value="" disabled selected hidden>Select Personnel</option>
+                                <?php foreach ($allPersonnel as $p): $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
+                                    <option value="<?= $p['id'] ?>"><?= htmlspecialchars($fn) ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
-
-                        <!-- DIVISION -->
                         <div class="col-md-6">
                             <label class="form-label">Division</label>
-
-                            <select name="division_id" id="edit_division" class="form-select" required>
-
-                                <?php
-                                $divisionQuery = mysqli_query($conn, "SELECT * FROM divisions");
-                                while ($d = mysqli_fetch_assoc($divisionQuery)):
-                                ?>
-                                    <option value="<?= $d['id'] ?>">
-                                        <?= htmlspecialchars($d['division']) ?>
-                                    </option>
-                                <?php endwhile; ?>
-
+                            <select name="division_id" class="form-select" required>
+                                <option value="" disabled selected hidden>Select Division</option>
+                                <?php foreach ($allDivisions as $d): ?>
+                                    <option value="<?= $d['id'] ?>"><?= htmlspecialchars($d['division']) ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
-
-                        <!-- BRAND -->
+                        <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" required></div>
+                        <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" required></div>
+                        <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no" required></div>
+                        <div class="col-md-6"><label class="form-label">Acquisition Details</label><input type="text" class="form-control" name="acquisition_details" required></div>
+                        <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" name="acquisition_date" class="form-control" required></div>
                         <div class="col-md-6">
-                            <label class="form-label">Brand</label>
-                            <input type="text" name="brand" id="edit_brand" class="form-control" required>
+                            <label class="form-label">Is Active?</label>
+                            <select name="is_active" class="form-select" required>
+                                <option value="" disabled selected hidden>Select</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
                         </div>
-
-                        <!-- MODEL -->
-                        <div class="col-md-6">
-                            <label class="form-label">Model</label>
-                            <input type="text" name="model" id="edit_model" class="form-control"required>
-                        </div>
-
-                        <!-- SERIAL -->
-                        <div class="col-md-6">
-                            <label class="form-label">PAR Serial Number</label>
-                            <input type="text" name="serial_no" id="edit_serial" class="form-control"required>
-                        </div>
-
-                        <!-- ACQUISITION -->
-                        <div class="col-md-6">
-                            <label class="form-label">Acquisition Details</label>
-                            <input type="text" name="acquisition_details" id="edit_acquisition" class="form-control"required>
-                        </div>
-
-                        <!-- DATE -->
-                        <div class="col-md-6">
-                            <label class="form-label">Acquisition Date</label>
-                            <input type="date" name="acquisition_date" id="edit_acq_date" class="form-control"required>
-                        </div>
-
-                        <!-- PREVIOUS HANDLERS -->
-                        <div class="col-md-6">
-                            <label class="form-label">Previous Handlers</label>
-
+                        <div class="col-md-12">
+                            <label class="form-label">Previous Handler/s</label>
                             <div class="dropdown w-100">
-
-                                <button class="form-select text-start" type="button" data-bs-toggle="dropdown">
-                                    Select Handlers
-                                </button>
-
+                                <button class="form-select text-start" type="button" data-bs-toggle="dropdown">Select Previous Handler/s</button>
                                 <div class="dropdown-menu w-100 p-2" style="max-height:250px;overflow-y:auto;">
-
-                                    <?php
-                                    $handlerQuery = mysqli_query($conn, "
-                                        SELECT p.id, r.rank, p.first_name, p.last_name
-                                        FROM personnels p
-                                        LEFT JOIN ranks r ON p.rank_id = r.id
-                                    ");
-
-                                    while ($h = mysqli_fetch_assoc($handlerQuery)):
-
-                                        $name = trim(($h['rank'] ?? '') . ' ' . $h['last_name'] . ' ' . $h['first_name']);
-                                    ?>
-
+                                    <?php foreach ($allPersonnel as $p): $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
                                         <div class="form-check">
-                                            <input class="form-check-input edit-handler"
-                                                type="checkbox"
-                                                name="previous_handlers_id[]"
-                                                value="<?= $h['id'] ?>"
-                                                id="edit_h<?= $h['id'] ?>">
-
-                                            <label class="form-check-label" for="edit_h<?= $h['id'] ?>">
-                                                <?= htmlspecialchars($name) ?>
-                                            </label>
+                                            <input class="form-check-input" type="checkbox" name="previous_handlers_id[]" value="<?= $p['id'] ?>" id="addPrPh<?= $p['id'] ?>">
+                                            <label class="form-check-label" for="addPrPh<?= $p['id'] ?>"><?= htmlspecialchars($fn) ?></label>
                                         </div>
-
-                                    <?php endwhile; ?>
-
+                                    <?php endforeach; ?>
                                 </div>
                             </div>
-
+                            <small class="text-muted">You can select multiple handlers</small>
                         </div>
-
-                        <!-- CREATED -->
-                        <div class="col-md-6">
-                            <label class="form-label">Created Date</label>
-                             <input type="date" name="created_date" id="edit_created" class="form-control" disabled>
-                        </div>
-
                     </div>
-
                     <div class="modal-footer mt-3">
-
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            Cancel
-                        </button>
-
-                        <button type="submit" class="btn btn-primary">
-                            Update
-                        </button>
-
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">Save Printer</button>
                     </div>
-
                 </form>
-
             </div>
         </div>
     </div>
 </div>
 
-                            </tr>
-
-                        <?php endwhile; ?>
-
-                    <?php else: ?>
-
-                        <tr>
-                            <td colspan="10" class="text-center">
-                                No printers found.
+<!-- TABLE -->
+<div class="contenttable">
+    <div class="table-container">
+        <table class="users-table">
+            <thead>
+                <tr>
+                    <th>PERSONNEL</th><th>DIVISION</th><th>BRAND</th><th>MODEL</th>
+                    <th>SERIAL NO</th><th>ACQUISITION DETAILS</th><th>ACQUISITION DATE</th>
+                    <th>PREVIOUS HANDLERS</th><th>IS ACTIVE?</th><th>CREATED DATE</th><th>ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if ($result->num_rows > 0): ?>
+                    <?php while ($row = $result->fetch_assoc()): ?>
+                        <tr data-active="<?= $row['is_active'] ? '1' : '0' ?>">
+                            <td><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></td>
+                            <td><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></td>
+                            <td><?= htmlspecialchars($row['brand'] ?? '') ?></td>
+                            <td><?= htmlspecialchars($row['model'] ?? '') ?></td>
+                            <td><?= htmlspecialchars($row['serial_no'] ?? '') ?></td>
+                            <td><?= htmlspecialchars($row['acquisition_details'] ?? '') ?></td>
+                            <td><?= htmlspecialchars($row['acquisition_date'] ?? '') ?></td>
+                            <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?></td>
+                            <td><?= $row['is_active'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></td>
+                            <td><?= htmlspecialchars(substr($row['created_date'] ?? '', 0, 10)) ?></td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editPrModal<?= $row['id'] ?>">
+                                    <i class="bi bi-gear-fill"></i>
+                                </button>
                             </td>
                         </tr>
-
-                    <?php endif; ?>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        <!-- FOOTER -->
-        <div class="table-footer">
-
-            <div class="user-stats">
-
-                <div class="stat-box total">
-                    <span class="label">Total Devices</span>
-                    <span class="value"><?= $totalDevices ?></span>
-                </div>
-
-            </div>
-
-            <!-- PAGINATION -->
-            <?php if ($totalPages > 1): ?>
-
-                <div class="pagination">
-
-                    <?php if ($page > 1): ?>
-                        <a href="?page=<?= $page - 1 ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division) ?>">
-                            Prev
-                        </a>
-                    <?php endif; ?>
-
-                    <?php
-                    $start = max(1, $page - 1);
-                    $end = min($totalPages, $start + 2);
-
-                    for ($i = $start; $i <= $end; $i++):
-                        ?>
-                        <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division) ?>"
-                            class="<?= ($i == $page) ? 'active-page' : '' ?>">
-                            <?= $i ?>
-                        </a>
-                    <?php endfor; ?>
-
-                    <?php if ($page < $totalPages): ?>
-                        <a href="?page=<?= $page + 1 ?>&search=<?= urlencode($search) ?>&division=<?= urlencode($division) ?>">
-                            Next
-                        </a>
-                    <?php endif; ?>
-
-                </div>
-
-            <?php endif; ?>
-
-        </div>
-
+                        <!-- EDIT MODAL -->
+                        <div class="modal fade" id="editPrModal<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header text-white" style="background-color:#0d6ea8;">
+                                        <h5 class="modal-title">Edit Printer</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form action="edit_printers.php" method="POST">
+                                            <input type="hidden" name="id" value="<?= $row['id'] ?>">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Personnel</label>
+                                                    <select name="personnel_id" class="form-select" required>
+                                                        <?php foreach ($allPersonnel as $p): $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
+                                                            <option value="<?= $p['id'] ?>" <?= ($row['personnel_id'] ?? '') == $p['id'] ? 'selected' : '' ?>><?= htmlspecialchars($fn) ?></option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Division</label>
+                                                    <select name="division_id" class="form-select" required>
+                                                        <?php foreach ($allDivisions as $d): ?>
+                                                            <option value="<?= $d['id'] ?>" <?= ($row['division_id'] ?? '') == $d['id'] ? 'selected' : '' ?>><?= htmlspecialchars($d['division']) ?></option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" value="<?= htmlspecialchars($row['brand'] ?? '') ?>" required></div>
+                                                <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" value="<?= htmlspecialchars($row['model'] ?? '') ?>" required></div>
+                                                <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no" value="<?= htmlspecialchars($row['serial_no'] ?? '') ?>" required></div>
+                                                <div class="col-md-6"><label class="form-label">Acquisition Details</label><input type="text" class="form-control" name="acquisition_details" value="<?= htmlspecialchars($row['acquisition_details'] ?? '') ?>" required></div>
+                                                <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" class="form-control" name="acquisition_date" value="<?= htmlspecialchars($row['acquisition_date'] ?? '') ?>" required></div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Is Active?</label>
+                                                    <select name="is_active" class="form-select">
+                                                        <option value="1" <?= ($row['is_active'] ?? 0) == 1 ? 'selected' : '' ?>>Yes</option>
+                                                        <option value="0" <?= ($row['is_active'] ?? 0) == 0 ? 'selected' : '' ?>>No</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-12">
+                                                    <label class="form-label">Previous Handler/s</label>
+                                                    <div class="dropdown w-100">
+                                                        <button class="form-select text-start" type="button" data-bs-toggle="dropdown">Select Previous Handler/s</button>
+                                                        <div class="dropdown-menu w-100 p-2" style="max-height:250px;overflow-y:auto;">
+                                                            <?php $selH = json_decode($row['previous_owners_id'] ?? '[]', true); if (!is_array($selH)) $selH = [];
+                                                            foreach ($allPersonnel as $p): $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input" type="checkbox" name="previous_handlers_id[]" value="<?= $p['id'] ?>" id="editPrPh<?= $row['id'] ?>_<?= $p['id'] ?>" <?= in_array($p['id'], $selH) ? 'checked' : '' ?>>
+                                                                    <label class="form-check-label" for="editPrPh<?= $row['id'] ?>_<?= $p['id'] ?>"><?= htmlspecialchars($fn) ?></label>
+                                                                </div>
+                                                            <?php endforeach; ?>
+                                                        </div>
+                                                    </div>
+                                                    <small class="text-muted">You can select multiple handlers</small>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer mt-3">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <tr><td colspan="11" class="text-center">No printers found.</td></tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
     </div>
+    <div class="table-footer">
+        <div class="user-stats">
+            <div class="stat-box total"><span class="label">Total Devices</span><span class="value" id="statTotal"><?= $totalDevices ?></span></div>
+            <div class="stat-box active"><span class="label">Active</span><span class="value" id="statActive"><?= $activeDevices ?></span></div>
+            <div class="stat-box inactive"><span class="label">Inactive</span><span class="value" id="statInactive"><?= $inactiveDevices ?></span></div>
+        </div>
+        <?php if ($totalPages > 1): $pb = http_build_query(['search' => $search, 'division' => $division_filter, 'is_active' => $active_filter]); ?>
+            <div class="pagination">
+                <?php if ($page > 1): ?><a href="?page=<?= $page - 1 ?>&<?= $pb ?>">Prev</a><?php endif; ?>
+                <?php for ($i = 1; $i <= $totalPages; $i++): ?><a href="?page=<?= $i ?>&<?= $pb ?>" class="<?= $i == $page ? 'active-page' : '' ?>"><?= $i ?></a><?php endfor; ?>
+                <?php if ($page < $totalPages): ?><a href="?page=<?= $page + 1 ?>&<?= $pb ?>">Next</a><?php endif; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+    function updateStats() {
+        const rows = document.querySelectorAll('.users-table tbody tr[data-active]');
+        let active = 0, inactive = 0;
+        rows.forEach(r => r.dataset.active === '1' ? active++ : inactive++);
+        document.getElementById('statTotal').textContent    = rows.length;
+        document.getElementById('statActive').textContent   = active;
+        document.getElementById('statInactive').textContent = inactive;
+    }
+    document.addEventListener('DOMContentLoaded', updateStats);
 
-    const editButtons = document.querySelectorAll(".editBtn");
-
-    editButtons.forEach(btn => {
-
-        btn.addEventListener("click", function () {
-
-            document.getElementById("edit_id").value = this.dataset.id;
-            document.getElementById("edit_personnel").value = this.dataset.personnel;
-            document.getElementById("edit_division").value = this.dataset.division;
-            document.getElementById("edit_brand").value = this.dataset.brand;
-            document.getElementById("edit_model").value = this.dataset.model;
-            document.getElementById("edit_serial").value = this.dataset.serial;
-            document.getElementById("edit_acquisition").value = this.dataset.acquisition;
-            document.getElementById("edit_acq_date").value = this.dataset.date;
-            document.getElementById("edit_created").value =
-                    (this.dataset.created || '').split(' ')[0];
-
-            // ✅ RESET ALL CHECKBOXES FIRST
-            document.querySelectorAll(".edit-handler").forEach(cb => cb.checked = false);
-
-            // ✅ GET HANDLERS ARRAY
-            let handlers = [];
-
-            try {
-                handlers = JSON.parse(this.dataset.handlers || "[]");
-            } catch (e) {
-                handlers = [];
-            }
-
-            // ✅ CHECK MATCHING IDS
-            handlers.forEach(id => {
-                let cb = document.querySelector("#edit_h" + id);
-                if (cb) cb.checked = true;
-            });
-
-        });
-
-    });
-
-});
+    function setupFilterGroup(a, b) {
+        const allCb = document.querySelector(a), items = document.querySelectorAll(b);
+        if (!allCb) return;
+        allCb.addEventListener('change', () => { if (allCb.checked) items.forEach(c => c.checked = false); });
+        items.forEach(cb => cb.addEventListener('change', () => { allCb.checked = !Array.from(items).some(c => c.checked); }));
+    }
+    setupFilterGroup('#allDivision', '.division-checkbox');
 </script>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-
-    // EDIT HANDLER VALIDATION
-    const editForm = document.querySelector("#editPrinterModal form");
-
-    editForm.addEventListener("submit", function (e) {
-
-        let checked = document.querySelectorAll(".edit-handler:checked");
-
-        if (checked.length === 0) {
-            e.preventDefault();
-            alert("Please select at least one Previous Handler.");
-        }
-
-    });
-
-    // ADD HANDLER VALIDATION
-    const addForm = document.querySelector("#addModal form");
-
-    addForm.addEventListener("submit", function (e) {
-
-        let checked = document.querySelectorAll('input[name="previous_handlers_id[]"]:checked');
-
-        if (checked.length === 0) {
-            e.preventDefault();
-            alert("Please select at least one Previous Handler.");
-        }
-
-    });
-
-});
-</script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>

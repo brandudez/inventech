@@ -13,74 +13,53 @@ if ($_SESSION['user']['role_id'] != 1) {
 }
 
 if (!isset($_POST['id'])) {
-    exit("Invalid request");
+    exit("Invalid request.");
 }
 
 /* =========================
-   GET DATA
+   GET FORM DATA
 ========================= */
-$id = (int) $_POST['id'];
-
-$personnel_id = $_POST['personnel_id'];
-$division_id = $_POST['division_id'];
-
-$brand = $_POST['brand'];
-$model = $_POST['model'];
-$serial_no = $_POST['serial_no'];
-$acquisition_details = $_POST['acquisition_details'];
-
-/* ======================================
-   RULE 1: acquisition_date = ALWAYS TODAY
-====================================== */
-$acquisition_date = date('Y-m-d');
-
-/* ======================================
-   RULE 2: created_date = DO NOT CHANGE
-   (we fetch existing value from DB)
-====================================== */
-$getCreated = $conn->prepare("SELECT created_date FROM cameras WHERE id = ?");
-$getCreated->bind_param("i", $id);
-$getCreated->execute();
-$res = $getCreated->get_result()->fetch_assoc();
-
-$created_date = $res['created_date'] ?? date('Y-m-d');
+$id                  = (int) $_POST['id'];
+$personnel_id        = (int) $_POST['personnel_id'];
+$division_id         = (int) $_POST['division_id'];
+$brand               = trim($_POST['brand']);
+$model               = trim($_POST['model']);
+$serial_no           = trim($_POST['serial_no']);
+$acquisition_details = trim($_POST['acquisition_details']);
+$acquisition_date    = $_POST['acquisition_date'];
+$is_active           = isset($_POST['is_active']) ? (int) $_POST['is_active'] : 1;
+$last_update_at      = date('Y-m-d');
 
 /* =========================
-   HANDLERS (JSON)
+   PREVIOUS HANDLERS (JSON)
 ========================= */
 $previous = $_POST['previous_handlers_id'] ?? [];
-
 if (!is_array($previous)) {
     $previous = [$previous];
 }
-
-$previous_json = json_encode(array_values($previous));
+$previous_json = json_encode(array_values(array_map('intval', $previous)));
 
 /* =========================
-   UPDATE QUERY
+   UPDATE QUERY (prepared)
+   created_date is never changed
 ========================= */
-$sql = "
-UPDATE cameras SET
-    personnel_id = ?,
-    division_id = ?,
-    brand = ?,
-    model = ?,
-    serial_no = ?,
-    acquisition_details = ?,
-    acquisition_date = ?,
-    previous_owners_id = ?,
-    created_date = ?
-WHERE id = ?
-";
-
-$stmt = $conn->prepare($sql);
-
-if (!$stmt) {
-    die("Prepare failed: " . $conn->error);
-}
+$stmt = $conn->prepare("
+    UPDATE cameras SET
+        personnel_id        = ?,
+        division_id         = ?,
+        brand               = ?,
+        model               = ?,
+        serial_no           = ?,
+        acquisition_details = ?,
+        acquisition_date    = ?,
+        previous_owners_id  = ?,
+        is_active           = ?,
+        last_update_at      = ?
+    WHERE id = ?
+");
 
 $stmt->bind_param(
-    "iisssssssi",
+    "iissssssisi",
     $personnel_id,
     $division_id,
     $brand,
@@ -89,17 +68,14 @@ $stmt->bind_param(
     $acquisition_details,
     $acquisition_date,
     $previous_json,
-    $created_date,
+    $is_active,
+    $last_update_at,
     $id
 );
 
-/* =========================
-   EXECUTE
-========================= */
 if ($stmt->execute()) {
     header("Location: device_cameras.php?updated=1");
     exit();
 } else {
     echo "Error: " . $stmt->error;
 }
-?>

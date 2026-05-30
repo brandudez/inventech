@@ -7,66 +7,59 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
-if (!isset($_POST['id'])) {
-    exit("Invalid request");
+if ($_SESSION['user']['role_id'] != 1) {
+    header("Location: ../../index.php");
+    exit();
 }
 
-$id = $_POST['id'];
-
-$personnel_id = $_POST['personnel_id'];
-$division_id = $_POST['division_id'];
-
-$brand = $_POST['brand'];
-$model = $_POST['model'];
-
-$serial_no = $_POST['serial_no'];
-$acquisition_details = $_POST['acquisition_details'];
-
-/* ✅ FORCE ACQUISITION DATE = TODAY */
-$acquisition_date = date('Y-m-d');
-
-/* ❗ created_date MUST NOT CHANGE (so we fetch from DB) */
-$get = $conn->prepare("SELECT created_date FROM printers WHERE id = ?");
-$get->bind_param("i", $id);
-$get->execute();
-$res = $get->get_result()->fetch_assoc();
-
-$created_date = $res['created_date'] ?? date('Y-m-d');
+if (!isset($_POST['id'])) {
+    exit("Invalid request.");
+}
 
 /* =========================
-   HANDLERS
+   GET FORM DATA
 ========================= */
+$id                  = (int) $_POST['id'];
+$personnel_id        = (int) $_POST['personnel_id'];
+$division_id         = (int) $_POST['division_id'];
+$brand               = trim($_POST['brand']);
+$model               = trim($_POST['model']);
+$serial_no           = trim($_POST['serial_no']);
+$acquisition_details = trim($_POST['acquisition_details']);
+$acquisition_date    = $_POST['acquisition_date'];
+$is_active           = isset($_POST['is_active']) ? (int) $_POST['is_active'] : 1;
+$last_update_at      = date('Y-m-d');
 
+/* =========================
+   PREVIOUS HANDLERS (JSON)
+========================= */
 $previous = $_POST['previous_handlers_id'] ?? [];
-
 if (!is_array($previous)) {
     $previous = [$previous];
 }
-
-$previous_json = json_encode(array_values($previous));
+$previous_json = json_encode(array_values(array_map('intval', $previous)));
 
 /* =========================
-   UPDATE
+   UPDATE QUERY (prepared)
+   created_date is never changed
 ========================= */
-
-$sql = "
-UPDATE printers SET
-    personnel_id = ?,
-    division_id = ?,
-    brand = ?,
-    model = ?,
-    serial_no = ?,
-    acquisition_details = ?,
-    acquisition_date = ?,
-    previous_owners_id = ?,
-    created_date = ?
-WHERE id = ?
-";
-
-$stmt = $conn->prepare($sql);
+$stmt = $conn->prepare("
+    UPDATE printers SET
+        personnel_id        = ?,
+        division_id         = ?,
+        brand               = ?,
+        model               = ?,
+        serial_no           = ?,
+        acquisition_details = ?,
+        acquisition_date    = ?,
+        previous_owners_id  = ?,
+        is_active           = ?,
+        last_update_at      = ?
+    WHERE id = ?
+");
 
 $stmt->bind_param(
-    "iisssssssi",
+    "iissssssisi",
     $personnel_id,
     $division_id,
     $brand,
@@ -75,7 +68,8 @@ $stmt->bind_param(
     $acquisition_details,
     $acquisition_date,
     $previous_json,
-    $created_date,
+    $is_active,
+    $last_update_at,
     $id
 );
 
