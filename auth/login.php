@@ -3,6 +3,37 @@
 session_start();
 include("../config/db.php");
 
+/* =========================
+   BLOCK MULTIPLE LOGIN
+   SAME BROWSER SESSION
+========================= */
+if (isset($_SESSION['user'])) {
+
+    $role = (int)$_SESSION['user']['role_id'];
+
+    switch ($role) {
+        case 1:
+            header("Location: ../pages/superadmin/superadmin_dashboard.php");
+            exit();
+
+        case 2:
+            header("Location: ../pages/admin/admin_dashboard.php");
+            exit();
+
+        case 3:
+            header("Location: ../pages/encoder/encoder_dashboard.php");
+            exit();
+
+        default:
+            session_destroy();
+            header("Location: ../index.php");
+            exit();
+    }
+}
+
+/* =========================
+   REQUEST METHOD CHECK
+========================= */
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     header("Location: ../index.php");
     exit();
@@ -41,7 +72,10 @@ $stmt = $conn->prepare("
 $stmt->bind_param("s", $email);
 $stmt->execute();
 
-$user = $stmt->get_result()->fetch_assoc();
+$result = $stmt->get_result();
+$user = $result->fetch_assoc();
+
+$stmt->close();
 
 /* =========================
    VALIDATION
@@ -62,16 +96,8 @@ if (!password_verify($password, $user['password'])) {
 }
 
 /* =========================
-   FIX SESSION CLEANLY
+   SECURITY
 ========================= */
-
-/*
-IMPORTANT:
-- Prevent session mix issues
-- Reset session properly before assigning new user
-*/
-
-session_unset();
 session_regenerate_id(true);
 
 /* =========================
@@ -83,28 +109,29 @@ $_SESSION['user'] = [
     'role_id' => (int)$user['role_id'],
     'division_id' => (int)$user['division_id'],
     'username' => $user['username'],
-    'name' => $user['first_name'] . ' ' . $user['last_name']
+    'name' => trim($user['first_name'] . ' ' . $user['last_name'])
 ];
 
 /* =========================
    REDIRECT BY ROLE
 ========================= */
-$role = (int)$user['role_id'];
+switch ((int)$user['role_id']) {
 
-if ($role === 1) {
-    header("Location: ../pages/superadmin/superadmin_dashboard.php");
-    exit();
+    case 1:
+        header("Location: ../pages/superadmin/superadmin_dashboard.php");
+        break;
+
+    case 2:
+        header("Location: ../pages/admin/admin_dashboard.php");
+        break;
+
+    case 3:
+        header("Location: ../pages/encoder/encoder_dashboard.php");
+        break;
+
+    default:
+        header("Location: ../index.php?error=invalid_role");
+        break;
 }
 
-if ($role === 2) {
-    header("Location: ../pages/admin/admin_dashboard.php");
-    exit();
-}
-
-if ($role === 3) {
-    header("Location: ../pages/encoder/encoder_dashboard.php");
-    exit();
-}
-
-header("Location: ../index.php?error=invalid_role");
 exit();

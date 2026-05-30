@@ -1,5 +1,33 @@
 <?php
 session_start();
+
+/* =========================
+   AUTO LOGIN REDIRECT
+========================= */
+if (isset($_SESSION['user'])) {
+
+    $role = (int)$_SESSION['user']['role_id'];
+
+    if ($role === 1) {
+        header("Location: pages/superadmin/superadmin_dashboard.php");
+        exit();
+    }
+
+    if ($role === 2) {
+        header("Location: pages/admin/admin_dashboard.php");
+        exit();
+    }
+
+    if ($role === 3) {
+        header("Location: pages/encoder/encoder_dashboard.php");
+        exit();
+    }
+
+    // fallback
+    session_destroy();
+    header("Location: index.php");
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
