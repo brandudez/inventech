@@ -80,6 +80,11 @@ $result = $stmt->get_result();
     <link rel="stylesheet" href="../superadmin/css/devices.css">
     <link rel="stylesheet" href="css/superadmin_navbar.css">
     <link rel="stylesheet" href="./css/superadmin_sidebar.css">
+    <style>
+        .clickable-row:hover { background-color: #f0f4ff !important; cursor: pointer; }
+        .view-label { font-size: 0.75rem; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+        .view-value { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 8px 12px; min-height: 38px; font-size: 0.95rem; }
+    </style>
 </head>
 <body>
 <?php include 'superadmin_sidebar.php'; ?>
@@ -218,7 +223,8 @@ $result = $stmt->get_result();
             <tbody>
                 <?php if ($result->num_rows > 0): ?>
                     <?php while ($row = $result->fetch_assoc()): ?>
-                        <tr data-active="<?= $row['is_active'] ? '1' : '0' ?>">
+                        <tr class="clickable-row" data-active="<?= $row['is_active'] ? '1' : '0' ?>"
+                            data-bs-toggle="modal" data-bs-target="#viewPrModal<?= $row['id'] ?>">
                             <td><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></td>
                             <td><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></td>
                             <td><?= htmlspecialchars($row['brand'] ?? '') ?></td>
@@ -229,12 +235,79 @@ $result = $stmt->get_result();
                             <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?></td>
                             <td><?= $row['is_active'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></td>
                             <td><?= htmlspecialchars(substr($row['created_date'] ?? '', 0, 10)) ?></td>
-                            <td>
+                            <td onclick="event.stopPropagation();">
                                 <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editPrModal<?= $row['id'] ?>">
                                     <i class="bi bi-gear-fill"></i>
                                 </button>
                             </td>
                         </tr>
+
+                        <!-- VIEW MODAL -->
+                        <div class="modal fade" id="viewPrModal<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header text-white" style="background-color:#0d6ea8;">
+                                        <h5 class="modal-title"><i class="bi bi-printer-fill me-2"></i>Printer Details</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="view-label">Personnel</div>
+                                                <div class="view-value"><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="view-label">Division</div>
+                                                <div class="view-value"><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="view-label">Brand</div>
+                                                <div class="view-value"><?= htmlspecialchars($row['brand'] ?? 'N/A') ?></div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="view-label">Model</div>
+                                                <div class="view-value"><?= htmlspecialchars($row['model'] ?? 'N/A') ?></div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="view-label">Serial Number</div>
+                                                <div class="view-value"><?= htmlspecialchars($row['serial_no'] ?? 'N/A') ?></div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="view-label">Acquisition Details</div>
+                                                <div class="view-value"><?= htmlspecialchars($row['acquisition_details'] ?? 'N/A') ?></div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="view-label">Acquisition Date</div>
+                                                <div class="view-value"><?= htmlspecialchars($row['acquisition_date'] ?? 'N/A') ?></div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="view-label">Is Active?</div>
+                                                <div class="view-value">
+                                                    <?= $row['is_active'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="view-label">Created Date</div>
+                                                <div class="view-value"><?= htmlspecialchars(substr($row['created_date'] ?? '', 0, 10)) ?></div>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <div class="view-label">Previous Handlers</div>
+                                                <div class="view-value"><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary"
+                                            data-bs-dismiss="modal"
+                                            data-edit-target="#editPrModal<?= $row['id'] ?>">
+                                            <i class="bi bi-gear-fill me-1"></i>Edit
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- EDIT MODAL -->
                         <div class="modal fade" id="editPrModal<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
@@ -342,6 +415,21 @@ $result = $stmt->get_result();
         items.forEach(cb => cb.addEventListener('change', () => { allCb.checked = !Array.from(items).some(c => c.checked); }));
     }
     setupFilterGroup('#allDivision', '.division-checkbox');
+
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-edit-target]');
+        if (!btn) return;
+        const editTarget = btn.getAttribute('data-edit-target');
+        const viewModal = btn.closest('.modal');
+        const bsView = bootstrap.Modal.getInstance(viewModal);
+        if (bsView) {
+            viewModal.addEventListener('hidden.bs.modal', function handler() {
+                viewModal.removeEventListener('hidden.bs.modal', handler);
+                new bootstrap.Modal(document.querySelector(editTarget)).show();
+            });
+            bsView.hide();
+        }
+    });
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
