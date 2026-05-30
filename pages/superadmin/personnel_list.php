@@ -32,9 +32,11 @@ $search = trim($_GET['search'] ?? '');
 ========================= */
 $rankFilters = $_GET['ranks'] ?? [];
 $divisionFilters = $_GET['divisions'] ?? [];
+$activeFilter = $_GET['is_active'] ?? '';
 
 $rankFilters = is_array($rankFilters) ? $rankFilters : [];
 $divisionFilters = is_array($divisionFilters) ? $divisionFilters : [];
+$activeFilter = ($activeFilter === '' || $activeFilter === null) ? '' : (int)$activeFilter;
 
 /* =========================
    BASE QUERY
@@ -96,6 +98,15 @@ if (!empty($search)) {
 }
 
 /* =========================
+   ACTIVE FILTER
+========================= */
+if ($activeFilter !== '') {
+    $sql .= " AND p.is_active = ?";
+    $params[] = $activeFilter;
+    $types .= "i";
+}
+
+/* =========================
    RANK FILTER
 ========================= */
 if (!empty($rankFilters)) {
@@ -135,6 +146,12 @@ WHERE 1=1
 $countParams = $params;
 $countTypes = $types;
 
+/* ACTIVE COUNT */
+if ($activeFilter !== '') {
+    $countSql .= " AND p.is_active = ?";
+}
+
+/* SEARCH */
 if (!empty($search)) {
     $countSql .= "
     AND (
@@ -147,31 +164,36 @@ if (!empty($search)) {
     )";
 }
 
+/* RANK */
 if (!empty($rankFilters)) {
     $placeholders = implode(',', array_fill(0, count($rankFilters), '?'));
     $countSql .= " AND p.rank_id IN ($placeholders)";
 }
 
+/* DIVISION */
 if (!empty($divisionFilters)) {
     $placeholders = implode(',', array_fill(0, count($divisionFilters), '?'));
     $countSql .= " AND p.division_id IN ($placeholders)";
 }
 
+/* =========================
+   EXEC COUNT
+========================= */
 $countStmt = $conn->prepare($countSql);
-if (!empty($countParams)) {
+
+if (!empty($countParams) || $activeFilter !== '') {
     $countStmt->bind_param($countTypes, ...$countParams);
 }
+
 $countStmt->execute();
 $totalUsers = $countStmt->get_result()->fetch_assoc()['total'];
 $totalPages = ceil($totalUsers / $limit);
 
 /* =========================
-   FINAL QUERY (DESC RANK SORTING)
+   FINAL QUERY
 ========================= */
 $sql .= "
-ORDER BY 
-    r.id DESC,
-    p.id DESC
+ORDER BY r.id DESC, p.id DESC
 LIMIT ? OFFSET ?
 ";
 
@@ -185,9 +207,8 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 /* =========================
-   STATS (FILTERED)
+   STATS QUERY
 ========================= */
-
 $statsSql = "
 SELECT 
     COUNT(*) as totalUsers,
@@ -204,6 +225,13 @@ WHERE 1=1
 $statsParams = [];
 $statsTypes = "";
 
+/* ACTIVE */
+if ($activeFilter !== '') {
+    $statsSql .= " AND p.is_active = ?";
+    $statsParams[] = $activeFilter;
+    $statsTypes .= "i";
+}
+
 /* SEARCH */
 if (!empty($search)) {
     $statsSql .= "
@@ -217,36 +245,33 @@ if (!empty($search)) {
     )";
 
     $searchValue = "%$search%";
-
     for ($i = 0; $i < 6; $i++) {
         $statsParams[] = $searchValue;
         $statsTypes .= "s";
     }
 }
 
-/* RANK FILTER */
+/* RANK */
 if (!empty($rankFilters)) {
     $placeholders = implode(',', array_fill(0, count($rankFilters), '?'));
     $statsSql .= " AND p.rank_id IN ($placeholders)";
-
     foreach ($rankFilters as $rank) {
         $statsParams[] = (int)$rank;
         $statsTypes .= "i";
     }
 }
 
-/* DIVISION FILTER */
+/* DIVISION */
 if (!empty($divisionFilters)) {
     $placeholders = implode(',', array_fill(0, count($divisionFilters), '?'));
     $statsSql .= " AND p.division_id IN ($placeholders)";
-
     foreach ($divisionFilters as $div) {
         $statsParams[] = (int)$div;
         $statsTypes .= "i";
     }
 }
 
-/* EXECUTE STATS */
+/* EXEC STATS */
 $statsStmt = $conn->prepare($statsSql);
 
 if (!empty($statsParams)) {
@@ -256,14 +281,26 @@ if (!empty($statsParams)) {
 $statsStmt->execute();
 $stats = $statsStmt->get_result()->fetch_assoc();
 
-$totalUsers   = $stats['totalUsers'];
-$activeCount  = $stats['activeCount'];
+$totalUsers = $stats['totalUsers'];
+$activeCount = $stats['activeCount'];
 $inactiveCount = $stats['inactiveCount'];
+
 /* =========================
-   FILTER OPTIONS (DYNAMIC)
+   FILTER OPTIONS
 ========================= */
 $ranksResult = $conn->query("SELECT id, rank FROM ranks ORDER BY id DESC");
 $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id ASC");
+
+/* =========================
+   CLEAN URL BUILDER
+========================= */
+$queryBase = [
+    'search' => $search,
+    'ranks' => $rankFilters,
+    'divisions' => $divisionFilters
+];
+
+$base = '?' . http_build_query($queryBase);
 ?>
 
 <!DOCTYPE html>
@@ -402,7 +439,30 @@ $divisionsResult = $conn->query("SELECT id, division FROM divisions ORDER BY id 
                             </ul>
 
                         </div>
+                   <!-- Active -->
+        <div class="dropdown">
 
+    <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
+        <?= $activeFilter === '' ? 'Is Active?' : ($activeFilter == 1 ? 'YES' : 'NO') ?>
+    </button>
+
+    <?php
+    $queryBase = [
+        'search' => $search,
+        'ranks' => $rankFilters,
+        'divisions' => $divisionFilters
+    ];
+
+    $base = '?' . http_build_query($queryBase);
+    ?>
+
+    <ul class="dropdown-menu p-3">
+        <li><a class="dropdown-item" href="<?= $base ?>">All</a></li>
+        <li><a class="dropdown-item" href="<?= $base ?>&is_active=1">YES</a></li>
+        <li><a class="dropdown-item" href="<?= $base ?>&is_active=0">NO</a></li>
+    </ul>
+
+</div>
                     </div>
 
                 </form>
