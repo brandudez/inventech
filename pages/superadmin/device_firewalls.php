@@ -488,8 +488,6 @@ while ($r = mysqli_fetch_assoc($dq)) $allDivisions[] = $r;
                         <th>FIRMWARE</th>
                         <th>MGMT INTERFACE</th>
                         <th>LOCATION</th>
-                        <th>IS ACTIVE?</th>
-                        <th>REMOTE ACCESS</th>
                         <th>REMOTE DETAILS</th>
                         <th>REMARKS</th>
                         <th>FOCAL PERSON</th>
@@ -499,6 +497,8 @@ while ($r = mysqli_fetch_assoc($dq)) $allDivisions[] = $r;
                         <th>ACQUISITION DETAILS</th>
                         <th>PREVIOUS HANDLERS</th>
                         <th>CREATED DATE</th>
+                        <th>REMOTE ACCESS</th>
+                        <th>IS ACTIVE?</th>
                         <th>ACTION</th>
                     </tr>
                 </thead>
@@ -521,19 +521,6 @@ while ($r = mysqli_fetch_assoc($dq)) $allDivisions[] = $r;
                                 <td><?= htmlspecialchars($row['firmware_version'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($row['management_interface_type'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['location'] ?? '') ?></td>
-
-                                <td>
-                                    <?= $row['is_active']
-                                        ? '<span class="text-success fw-bold">YES</span>'
-                                        : '<span class="text-danger fw-bold">NO</span>' ?>
-                                </td>
-
-                                <td>
-                                    <?= $row['is_remotely_accessible']
-                                        ? '<span class="text-success fw-bold">YES</span>'
-                                        : '<span class="text-danger fw-bold">NO</span>' ?>
-                                </td>
-
                                 <td><?= htmlspecialchars($row['remote_connection_details'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['remarks'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['pnp_focal_person'] ?? 'N/A') ?></td>
@@ -543,7 +530,16 @@ while ($r = mysqli_fetch_assoc($dq)) $allDivisions[] = $r;
                                 <td><?= htmlspecialchars($row['acquisition_details'] ?? 'N/A') ?></td>
                                 <td><?= getPersonnelNames($conn, $row['previous_owners_id']) ?></td>
                                 <td><?= htmlspecialchars($row['created_date'] ?? '') ?></td>
-
+                                <td>
+                                    <?= $row['is_remotely_accessible']
+                                        ? '<span class="text-success fw-bold">YES</span>'
+                                        : '<span class="text-danger fw-bold">NO</span>' ?>
+                                </td>
+                                <td>
+                                    <?= $row['is_active']
+                                        ? '<span class="text-success fw-bold">YES</span>'
+                                        : '<span class="text-danger fw-bold">NO</span>' ?>
+                                </td>
                                 <td>
                                     <button class="btn btn-primary btn-sm"
                                         data-bs-toggle="modal"

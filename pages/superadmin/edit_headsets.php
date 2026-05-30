@@ -2,6 +2,9 @@
 session_start();
 include("../../config/db.php");
 
+/* =========================
+   AUTH CHECK
+========================= */
 if (!isset($_SESSION['user'])) {
     header("Location: ../../index.php");
     exit();
@@ -20,22 +23,27 @@ if (!isset($_POST['id'])) {
    GET DATA
 ========================= */
 
-$id = (int) $_POST['id'];
+$id = (int) ($_POST['id'] ?? 0);
 
-$personnel_id = $_POST['personnel_id'];
-$division_id = $_POST['division_id'];
+$personnel_id = (int) ($_POST['personnel_id'] ?? 0);
+$division_id  = (int) ($_POST['division_id'] ?? 0);
 
-$brand = $_POST['brand'];
-$model = $_POST['model'];
+$brand = trim($_POST['brand'] ?? '');
+$model = trim($_POST['model'] ?? '');
 
-$serial_no = $_POST['serial_no'];
-$acquisition_details = $_POST['acquisition_details'];
+$serial_no = trim($_POST['serial_no'] ?? '');
+$acquisition_details = trim($_POST['acquisition_details'] ?? '');
 
-/* ✅ ALWAYS SET TO TODAY ON UPDATE */
-$acquisition_date = date('Y-m-d');
+/* ✅ GET DATE FROM FORM */
+$acquisition_date = $_POST['acquisition_date'] ?? null;
+
+/* ✅ GET ACTIVE STATUS */
+$is_active = isset($_POST['is_active'])
+    ? (int) $_POST['is_active']
+    : 1;
 
 /* =========================
-   HANDLERS (JSON)
+   PREVIOUS HANDLERS (JSON)
 ========================= */
 
 $previous = $_POST['previous_handlers_id'] ?? [];
@@ -44,12 +52,14 @@ if (!is_array($previous)) {
     $previous = [$previous];
 }
 
+/* convert all IDs to integers */
+$previous = array_map('intval', $previous);
+
+/* save as JSON */
 $previous_json = json_encode(array_values($previous));
 
 /* =========================
-   IMPORTANT:
-   created_date is NOT touched at all
-   (it stays exactly as in DB)
+   UPDATE QUERY
 ========================= */
 
 $sql = "
@@ -61,14 +71,19 @@ UPDATE headsets SET
     serial_no = ?,
     acquisition_details = ?,
     acquisition_date = ?,
+    is_active = ?,
     previous_owners_id = ?
 WHERE id = ?
 ";
 
 $stmt = $conn->prepare($sql);
 
+if (!$stmt) {
+    die("Prepare failed: " . $conn->error);
+}
+
 $stmt->bind_param(
-    "iissssssi",
+    "iisssssisi",
     $personnel_id,
     $division_id,
     $brand,
@@ -76,6 +91,7 @@ $stmt->bind_param(
     $serial_no,
     $acquisition_details,
     $acquisition_date,
+    $is_active,
     $previous_json,
     $id
 );
@@ -88,5 +104,9 @@ if ($stmt->execute()) {
     header("Location: device_headsets.php?updated=1");
     exit();
 } else {
-    echo "Error: " . $stmt->error;
+    echo "Error updating headset: " . $stmt->error;
 }
+
+$stmt->close();
+$conn->close();
+?>
