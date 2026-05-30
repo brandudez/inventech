@@ -17,34 +17,33 @@ include("../../config/db.php");
    BASIC FIELDS
 ========================= */
 $personnel_id = $_POST['personnel_id'] ?? 0;
-
-$division_id = $_POST['division_id'] ?? 0;
+$division_id  = $_POST['division_id'] ?? 0;
 
 $manufacturer = $_POST['manufacturer'] ?? '';
-$model = $_POST['model'] ?? '';
-$serial_no = $_POST['serial_no'] ?? '';
+$model        = $_POST['model'] ?? '';
+$serial_no    = $_POST['serial_no'] ?? '';
 
-$ports = $_POST['ports'] ?? 0;
-$active_ports = $_POST['active_ports'] ?? 0;
+$ports         = $_POST['ports'] ?? 0;
+$active_ports  = $_POST['active_ports'] ?? 0;
 
 $ip_range = $_POST['ip_range'] ?? '';
 $firmware = $_POST['firmware'] ?? '';
-
 $location = $_POST['location'] ?? '';
 
 $active = ($_POST['active'] ?? 1) == "1" ? 1 : 0;
 
-$remote_access = ($_POST['remote_access'] ?? 0) == "1" ? 1 : 0;
+$remote_access = ($_POST['remote_access'] ?? 0) == "1"
+    ? 1
+    : 0;
 
 $remote_details = $_POST['remote_details'] ?? '';
+$remarks        = $_POST['remarks'] ?? '';
+$pnp_focal      = $_POST['pnp_focal'] ?? '';
+$contact        = $_POST['contact'] ?? '';
 
-$remarks = $_POST['remarks'] ?? '';
-
-$pnp_focal = $_POST['pnp_focal'] ?? '';
-
-$contact = $_POST['contact'] ?? '';
-
-$acq_date = $_POST['acq_date'] ?? null;
+$acq_date = !empty($_POST['acq_date'])
+    ? $_POST['acq_date']
+    : null;
 
 $acq_type = $_POST['acq_type'] ?? '';
 
@@ -57,7 +56,9 @@ if (!is_array($previous_handlers_id)) {
     $previous_handlers_id = [$previous_handlers_id];
 }
 
-$previous_handlers_json = json_encode(array_values($previous_handlers_id));
+$previous_handlers_json = json_encode(
+    array_values($previous_handlers_id)
+);
 
 /* =========================
    DEFAULT DEVICE ID
@@ -71,6 +72,7 @@ $sql = "
 INSERT INTO routers (
 
     personnel_id,
+    division_id,
     device_id,
     manufacturer,
     model,
@@ -94,7 +96,7 @@ INSERT INTO routers (
 VALUES (
 
     ?,?,?,?,?,?,?,?,?,?,
-    ?,?,?,?,?,?,?,?,?
+    ?,?,?,?,?,?,?,?,?,?
 
 )
 ";
@@ -106,15 +108,16 @@ if (!$stmt) {
 }
 
 /* =========================
-   FIXED TYPES
+   TYPES (20 FIELDS)
 ========================= */
-$types = str_repeat("s", 19);
+$types = str_repeat("s", 20);
 
 $stmt->bind_param(
 
     $types,
 
     $personnel_id,
+    $division_id,
     $device_id,
     $manufacturer,
     $model,
@@ -137,7 +140,7 @@ $stmt->bind_param(
 );
 
 /* =========================
-   EXECUTE LAST
+   EXECUTE
 ========================= */
 if ($stmt->execute()) {
 

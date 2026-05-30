@@ -31,7 +31,10 @@ $is_remote_acc = ($_POST['is_remote_acc'] ?? 0) == "1" ? 1 : 0;
    ENDPOINT SECURITY
 ========================= */
 $endpoint_security = $_POST['endpoint_security'] ?? [];
-if (!is_array($endpoint_security)) $endpoint_security = [];
+
+if (!is_array($endpoint_security)) {
+    $endpoint_security = [];
+}
 
 $endpoint_security_json = json_encode(array_values($endpoint_security));
 
@@ -76,10 +79,13 @@ $office_license_key = $_POST['office_license_key'] ?? '';
 
 $par_serial_no = $_POST['par_serial_no'] ?? '';
 
+/* FIX: ACQUISITION DATE */
+$acquisition_date = $_POST['acquisition_date'] ?? null;
+
 $is_active = ($_POST['is_active'] ?? 1) == "1" ? 1 : 0;
 
 /* =========================
-   INSERT QUERY (ONLY ONCE)
+   INSERT QUERY
 ========================= */
 $sql = "
 INSERT INTO desktops (
@@ -105,6 +111,7 @@ INSERT INTO desktops (
     user_account_type,
     authorized_software,
     unauthorized_software,
+    acquisition_date,
     office_application,
     is_office_licensed,
     previous_owners_id,
@@ -114,7 +121,9 @@ INSERT INTO desktops (
     is_active
 )
 VALUES (
-    ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+    ?,?,?,?,?,?,?,?,?,?,
+    ?,?,?,?,?,?,?,?,?,?,
+    ?,?,?,?,?,?,?,?,?,?
 )
 ";
 
@@ -124,10 +133,8 @@ if (!$stmt) {
     die("Prepare failed: " . $conn->error);
 }
 
-/* =========================
-   FIXED TYPES
-========================= */
-$types = str_repeat("s", 29);
+/* 30 fields now */
+$types = str_repeat("s", 30);
 
 $stmt->bind_param(
     $types,
@@ -153,6 +160,7 @@ $stmt->bind_param(
     $user_account_type,
     $authorized_software,
     $unauthorized_software,
+    $acquisition_date,
     $office_application,
     $is_office_licensed,
     $previous_owners_json,
@@ -163,11 +171,10 @@ $stmt->bind_param(
 );
 
 /* =========================
-   EXECUTE LAST
+   EXECUTE
 ========================= */
 if ($stmt->execute()) {
 
-    // clear filters after save
     header("Location: device_desktops.php");
     exit();
 
