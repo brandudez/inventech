@@ -363,7 +363,7 @@ $j_other_data    = json_encode([$cnt_printers,$cnt_cameras,$cnt_headsets,$cnt_sw
 
     <!-- tab toggle -->
     <div style="display:flex;gap:6px;margin-bottom:1rem;">
-        <button class="tab-btn active" onclick="switchView('users', event)">System users</button>
+        <button class="tab-btn active" onclick="switchView('users', event)">Users</button>
         <button class="tab-btn" onclick="switchView('pers', event)">Personnels</button>
     </div>
 
