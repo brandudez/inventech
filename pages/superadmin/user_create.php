@@ -11,121 +11,69 @@ if ($_SESSION['user']['role_id'] != 1) {
     exit();
 }
 
-
 include("../../config/db.php");
-
-$message = "";
 
 /* ADD USER */
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $role_id = $_POST['role_id'];
+    $role_id     = $_POST['role_id'];
     $division_id = $_POST['division_id'];
-    $rank_id = $_POST['rank_id'];
+    $rank_id     = $_POST['rank_id'];
 
-    $first_name = trim($_POST['first_name']);
-    $middle_name = trim($_POST['middle_name']);
-    $last_name = trim($_POST['last_name']);
-
-    $first_name = mb_strtoupper(trim($_POST['first_name']), 'UTF-8');
+    $first_name  = mb_strtoupper(trim($_POST['first_name']),  'UTF-8');
     $middle_name = mb_strtoupper(trim($_POST['middle_name']), 'UTF-8');
-    $last_name = mb_strtoupper(trim($_POST['last_name']), 'UTF-8');
+    $last_name   = mb_strtoupper(trim($_POST['last_name']),   'UTF-8');
 
-    $email = trim($_POST['email']);
-
+    $email    = trim($_POST['email']);
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
     /* CURRENT LOGGED IN USER */
     $creator_user_id = $_SESSION['user']['id'] ?? 1;
 
     /* USERNAME */
-    $firstInitial = strtolower(substr($first_name, 0, 1));
+    $firstInitial  = strtolower(substr($first_name,  0, 1));
     $middleInitial = strtolower(substr($middle_name, 0, 1));
     $lastNameLower = strtolower($last_name);
-
-    $username = $lastNameLower . $firstInitial . $middleInitial;
+    $username      = $lastNameLower . $firstInitial . $middleInitial;
 
     /* CHECK IF EMAIL EXISTS */
     $check = $conn->prepare("SELECT id FROM users WHERE email = ?");
     $check->bind_param("s", $email);
     $check->execute();
-    $checkResult = $check->get_result();
 
-    if ($checkResult->num_rows > 0) {
-
-        $message = "❌ Email already exists!";
-
+    if ($check->get_result()->num_rows > 0) {
+        $_SESSION['toast'] = ['type' => 'danger', 'message' => 'Email already exists!'];
     } else {
-
-        /* INSERT USER */
         $stmt = $conn->prepare("
             INSERT INTO users
-            (
-                role_id,
-                division_id,
-                rank_id,
-                username,
-                first_name,
-                middle_name,
-                last_name,
-                email,
-                password,
-                creator_user_id
-            )
+                (role_id, division_id, rank_id, username,
+                 first_name, middle_name, last_name, email, password, creator_user_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
-
         $stmt->bind_param(
             "iiissssssi",
-            $role_id,
-            $division_id,
-            $rank_id,
-            $username,
-            $first_name,
-            $middle_name,
-            $last_name,
-            $email,
-            $password,
-            $creator_user_id
+            $role_id, $division_id, $rank_id, $username,
+            $first_name, $middle_name, $last_name, $email, $password, $creator_user_id
         );
 
         if ($stmt->execute()) {
-            $message = "✅ User added successfully!";
+            $_SESSION['toast'] = ['type' => 'success', 'message' => 'User added successfully!'];
         } else {
-            $message = "❌ Error adding user!";
+            $_SESSION['toast'] = ['type' => 'danger', 'message' => 'Error adding user. Please try again.'];
         }
     }
+
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
 }
 
-/* FETCH ROLES */
-$roles = [];
-$roleQuery = $conn->query("SELECT * FROM roles");
-
-while ($row = $roleQuery->fetch_assoc()) {
-    $roles[] = $row;
-}
-
-/* FETCH DIVISIONS */
-$divisions = [];
-$divisionQuery = $conn->query("SELECT * FROM divisions");
-
-while ($row = $divisionQuery->fetch_assoc()) {
-    $divisions[] = $row;
-}
-
-/* FETCH RANKS */
-$ranks = [];
-$rankQuery = $conn->query("SELECT * FROM ranks");
-
-while ($row = $rankQuery->fetch_assoc()) {
-    $ranks[] = $row;
-}
+/* FETCH ROLES, DIVISIONS, RANKS */
+$roles = $conn->query("SELECT * FROM roles")->fetch_all(MYSQLI_ASSOC);
+$divisions = $conn->query("SELECT * FROM divisions")->fetch_all(MYSQLI_ASSOC);
+$ranks = $conn->query("SELECT * FROM ranks")->fetch_all(MYSQLI_ASSOC);
 ?>
-
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -136,141 +84,117 @@ while ($row = $rankQuery->fetch_assoc()) {
     <link rel="stylesheet" href="./css/superadmin_sidebar.css">
     <title>Add User</title>
 </head>
-
 <body>
-    <!-- SIDEBAR -->
-    <?php include 'superadmin_sidebar.php'; ?>
 
-    <!-- TOP NAVBAR -->
+    <?php include 'superadmin_sidebar.php'; ?>
     <?php include 'superadmin_navbar.php'; ?>
+
+    <!-- TOAST CONTAINER -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 99999;">
+        <div id="liveToast" class="toast align-items-center border-0 text-white" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body fw-semibold" id="toastMessage"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
 
     <!-- MAIN -->
     <div class="main">
-
-        <!-- MAIN CONTENT -->
-
         <div class="add-user-wrapper">
 
             <h2 class="page-title">Add User</h2>
-
-            <?php if (!empty($message)): ?>
-                <div class="message" id="msgBox">
-                    <?php echo $message; ?>
-                </div>
-            <?php endif; ?>
 
             <form method="POST" class="user-form">
 
                 <!-- ROLE + DIVISION -->
                 <div class="form-row">
-
                     <div class="form-group">
                         <label>Role</label>
-
                         <select name="role_id" required>
                             <option value="">Select Role</option>
-
-                                                <?php foreach ($roles as $role): ?>
-                                <option value="<?= $role['id']; ?>">
-                                                        <?= ucfirst($role['role_name']); ?>
-                                </option>
-                                                <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Division</label>
-
-                        <select name="division_id" required>
-                            <option value="">Select Division</option>
-
-                            <?php foreach ($divisions as $division): ?>
-                                <option value="<?= $division['id']; ?>">
-                                    <?= $division['division']; ?>
-                                </option>
+                            <?php foreach ($roles as $role): ?>
+                                <option value="<?= $role['id'] ?>"><?= ucfirst($role['role_name']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-
+                    <div class="form-group">
+                        <label>Division</label>
+                        <select name="division_id" required>
+                            <option value="">Select Division</option>
+                            <?php foreach ($divisions as $division): ?>
+                                <option value="<?= $division['id'] ?>"><?= htmlspecialchars($division['division']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- RANK + NAMES -->
                 <div class="form-row four-columns">
-
                     <div class="form-group">
                         <label>Rank</label>
-
                         <select name="rank_id" required>
                             <option value="">Select Rank</option>
-
                             <?php foreach ($ranks as $rank): ?>
-                                <option value="<?= $rank['id']; ?>">
-                                    <?= $rank['rank']; ?>
-                                </option>
+                                <option value="<?= $rank['id'] ?>"><?= htmlspecialchars($rank['rank']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-
                     <div class="form-group">
                         <label>First Name</label>
-                        <input type="text" placeholder="Enter your name" name="first_name" required>
+                        <input type="text" placeholder="Enter First Name" name="first_name" required>
                     </div>
-
                     <div class="form-group">
                         <label>Middle Name</label>
-                        <input type="text" placeholder="Enter your Middle Name" name="middle_name">
+                        <input type="text" placeholder="Enter Middle Name" name="middle_name">
                     </div>
-
                     <div class="form-group">
                         <label>Last Name</label>
-                        <input type="text" placeholder="Enter your Last Name" name="last_name" required>
+                        <input type="text" placeholder="Enter Last Name" name="last_name" required>
                     </div>
-
-
                 </div>
 
                 <!-- EMAIL + PASSWORD -->
                 <div class="form-row">
-
                     <div class="form-group">
                         <label>Email</label>
-                        <input type="email" placeholder="Enter your email" name="email" required>
+                        <input type="email" placeholder="Enter email" name="email" required>
                     </div>
-
                     <div class="form-group">
                         <label>Password</label>
-                        <input type="password" placeholder="Enter your password" name="password" required>
+                        <input type="password" placeholder="Enter password" name="password" required>
                     </div>
-
                 </div>
 
                 <!-- BUTTON -->
                 <div class="button-container">
-                    <button type="submit" class="btn-submit">
-                        Add User
-                    </button>
+                    <button type="submit" class="btn-submit">Add User</button>
                 </div>
 
             </form>
 
         </div>
-
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <?php if (!empty($_SESSION['toast'])): ?>
     <script>
-        const msg = document.getElementById("msgBox");
+        document.addEventListener('DOMContentLoaded', function () {
+            const toastEl  = document.getElementById('liveToast');
+            const toastMsg = document.getElementById('toastMessage');
+            const type     = '<?= $_SESSION['toast']['type'] ?>';
+            const message  = '<?= addslashes($_SESSION['toast']['message']) ?>';
 
-        if (msg) {
-            setTimeout(() => {
-                msg.style.opacity = "0";
-                msg.style.transition = "0.5s ease";
+            toastEl.classList.add('bg-' + type);
+            toastMsg.textContent = message;
 
-                setTimeout(() => {
-                    msg.remove();
-                }, 500);
-            }, 2000); // disappears after 2 seconds
-        }
+            const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
+            toast.show();
+        });
     </script>
+    <?php unset($_SESSION['toast']); ?>
+    <?php endif; ?>
 
 </body>
-
 </html>

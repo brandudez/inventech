@@ -13,75 +13,56 @@ if ($_SESSION['user']['role_id'] != 1) {
 
 include("../../config/db.php");
 
-/* =========================
-   GET FORM DATA
-========================= */
-$user_id  = $_POST['user_id'];
-$rank     = $_POST['rank'];
-$division = $_POST['division'];
-$status   = $_POST['status'];
-$name     = trim($_POST['name']);
+$user_id  = $_POST['user_id']  ?? '';
+$rank     = $_POST['rank']     ?? '';
+$division = $_POST['division'] ?? '';
+$status   = $_POST['status']   ?? '';
+$name     = trim($_POST['name'] ?? '');
 
-/* =========================
-   VALIDATION (BASIC SAFETY)
-========================= */
 if (!$user_id) {
-    die("Invalid user ID");
+    header("Location: personnel_list.php?error=PersonnelFailed");
+    exit();
 }
 
-/* =========================
-   SPLIT NAME
-========================= */
-$nameParts = preg_split('/\s+/', $name);
-
+/* SPLIT NAME */
+$nameParts   = preg_split('/\s+/', $name);
 $first_name  = $nameParts[0] ?? '';
 $middle_name = '';
 $last_name   = '';
-
-$count = count($nameParts);
+$count       = count($nameParts);
 
 if ($count == 2) {
-
     $last_name = $nameParts[1];
-
 } elseif ($count >= 3) {
-
     $middle_name = $nameParts[1];
-
-    $last_name = implode(' ', array_slice($nameParts, 2));
+    $last_name   = implode(' ', array_slice($nameParts, 2));
 }
 
-/* =========================
-   UPDATE PERSONNEL (FIXED)
-========================= */
+/* UPDATE */
 $stmt = $conn->prepare("
-UPDATE personnels
-SET
-    first_name = ?,
-    middle_name = ?,
-    last_name = ?,
-    rank_id = ?,
-    division_id = ?,
-    is_active = ?
-WHERE id = ?
+    UPDATE personnels SET
+        first_name  = ?,
+        middle_name = ?,
+        last_name   = ?,
+        rank_id     = ?,
+        division_id = ?,
+        is_active   = ?
+    WHERE id = ?
 ");
 
-$stmt->bind_param(
-    "sssiiii",
-    $first_name,
-    $middle_name,
-    $last_name,
-    $rank,
-    $division,
-    $status,
-    $user_id
-);
+if (!$stmt) {
+    header("Location: personnel_list.php?error=PersonnelFailed");
+    exit();
+}
 
-$stmt->execute();
+$stmt->bind_param("sssiiii", $first_name, $middle_name, $last_name, $rank, $division, $status, $user_id);
 
-/* =========================
-   REDIRECT
-========================= */
-header("Location: personnel_list.php");
-exit;
+if ($stmt->execute()) {
+    header("Location: personnel_list.php?msg=PersonnelUpdated");
+} else {
+    header("Location: personnel_list.php?error=PersonnelFailed");
+}
+
+$stmt->close();
+exit();
 ?>
