@@ -118,174 +118,27 @@ $result = $data_stmt->get_result();
 
     <!-- CSS -->
     <link rel="stylesheet" href="assets/admin_dashboard.css">
+    <link rel="stylesheet" href="assets/admin_navbar.css">
+    <link rel="stylesheet" href="assets/admin_sidebar.css">
     <link rel="stylesheet" href="assets/add_user_modal.css">
 
     <!-- SWEETALERT -->
     <script src="../assets/js/sweetalert2.min.js"></script>
 
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f5f6fa;
-        }
-
-        .empty-message {
-            padding: 20px;
-            text-align: center;
-            color: #666;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        table th,
-        table td {
-            padding: 14px;
-            border-bottom: 1px solid #ddd;
-            text-align: left;
-        }
-
-        .pagination {
-            display: flex;
-            gap: 10px;
-            padding: 20px;
-            justify-content: center;
-        }
-
-        .pagination a {
-            padding: 8px 14px;
-            background: #eee;
-            text-decoration: none;
-            border-radius: 6px;
-            color: #333;
-        }
-
-        .pagination a.active {
-            background: #2563eb;
-            color: white;
-        }
-
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 13px;
-        }
-
-        /* MAIN CONTAINER */
-        .main-container {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            padding: 30px;
-            box-sizing: border-box;
-        }
-
-        /* CONTENT */
-        .content {
-            width: 100%;
-            max-width: 1200px;
-        }
-
-        /* TABLE SECTION */
-        .table-section {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-        }
-
-        /* CONTENT HEADER */
-        .content-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        /* SEARCH */
-        .search-box input {
-            padding: 10px 14px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            min-width: 220px;
-        }
-
-        /* BUTTONS */
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        /* BUTTON */
-        .btn {
-            border: none;
-            padding: 10px 14px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .btn-primary {
-            background: #2563eb;
-            color: white;
-        }
-
-        .btn-danger {
-            background: #dc2626;
-            color: white;
-        }
-    </style>
 
 </head>
 
 <body>
 
+    <!-- SIDEBAR -->
+    <?php include 'admin_sidebar.php' ; ?>
+    
+    <!-- HEADER NAVBAR -->
+    <?php include 'admin_navbar.php' ; ?> 
+
+
     <!-- ADD USER MODAL -->
     <?php include("./modals/add_user_modal.php"); ?>
-
-    <!-- HEADER -->
-    <header class="header">
-
-        <div class="navbar">
-
-            <div class="nav-left">
-
-                <img src="../../assets/img/ITMSLOGO.jpg" class="logo">
-
-                <span class="title">
-                    ITMS INVENTECH
-                </span>
-
-            </div>
-
-            <!-- PROFILE -->
-            <div class="admin-profile" id="adminProfile">
-
-                <span>
-                    <?= htmlspecialchars($user['username']) ?>
-                </span>
-
-                <div class="profile-avatar">
-                    <?= strtoupper(substr($user['username'], 0, 1)) ?>
-                </div>
-
-                <div class="dropdown-menu" id="dropdownMenu">
-
-                    <a href="../../auth/logout.php">
-                    Logout
-                </a>
-
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </header>
 
     <!-- MAIN -->
     <div class="main-container">

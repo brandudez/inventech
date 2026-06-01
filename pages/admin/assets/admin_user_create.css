@@ -1,0 +1,159 @@
+/* ===== PAGE ===== */
+body {
+  margin: 0;
+  padding: 0;
+  background: #f4f7fb;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ===== MAIN ===== */
+.main {
+  margin-left: 215px;
+  padding: 90px 20px 20px;
+  transition: 0.3s ease;
+}
+
+/* ===== MOVE MAIN WHEN SIDEBAR COLLAPSED ===== */
+.sidebar.collapsed ~ .main {
+  margin-left: 85px;
+}
+
+/* ===== WRAPPER ===== */
+.add-user-wrapper {
+  width: 100%;
+  background: #fff;
+  padding: 35px;
+  border-radius: 18px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+  transition: 0.3s ease;
+}
+
+/* ===== TITLE ===== */
+.page-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: #0d6ea8;
+  margin-bottom: 30px;
+}
+
+/* ===== FORM ===== */
+.user-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ===== FORM ROW ===== */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* ===== 4 COLUMNS ===== */
+.four-columns {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* ===== FORM GROUP ===== */
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== LABEL ===== */
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+/* ===== INPUTS ===== */
+.form-group input,
+.form-group select {
+  height: 50px;
+  padding: 0 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 14px;
+  background: #fff;
+  transition: 0.2s ease;
+}
+
+/* ===== INPUT FOCUS ===== */
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #0d6ea8;
+  box-shadow: 0 0 0 4px rgba(13, 110, 168, 0.12);
+}
+
+/* ===== BUTTON AREA ===== */
+.button-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+/* ===== BUTTON ===== */
+.btn-submit {
+  width: 100%;
+  height: 50px;
+  border: none;
+  border-radius: 12px;
+  background: #0d6ea8;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+/* ===== BUTTON HOVER ===== */
+.btn-submit:hover {
+  background: #095782;
+  transform: translateY(-2px);
+}
+
+/* ===== MESSAGE ===== */
+.message {
+  margin-bottom: 20px;
+  padding: 14px;
+  border-radius: 10px;
+  background: #eaf6ff;
+  color: #0d6ea8;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ===== RESPONSIVE ===== */
+@media screen and (max-width: 992px) {
+  .four-columns {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .main {
+    margin-left: 85px;
+    padding: 80px 15px 15px;
+  }
+
+  .form-row,
+  .four-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .add-user-wrapper {
+    padding: 20px;
+  }
+
+  .button-container {
+    justify-content: center;
+  }
+
+  .btn-submit {
+    width: 100%;
+  }
+}
