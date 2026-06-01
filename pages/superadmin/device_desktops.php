@@ -125,33 +125,76 @@ while ($r = mysqli_fetch_assoc($eq)) $addEpRows[] = $r;
 $addHandlerRows = $addPersonnelRows;
 
 $osList = [
-    "Windows 10 Home","Windows 10 Home N","Windows 10 Home Single Language",
-    "Windows 10 Pro","Windows 10 Pro N","Windows 10 Pro Education",
-    "Windows 10 Pro for Workstations","Windows 10 Enterprise","Windows 10 Enterprise N",
-    "Windows 10 Enterprise LTSC","Windows 10 Education","Windows 10 Education N",
-    "Windows 10 IoT Enterprise","Windows 10 Team",
-    "Windows 11 Home","Windows 11 Home N","Windows 11 Home Single Language",
-    "Windows 11 Pro","Windows 11 Pro N","Windows 11 Pro Education",
-    "Windows 11 Pro for Workstations","Windows 11 Enterprise","Windows 11 Enterprise N",
-    "Windows 11 Enterprise LTSC","Windows 11 Education","Windows 11 Education N",
-    "Windows 11 SE","Windows 11 IoT Enterprise",
+    // Windows 10
+    "Windows 10 Home",
+    "Windows 10 Home Single Language",
+    "Windows 10 Pro",
+    "Windows 10 Pro Education",
+    "Windows 10 Pro for Workstations",
+    "Windows 10 Enterprise",
+    "Windows 10 Enterprise LTSC",
+    "Windows 10 Education",
+    "Windows 10 IoT Enterprise",
+
+    // Windows 11
+    "Windows 11 Home",
+    "Windows 11 Home Single Language",
+    "Windows 11 Pro",
+    "Windows 11 Pro Education",
+    "Windows 11 Pro for Workstations",
+    "Windows 11 Enterprise",
+    "Windows 11 Enterprise LTSC",
+    "Windows 11 Education",
+    "Windows 11 SE",
+    "Windows 11 IoT Enterprise",
+
+    // Others
+    "Other"
 ];
 
 $officeAppsList = [
-    "Microsoft 365 Personal","Microsoft 365 Family","Microsoft 365 Business Basic",
-    "Microsoft 365 Business Standard","Microsoft 365 Business Premium",
-    "Microsoft 365 Apps for Business","Microsoft 365 Apps for Enterprise",
-    "Microsoft Office Home & Student 2021","Microsoft Office Home & Business 2021",
-    "Microsoft Office Professional 2021","Microsoft Office LTSC 2021",
-    "Microsoft Office Home & Student 2019","Microsoft Office Home & Business 2019",
+    // Microsoft 365
+    "Microsoft 365 Personal",
+    "Microsoft 365 Family",
+    "Microsoft 365 Business Basic",
+    "Microsoft 365 Business Standard",
+    "Microsoft 365 Business Premium",
+    "Microsoft 365 Apps for Business",
+    "Microsoft 365 Apps for Enterprise",
+
+    // Office 2024
+    "Microsoft Office Home 2024",
+    "Microsoft Office Home & Business 2024",
+    "Microsoft Office LTSC 2024",
+
+    // Office 2021
+    "Microsoft Office Home & Student 2021",
+    "Microsoft Office Home & Business 2021",
+    "Microsoft Office Professional 2021",
+    "Microsoft Office LTSC 2021",
+
+    // Office 2019
+    "Microsoft Office Home & Student 2019",
+    "Microsoft Office Home & Business 2019",
     "Microsoft Office Professional Plus 2019",
-    "Microsoft Word","Microsoft Excel","Microsoft PowerPoint","Microsoft Outlook",
-    "Microsoft Access","Microsoft Publisher","Microsoft OneNote","Microsoft Teams",
-    "Google Docs","Google Sheets","Google Slides","Google Workspace",
-    "WPS Office Free","WPS Office Premium",
-    "LibreOffice Writer","LibreOffice Calc","LibreOffice Impress","LibreOffice Full Suite",
-    "Apache OpenOffice Writer","Apache OpenOffice Calc","Apache OpenOffice Impress",
-    "Apple Pages","Apple Numbers","Apple Keynote",
+
+    // Office 2016
+    "Microsoft Office Home & Student 2016",
+    "Microsoft Office Home & Business 2016",
+    "Microsoft Office Professional Plus 2016",
+
+    // Office 2013
+    "Microsoft Office Home & Student 2013",
+    "Microsoft Office Home & Business 2013",
+    "Microsoft Office Professional Plus 2013",
+
+    // Alternative Office Suites
+    "LibreOffice",
+    "Apache OpenOffice",
+    "WPS Office",
+
+    // Others
+    "Other"
 ];
 ?>
 <!DOCTYPE html>

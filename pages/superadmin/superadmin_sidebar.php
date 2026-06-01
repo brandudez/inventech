@@ -63,10 +63,10 @@
 
             <a href="../superadmin/device_desktops.php"
                 class="<?= basename($_SERVER['PHP_SELF']) == 'device_desktops.php' ? 'active' : '' ?>">
-                <div class="menu-item">
-                    <span class="icon"><i class="bi bi-laptop"></i></span>
-                    <span class="text">Desktops</span>
-                </div>
+                    <div class="menu-item">
+                        <span class="icon"><i class="bi bi-pc-display"></i></span>
+                        <span class="text">Desktops</span>
+                    </div>
             </a>
 
             <a href="../superadmin/device_laptops.php"

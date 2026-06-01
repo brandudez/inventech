@@ -48,7 +48,7 @@ $sql = "
     LEFT JOIN ranks r      ON p.rank_id     = r.id
     LEFT JOIN users u      ON p.created_by  = u.id
     LEFT JOIN roles rl     ON u.role_id     = rl.id
-    WHERE 1=1
+    WHERE p.is_active = 1
 ";
 
 $params = [];
@@ -233,18 +233,6 @@ $base = '?' . http_build_query($queryBase);
                             </ul>
                         </div>
 
-                        <!-- IS ACTIVE -->
-                        <div class="dropdown">
-                            <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
-                                <?= $activeFilter === '' ? 'Is Active?' : ($activeFilter == 1 ? 'YES' : 'NO') ?>
-                            </button>
-                            <ul class="dropdown-menu p-3">
-                                <li><a class="dropdown-item" href="<?= $base ?>">All</a></li>
-                                <li><a class="dropdown-item" href="<?= $base ?>&is_active=1">YES</a></li>
-                                <li><a class="dropdown-item" href="<?= $base ?>&is_active=0">NO</a></li>
-                            </ul>
-                        </div>
-
                     </div>
                 </form>
             </div>
@@ -285,6 +273,12 @@ $base = '?' . http_build_query($queryBase);
                                     )">
                                         <i class="bi bi-gear-fill"></i>
                                     </button>
+                                    <button type="button" class="btn-change" onclick="openPasswordModal(<?= $row['id'] ?>)">
+                                        <i class="bi bi-key-fill"></i>
+                                    </button>
+                                    <button type="button" class="btn-delete" onclick="openPasswordModal(<?= $row['id'] ?>)">
+                                        <i class="bi bi-trash3-fill"></i>
+                                    </button>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -298,9 +292,7 @@ $base = '?' . http_build_query($queryBase);
         <!-- FOOTER -->
         <div class="table-footer">
             <div class="user-stats">
-                <div class="stat-box total"><span class="label">Total Users</span><span class="value"><?= $totalUsers ?></span></div>
-                <div class="stat-box active"><span class="label">Active</span><span class="value"><?= $activeCount ?></span></div>
-                <div class="stat-box inactive"><span class="label">Inactive</span><span class="value"><?= $inactiveCount ?></span></div>
+                <div class="stat-box total"><span class="label">Total Users</span><span class="value"><?= $totalUsers ?></span></div></div>
             </div>
 
             <?php if ($totalPages > 1):
