@@ -52,13 +52,13 @@ $officeAppsList = [
    ════════════════════════════════════════════ */
 $sql_users_div = "
     SELECT d.division,
-       COALESCE(SUM(u.is_active = 1),0) AS total,
-       COALESCE(SUM(u.is_active = 1),0) AS active,
-       COALESCE(SUM(u.is_active = 0),0) AS inactive
-FROM divisions d
-LEFT JOIN users u ON u.division_id = d.id
-GROUP BY d.id, d.division
-ORDER BY d.id
+           COUNT(CASE WHEN u.is_active = 1 THEN 1 END) AS total,
+           COUNT(CASE WHEN u.is_active = 1 THEN 1 END) AS active,
+           COUNT(CASE WHEN u.is_active = 0 THEN 1 END) AS inactive
+    FROM divisions d
+    LEFT JOIN users u ON u.division_id = d.id
+    GROUP BY d.id, d.division
+    ORDER BY d.id
 ";
 $users_div_result = $conn->query($sql_users_div);
 $div_labels = $div_total = $div_active = $div_inactive = [];
@@ -77,12 +77,13 @@ $grand_inactive   = array_sum($div_inactive);
    ════════════════════════════════════════════ */
 $sql_pers_div = "
     SELECT d.division,
-           COUNT(p.id)          AS total,
-           SUM(p.is_active = 1) AS active,
-           SUM(p.is_active = 0) AS inactive
-    FROM   divisions d
+           COUNT(CASE WHEN p.is_active = 1 THEN 1 END) AS total,
+           COUNT(CASE WHEN p.is_active = 1 THEN 1 END) AS active,
+           COUNT(CASE WHEN p.is_active = 0 THEN 1 END) AS inactive
+    FROM divisions d
     LEFT JOIN personnels p ON p.division_id = d.id
-    GROUP  BY d.id, d.division ORDER BY d.id
+    GROUP BY d.id, d.division
+    ORDER BY d.id
 ";
 $pers_div_result = $conn->query($sql_pers_div);
 $pers_labels = $pers_total = $pers_active = $pers_inactive = [];
@@ -92,7 +93,7 @@ while ($row = $pers_div_result->fetch_assoc()) {
     $pers_active[]   = (int)$row['active'];
     $pers_inactive[] = (int)$row['inactive'];
 }
-$grand_pers_total = array_sum($pers_total);
+$grand_pers_active = array_sum($pers_active);
 
 /* ════════════════════════════════════════════
    3.  ALL DEVICES PER DIVISION
@@ -342,7 +343,7 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
         </div>
         <div class="kpi">
             <div class="kpi-label">Total Personnels</div>
-            <div class="kpi-value"><?= $grand_pers_total ?></div>
+            <div class="kpi-value"><?= $grand_pers_active ?></div>
             <div class="kpi-sub">across all divisions</div>
         </div>
         <div class="kpi">
