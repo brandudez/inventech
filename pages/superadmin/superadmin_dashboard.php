@@ -614,12 +614,12 @@ $office_chart_h = $office_count * 38 + 40;
 
             <!-- Win10 / Win11 KPI cards -->
             <div class="os-kpi-grid">
-                <div class="kpi kpi-win10" style="background:#f8f9fb;">
+                <div class="kpi kpi-win10" style="background:#f0efef;">
                     <div class="kpi-label" style="font-size:11px;font-weight:700;color:#7c85a0;text-transform:uppercase;letter-spacing:.06em;">Windows 10 Total</div>
                     <div class="kpi-value"><?= $win10 ?></div>
                     <div class="kpi-sub">across all editions</div>
                 </div>
-                <div class="kpi kpi-win11" style="background:#f8f9fb;">
+                <div class="kpi kpi-win11" style="background:#f0efef;">
                     <div class="kpi-label" style="font-size:11px;font-weight:700;color:#7c85a0;text-transform:uppercase;letter-spacing:.06em;">Windows 11 Total</div>
                     <div class="kpi-value"><?= $win11 ?></div>
                     <div class="kpi-sub">across all editions</div>
