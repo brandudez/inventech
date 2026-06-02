@@ -439,7 +439,7 @@
   cursor: pointer;
 }
 .btn-change:hover {
-  background: #f24040;
+  background: #d2e809;
   transform: translateY(-2px);
 }
 .btn-change {
@@ -450,9 +450,33 @@
   font-size: 13px;
   font-weight: 600;
   transition: 0.3s ease;
-  margin-left: 15px;
+  margin-left: 5px;
   display: inline-block;
-  background: #dc3434;
+  background: #f4b400;
+  box-shadow: 0 4px 10px rgba(13, 110, 168, 0.3);
+}
+/*DELETE BUTTON */
+.btn-delete {
+  background: #0d6ea8;
+  box-shadow: 0 4px 10px rgba(79, 195, 247, 0.3);
+  border: none;
+  cursor: pointer;
+}
+.btn-delete:hover {
+  background: #ff0000;
+  transform: translateY(-2px);
+}
+.btn-delete {
+  padding: 8px 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  transition: 0.3s ease;
+  margin-left: 5px;
+  display: inline-block;
+  background: #d51919;
   box-shadow: 0 4px 10px rgba(13, 110, 168, 0.3);
 }
 

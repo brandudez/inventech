@@ -136,10 +136,6 @@ $result = $data_stmt->get_result();
     <!-- HEADER NAVBAR -->
     <?php include 'admin_navbar.php' ; ?> 
 
-
-    <!-- ADD USER MODAL -->
-    <?php include("./modals/add_user_modal.php"); ?>
-
     <!-- MAIN -->
     <div class="main-container">
 

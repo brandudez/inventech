@@ -28,6 +28,7 @@ $devicesActive = in_array($currentPage, $devicePages);
         <span class="toggle-btn" id="toggleBtn">☰</span>
     </div>
 
+
     <!-- LOGO -->
     <img src="../../assets/img/ITMSLOGO.jpg" class="logo">
 
@@ -35,6 +36,14 @@ $devicesActive = in_array($currentPage, $devicePages);
     <h2 class="sidebar-title">ITMS InvenTech</h2>
 
     <!-- MENU -->
+
+        <!-- MENU -->
+    <a href="admin_dashboard.php"
+        class="<?= basename($_SERVER['PHP_SELF']) == 'admin_dashboard.php' ? 'active' : '' ?>">
+        <span class="icon"><i class="bi bi-grid-1x2"></i></span>
+        <span class="text">Dashboard</span>
+    </a>
+
     <a href="admin_user_create.php"
        class="<?= $currentPage == 'admin_user_create.php' ? 'active' : '' ?>">
         <span class="icon"><i class="bi bi-people"></i></span>
