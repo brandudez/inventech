@@ -265,7 +265,7 @@ body {
 }
 
 .btn-primary {
-  background: #008000;
+  background: #0fa90fd3;
   color: white;
   font-weight: 600;
   border: none;
@@ -570,7 +570,7 @@ body {
   transition: 0.3s ease;
   margin-left: 5px;
   display: inline-block;
-  background: #e5de00;
+  background: #f4b400;
   box-shadow: 0 4px 10px rgba(13, 110, 168, 0.3);
 }
 /*DELETE BUTTON */

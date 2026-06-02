@@ -17,33 +17,55 @@ include("../../config/db.php");
    KNOWN VALUE LISTS (from dropdowns)
    ════════════════════════════════════════════ */
 $osList = [
-    "Windows 10 Home","Windows 10 Home Single Language","Windows 10 Pro",
-    "Windows 10 Pro Education","Windows 10 Pro for Workstations",
-    "Windows 10 Enterprise","Windows 10 Enterprise LTSC",
-    "Windows 10 Education","Windows 10 IoT Enterprise",
-    "Windows 11 Home","Windows 11 Home Single Language","Windows 11 Pro",
-    "Windows 11 Pro Education","Windows 11 Pro for Workstations",
-    "Windows 11 Enterprise","Windows 11 Enterprise LTSC",
-    "Windows 11 Education","Windows 11 SE","Windows 11 IoT Enterprise"
+    "Windows 10 Home",
+    "Windows 10 Home Single Language",
+    "Windows 10 Pro",
+    "Windows 10 Pro Education",
+    "Windows 10 Pro for Workstations",
+    "Windows 10 Enterprise",
+    "Windows 10 Enterprise LTSC",
+    "Windows 10 Education",
+    "Windows 10 IoT Enterprise",
+    "Windows 11 Home",
+    "Windows 11 Home Single Language",
+    "Windows 11 Pro",
+    "Windows 11 Pro Education",
+    "Windows 11 Pro for Workstations",
+    "Windows 11 Enterprise",
+    "Windows 11 Enterprise LTSC",
+    "Windows 11 Education",
+    "Windows 11 SE",
+    "Windows 11 IoT Enterprise"
     // "Other" intentionally excluded — show every real edition only
 ];
 
 $officeAppsList = [
-    "Microsoft 365 Personal","Microsoft 365 Family",
-    "Microsoft 365 Business Basic","Microsoft 365 Business Standard",
-    "Microsoft 365 Business Premium","Microsoft 365 Apps for Business",
+    "Microsoft 365 Personal",
+    "Microsoft 365 Family",
+    "Microsoft 365 Business Basic",
+    "Microsoft 365 Business Standard",
+    "Microsoft 365 Business Premium",
+    "Microsoft 365 Apps for Business",
     "Microsoft 365 Apps for Enterprise",
-    "Microsoft Office Home 2024","Microsoft Office Home & Business 2024",
+    "Microsoft Office Home 2024",
+    "Microsoft Office Home & Business 2024",
     "Microsoft Office LTSC 2024",
-    "Microsoft Office Home & Student 2021","Microsoft Office Home & Business 2021",
-    "Microsoft Office Professional 2021","Microsoft Office LTSC 2021",
-    "Microsoft Office Home & Student 2019","Microsoft Office Home & Business 2019",
+    "Microsoft Office Home & Student 2021",
+    "Microsoft Office Home & Business 2021",
+    "Microsoft Office Professional 2021",
+    "Microsoft Office LTSC 2021",
+    "Microsoft Office Home & Student 2019",
+    "Microsoft Office Home & Business 2019",
     "Microsoft Office Professional Plus 2019",
-    "Microsoft Office Home & Student 2016","Microsoft Office Home & Business 2016",
+    "Microsoft Office Home & Student 2016",
+    "Microsoft Office Home & Business 2016",
     "Microsoft Office Professional Plus 2016",
-    "Microsoft Office Home & Student 2013","Microsoft Office Home & Business 2013",
+    "Microsoft Office Home & Student 2013",
+    "Microsoft Office Home & Business 2013",
     "Microsoft Office Professional Plus 2013",
-    "LibreOffice","Apache OpenOffice","WPS Office"
+    "LibreOffice",
+    "Apache OpenOffice",
+    "WPS Office"
     // "Other" intentionally excluded
 ];
 
@@ -98,7 +120,7 @@ $grand_pers_active = array_sum($pers_active);
 /* ════════════════════════════════════════════
    3.  ALL DEVICES PER DIVISION
    ════════════════════════════════════════════ */
-$device_tables = ['laptops','desktops','printers','cameras','headsets','switches','routers','firewalls'];
+$device_tables = ['laptops', 'desktops', 'printers', 'cameras', 'headsets', 'switches', 'routers', 'firewalls'];
 $device_maps = [];
 foreach ($device_tables as $table) {
     $result = $conn->query("
@@ -162,8 +184,14 @@ foreach ($os_count_map as $name => $cnt) {
 }
 $os_gen_labels = [];
 $os_gen_data   = [];
-if ($win10) { $os_gen_labels[] = 'Windows 10'; $os_gen_data[] = $win10; }
-if ($win11) { $os_gen_labels[] = 'Windows 11'; $os_gen_data[] = $win11; }
+if ($win10) {
+    $os_gen_labels[] = 'Windows 10';
+    $os_gen_data[] = $win10;
+}
+if ($win11) {
+    $os_gen_labels[] = 'Windows 11';
+    $os_gen_data[] = $win11;
+}
 
 /* ════════════════════════════════════════════
    5.  ENDPOINT SECURITY
@@ -211,7 +239,8 @@ $office_count  = count($office_labels); // always 26
 /* ════════════════════════════════════════════
    7.  OTHER DEVICE COUNTS
    ════════════════════════════════════════════ */
-function countTable($conn, $table) {
+function countTable($conn, $table)
+{
     $r = $conn->query("SELECT COUNT(*) AS c FROM `$table`");
     return (int)$r->fetch_assoc()['c'];
 }
@@ -222,7 +251,7 @@ $cnt_switches  = countTable($conn, 'switches');
 $cnt_routers   = countTable($conn, 'routers');
 $cnt_firewalls = countTable($conn, 'firewalls');
 $total_devices = $total_laptops + $total_desktops + $cnt_printers + $cnt_cameras
-               + $cnt_headsets + $cnt_switches + $cnt_routers + $cnt_firewalls;
+    + $cnt_headsets + $cnt_switches + $cnt_routers + $cnt_firewalls;
 
 $conn->close();
 
@@ -251,8 +280,8 @@ $j_ep_data       = json_encode($ep_data);
 $j_office_labels = json_encode($office_labels);
 $j_office_data   = json_encode($office_data);
 
-$j_other_labels  = json_encode(['Printers','Cameras','Headsets','Switches','Routers','Firewalls']);
-$j_other_data    = json_encode([$cnt_printers,$cnt_cameras,$cnt_headsets,$cnt_switches,$cnt_routers,$cnt_firewalls]);
+$j_other_labels  = json_encode(['Printers', 'Cameras', 'Headsets', 'Switches', 'Routers', 'Firewalls']);
+$j_other_data    = json_encode([$cnt_printers, $cnt_cameras, $cnt_headsets, $cnt_switches, $cnt_routers, $cnt_firewalls]);
 
 // Chart heights — 38px per bar
 $os_chart_h     = $os_all_count  * 38 + 40;   // 19 bars = ~762px
@@ -261,6 +290,7 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -271,15 +301,32 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
     <link rel="stylesheet" href="./css/superadmin_sidebar.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
-        .analytics-wrap { padding: 1.5rem 1.75rem 3rem; }
-        .page-title { font-size: 1.25rem; font-weight: 700; margin-bottom: .25rem; color: #1a1a2e; }
-        .page-sub   { font-size: 13px; color: #9ba3b8; margin-bottom: 1.75rem; }
+        .analytics-wrap {
+            padding: 1.5rem 1.75rem 3rem;
+        }
+
+        .page-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: .25rem;
+            color: #1a1a2e;
+        }
+
+        .page-sub {
+            font-size: 13px;
+            color: #9ba3b8;
+            margin-bottom: 1.75rem;
+        }
 
         .section-label {
-            font-size: 10.5px; font-weight: 700; color: #9ba3b8;
-            text-transform: uppercase; letter-spacing: .07em;
+            font-size: 10.5px;
+            font-weight: 700;
+            color: #9ba3b8;
+            text-transform: uppercase;
+            letter-spacing: .07em;
             border-bottom: 1px solid #eef0f6;
-            padding-bottom: 7px; margin: 2rem 0 1rem;
+            padding-bottom: 7px;
+            margin: 2rem 0 1rem;
         }
 
         .kpi-grid {
@@ -288,350 +335,597 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
             gap: 12px;
             margin-bottom: 2rem;
         }
+
         .kpi {
-            background: #f8f9fb; border: 1px solid #e8eaf0; border-radius: 12px;
-            padding: 18px 20px; display: flex; flex-direction: column; gap: 4px;
+            background: #f8f9fb;
+            border: 1px solid #e8eaf0;
+            border-radius: 12px;
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
-        .kpi-label { font-size: 11px; font-weight: 700; color: #7c85a0; text-transform: uppercase; letter-spacing: .06em; }
-        .kpi-value { font-size: 36px; font-weight: 800; color: #1a1a2e; line-height: 1.1; }
-        .kpi-sub   { font-size: 12px; color: #9ba3b8; }
 
-        .cc { background:#fff; border:1px solid #e8eaf0; border-radius:12px; padding:1.2rem 1.3rem; }
-        .cc-title { font-size:13.5px; font-weight:600; color:#1a1a2e; margin:0 0 2px; }
-        .cc-sub   { font-size:12px; color:#9ba3b8; margin:0 0 .85rem; }
+        .kpi-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #7c85a0;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
 
-        .g2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1rem; }
+        .kpi-value {
+            font-size: 36px;
+            font-weight: 800;
+            color: #1a1a2e;
+            line-height: 1.1;
+        }
+
+        .kpi-sub {
+            font-size: 12px;
+            color: #9ba3b8;
+        }
+
+        .cc {
+            background: #fff;
+            border: 1px solid #e8eaf0;
+            border-radius: 12px;
+            padding: 1.2rem 1.3rem;
+        }
+
+        .cc-title {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin: 0 0 2px;
+        }
+
+        .cc-sub {
+            font-size: 12px;
+            color: #9ba3b8;
+            margin: 0 0 .85rem;
+        }
+
+        .g2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
 
         .tab-btn {
-            background:none; border:1px solid #e8eaf0; border-radius:6px;
-            font-size:12px; font-weight:600; padding:4px 12px; cursor:pointer; color:#5f6680;
-            transition:all .15s;
+            background: none;
+            border: 1px solid #e8eaf0;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            cursor: pointer;
+            color: #5f6680;
+            transition: all .15s;
         }
-        .tab-btn.active { background:#1a1a2e; color:#fff; border-color:#1a1a2e; }
+
+        .tab-btn.active {
+            background: #1a1a2e;
+            color: #fff;
+            border-color: #1a1a2e;
+        }
 
         /* colour legend */
-        .clr-legend { display:flex; gap:14px; flex-wrap:wrap; font-size:11px; color:#5f6680; margin-bottom:10px; }
-        .clr-legend span { display:flex; align-items:center; gap:5px; }
-        .clr-legend i { width:10px; height:10px; border-radius:2px; display:inline-block; flex-shrink:0; }
+        .clr-legend {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            font-size: 11px;
+            color: #5f6680;
+            margin-bottom: 10px;
+        }
+
+        .clr-legend span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .clr-legend i {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            display: inline-block;
+            flex-shrink: 0;
+        }
 
         /* section divider inside a card for grouping */
         .group-divider {
-            font-size: 10px; font-weight: 700; color: #9ba3b8;
-            text-transform: uppercase; letter-spacing: .06em;
-            border-top: 1px dashed #eef0f6; margin: 6px 0 4px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #9ba3b8;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            border-top: 1px dashed #eef0f6;
+            margin: 6px 0 4px;
             padding-top: 6px;
         }
     </style>
 </head>
+
 <body>
 
-<?php include 'superadmin_sidebar.php'; ?>
-<?php include 'superadmin_navbar.php'; ?>
+    <?php include 'superadmin_sidebar.php'; ?>
+    <?php include 'superadmin_navbar.php'; ?>
 
-<div class="main">
-<div class="analytics-wrap">
+    <div class="main">
+        <div class="analytics-wrap">
 
-    <h1 class="page-title">📊 Analytics Overview</h1>
-    <p class="page-sub">Live inventory data — <?= date('F j, Y') ?></p>
+            <h1 class="page-title">Analytics Overview</h1>
+            <p class="page-sub">Live inventory data — <?= date('F j, Y') ?></p>
 
-    <!-- ── KPI STRIP ── -->
-    <div class="kpi-grid">
-        <div class="kpi">
-            <div class="kpi-label">Total System Users</div>
-            <div class="kpi-value"><?= $grand_total ?></div>
-            <div class="kpi-sub">across all divisions</div>
-        </div>
-        <div class="kpi">
-            <div class="kpi-label">Total Personnels</div>
-            <div class="kpi-value"><?= $grand_pers_active ?></div>
-            <div class="kpi-sub">across all divisions</div>
-        </div>
-        <div class="kpi">
-            <div class="kpi-label">Total Devices</div>
-            <div class="kpi-value"><?= $total_devices ?></div>
-            <div class="kpi-sub">across all types</div>
-        </div>
-    </div>
-
-    <!-- ── USERS / PERSONNELS PER DIVISION ── -->
-    <div class="section-label">System Users per Division</div>
-    <div style="display:flex;gap:6px;margin-bottom:1rem;">
-        <button class="tab-btn active" onclick="switchView('users', event)">Users</button>
-        <button class="tab-btn"        onclick="switchView('pers',  event)">Personnels</button>
-    </div>
-    <div class="cc mb-3">
-        <p class="cc-title" id="barTitle">Users per division</p>
-        <p class="cc-sub">Total headcount per unit</p>
-        <div style="position:relative;width:100%;height:280px;">
-            <canvas id="divBarChart"></canvas>
-        </div>
-    </div>
-
-    <!-- ── OTHER DEVICE INVENTORY ── -->
-    <div class="cc mb-3">
-        <p class="cc-title">Other device inventory</p>
-        <p class="cc-sub">Printers, cameras, headsets &amp; network devices</p>
-        <div style="position:relative;width:100%;height:220px;">
-            <canvas id="otherDevChart"></canvas>
-        </div>
-    </div>
-
-    <!-- ── ALL DEVICES PER DIVISION ── -->
-    <div class="section-label">All Devices per Division</div>
-    <div class="cc mb-3">
-        <p class="cc-title">All devices per division</p>
-        <p class="cc-sub">Grouped by device type per unit</p>
-        <div style="position:relative;width:100%;height:420px;">
-            <canvas id="devDivChart"></canvas>
-        </div>
-    </div>
-
-    <!-- ── OPERATING SYSTEMS ── -->
-    <div class="section-label">Operating Systems</div>
-    <div class="g2 mb-3">
-        <!-- hBar: ALL 19 editions -->
-        <div class="cc">
-            <p class="cc-title">All OS editions</p>
-            <p class="cc-sub">Every edition in the system — count per type</p>
-            <div class="clr-legend">
-                <span><i style="background:#3b82f6"></i>Windows 10</span>
-                <span><i style="background:#8b5cf6"></i>Windows 11</span>
+            <!-- ── KPI STRIP ── -->
+            <div class="kpi-grid">
+                <div class="kpi">
+                    <div class="kpi-label">Total Users</div>
+                    <div class="kpi-value"><?= $grand_total ?></div>
+                    <div class="kpi-sub">across all divisions</div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-label">Total Personnels</div>
+                    <div class="kpi-value"><?= $grand_pers_active ?></div>
+                    <div class="kpi-sub">across all divisions</div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-label">Total Devices</div>
+                    <div class="kpi-value"><?= $total_devices ?></div>
+                    <div class="kpi-sub">across all types</div>
+                </div>
             </div>
-            <div style="position:relative;width:100%;height:<?= $os_chart_h ?>px;">
-                <canvas id="osDetailChart"></canvas>
+
+            <!-- ── USERS / PERSONNELS PER DIVISION ── -->
+            <div class="section-label">Count per Division</div>
+            <div style="display:flex;gap:6px;margin-bottom:1rem;">
+                <button class="tab-btn active" onclick="switchView('users', event)">Users</button>
+                <button class="tab-btn" onclick="switchView('pers',  event)">Personnels</button>
             </div>
-        </div>
-    </div>
+            <div class="cc mb-3">
+                <p class="cc-title" id="barTitle">Users per division</p>
+                <p class="cc-sub">Total headcount</p>
+                <div style="position:relative;width:100%;height:280px;">
+                    <canvas id="divBarChart"></canvas>
+                </div>
+            </div>
 
-    <!-- ── ENDPOINT SECURITY ── -->
-    <div class="section-label">Endpoint Security</div>
-    <div class="cc mb-3">
-        <p class="cc-title">Antivirus solutions installed</p>
-        <p class="cc-sub">Count of devices per AV product</p>
-        <div style="position:relative;width:100%;height:<?= $ep_chart_h ?>px;">
-            <canvas id="epBarChart"></canvas>
-        </div>
-    </div>
+            <!-- ── OTHER DEVICE INVENTORY ── -->
+            <div class="cc mb-3">
+                <p class="cc-title">Device Count Inventory</p>
+                <p class="cc-sub">Total count</p>
+                <div style="position:relative;width:100%;height:220px;">
+                    <canvas id="otherDevChart"></canvas>
+                </div>
+            </div>
 
-    <!-- ── OFFICE APPLICATIONS — all 26 one-by-one ── -->
-    <div class="section-label">Office Applications</div>
-    <div class="cc mb-3">
-        <p class="cc-title">Office application distribution</p>
-        <p class="cc-sub">Every application in the system — count per type</p>
+            <!-- ── ALL DEVICES PER DIVISION ── -->
+            <div class="section-label">All Devices per Division</div>
+            <div class="cc mb-3">
+                <p class="cc-title">All devices per division</p>
+                <p class="cc-sub">Grouped by device type per unit</p>
+                <div style="position:relative;width:100%;height:420px;">
+                    <canvas id="devDivChart"></canvas>
+                </div>
+            </div>
 
-        <!-- colour legend for version families -->
-        <div class="clr-legend">
-            <span><i style="background:#0078d4"></i>Microsoft 365</span>
-            <span><i style="background:#107c41"></i>Office 2024</span>
-            <span><i style="background:#217346"></i>Office 2021</span>
-            <span><i style="background:#d83b01"></i>Office 2019</span>
-            <span><i style="background:#ca5010"></i>Office 2016</span>
-            <span><i style="background:#986f0b"></i>Office 2013</span>
-            <span><i style="background:#6366f1"></i>Alternatives</span>
-        </div>
+            <!-- ── OPERATING SYSTEMS ── -->
+            <div class="section-label">Operating Systems</div>
+            <div class="g2 mb-3">
+                <!-- hBar: ALL 19 editions -->
+                <div class="cc">
+                    <p class="cc-title">All OS editions</p>
+                    <p class="cc-sub">Every edition in the system — count per type</p>
+                    <div class="clr-legend">
+                        <span><i style="background:#3b82f6"></i>Windows 10</span>
+                        <span><i style="background:#8b5cf6"></i>Windows 11</span>
+                    </div>
+                    <div style="position:relative;width:100%;height:<?= $os_chart_h ?>px;">
+                        <canvas id="osDetailChart"></canvas>
+                    </div>
+                </div>
+            </div>
 
-        <div style="position:relative;width:100%;height:<?= $office_chart_h ?>px;">
-            <canvas id="officeChart"></canvas>
-        </div>
-    </div>
+            <!-- ── ENDPOINT SECURITY ── -->
+            <div class="section-label">Endpoint Security</div>
+            <div class="cc mb-3">
+                <p class="cc-title">Antivirus solutions installed</p>
+                <p class="cc-sub">Count of devices per AV product</p>
+                <div style="position:relative;width:100%;height:<?= $ep_chart_h ?>px;">
+                    <canvas id="epBarChart"></canvas>
+                </div>
+            </div>
 
-</div><!-- /analytics-wrap -->
-</div><!-- /main -->
+            <!-- ── OFFICE APPLICATIONS — all 26 one-by-one ── -->
+            <div class="section-label">Office Applications</div>
+            <div class="cc mb-3">
+                <p class="cc-title">Office application distribution</p>
+                <p class="cc-sub">Every application in the system — count per type</p>
 
-<script>
-const DIV_LABELS    = <?= $j_div_labels ?>;
-const DIV_TOTAL     = <?= $j_div_total ?>;
-const PERS_TOTAL    = <?= $j_pers_total ?>;
+                <!-- colour legend for version families -->
+                <div class="clr-legend">
+                    <span><i style="background:#0078d4"></i>Microsoft 365</span>
+                    <span><i style="background:#107c41"></i>Office 2024</span>
+                    <span><i style="background:#217346"></i>Office 2021</span>
+                    <span><i style="background:#d83b01"></i>Office 2019</span>
+                    <span><i style="background:#ca5010"></i>Office 2016</span>
+                    <span><i style="background:#986f0b"></i>Office 2013</span>
+                    <span><i style="background:#6366f1"></i>Alternatives</span>
+                </div>
 
-const DEV_LAPTOPS   = <?= $j_dev_laptops ?>;
-const DEV_DESKTOPS  = <?= $j_dev_desktops ?>;
-const DEV_PRINTERS  = <?= $j_dev_printers ?>;
-const DEV_CAMERAS   = <?= $j_dev_cameras ?>;
-const DEV_HEADSETS  = <?= $j_dev_headsets ?>;
-const DEV_SWITCHES  = <?= $j_dev_switches ?>;
-const DEV_ROUTERS   = <?= $j_dev_routers ?>;
-const DEV_FIREWALLS = <?= $j_dev_firewalls ?>;
+                <div style="position:relative;width:100%;height:<?= $office_chart_h ?>px;">
+                    <canvas id="officeChart"></canvas>
+                </div>
+            </div>
 
-const OS_GEN_LABELS  = <?= $j_os_gen_labels ?>;
-const OS_GEN_DATA    = <?= $j_os_gen_data ?>;
-const OS_ALL_LABELS  = <?= $j_os_all_labels ?>;
-const OS_ALL_DATA    = <?= $j_os_all_data ?>;
+        </div><!-- /analytics-wrap -->
+    </div><!-- /main -->
 
-const EP_LABELS      = <?= $j_ep_labels ?>;
-const EP_DATA        = <?= $j_ep_data ?>;
+    <script>
+        const DIV_LABELS = <?= $j_div_labels ?>;
+        const DIV_TOTAL = <?= $j_div_total ?>;
+        const PERS_TOTAL = <?= $j_pers_total ?>;
 
-const OFFICE_LABELS  = <?= $j_office_labels ?>;
-const OFFICE_DATA    = <?= $j_office_data ?>;
+        const DEV_LAPTOPS = <?= $j_dev_laptops ?>;
+        const DEV_DESKTOPS = <?= $j_dev_desktops ?>;
+        const DEV_PRINTERS = <?= $j_dev_printers ?>;
+        const DEV_CAMERAS = <?= $j_dev_cameras ?>;
+        const DEV_HEADSETS = <?= $j_dev_headsets ?>;
+        const DEV_SWITCHES = <?= $j_dev_switches ?>;
+        const DEV_ROUTERS = <?= $j_dev_routers ?>;
+        const DEV_FIREWALLS = <?= $j_dev_firewalls ?>;
 
-const OTHER_LABELS   = <?= $j_other_labels ?>;
-const OTHER_DATA     = <?= $j_other_data ?>;
+        const OS_GEN_LABELS = <?= $j_os_gen_labels ?>;
+        const OS_GEN_DATA = <?= $j_os_gen_data ?>;
+        const OS_ALL_LABELS = <?= $j_os_all_labels ?>;
+        const OS_ALL_DATA = <?= $j_os_all_data ?>;
 
-/* ── helpers ── */
-const GRID = 'rgba(0,0,0,.05)';
-const TICK = '#9ba3b8';
+        const EP_LABELS = <?= $j_ep_labels ?>;
+        const EP_DATA = <?= $j_ep_data ?>;
 
-const OTHER_COLORS = ['#6366f1','#f97316','#14b8a6','#3b82f6','#10b981','#ef4444'];
-const EP_COLORS    = ['#3b82f6','#f59e0b','#10b981','#ec4899','#8b5cf6','#ef4444','#6b7280','#14b8a6'];
+        const OFFICE_LABELS = <?= $j_office_labels ?>;
+        const OFFICE_DATA = <?= $j_office_data ?>;
 
-function osColor(label) {
-    if (label.startsWith('Windows 10')) return '#3b82f6';
-    if (label.startsWith('Windows 11')) return '#8b5cf6';
-    return '#9ba3b8';
-}
+        const OTHER_LABELS = <?= $j_other_labels ?>;
+        const OTHER_DATA = <?= $j_other_data ?>;
 
-function officeColor(label) {
-    if (label.includes('365'))                                              return '#0078d4';
-    if (label.includes('2024'))                                             return '#107c41';
-    if (label.includes('2021'))                                             return '#217346';
-    if (label.includes('2019'))                                             return '#d83b01';
-    if (label.includes('2016'))                                             return '#ca5010';
-    if (label.includes('2013'))                                             return '#986f0b';
-    if (['LibreOffice','Apache OpenOffice','WPS Office'].includes(label))   return '#6366f1';
-    return '#9ba3b8';
-}
+        /* ── helpers ── */
+        const GRID = 'rgba(0,0,0,.05)';
+        const TICK = '#9ba3b8';
 
-function hBar(tickSize) {
-    tickSize = tickSize || 11;
-    return {
-        indexAxis:'y', responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ display:false } },
-        scales:{
-            x:{ ticks:{color:TICK,font:{size:tickSize}}, grid:{color:GRID}, beginAtZero:true },
-            y:{ ticks:{color:TICK,font:{size:tickSize}}, grid:{display:false} }
+        const OTHER_COLORS = ['#6366f1', '#f97316', '#14b8a6', '#3b82f6', '#10b981', '#ef4444'];
+        const EP_COLORS = ['#3b82f6', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#ef4444', '#6b7280', '#14b8a6'];
+
+        function osColor(label) {
+            if (label.startsWith('Windows 10')) return '#3b82f6';
+            if (label.startsWith('Windows 11')) return '#8b5cf6';
+            return '#9ba3b8';
         }
-    };
-}
-function vBar(stacked) {
-    return {
-        responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ display:false } },
-        scales:{
-            x:{ stacked, ticks:{color:TICK,font:{size:10}}, grid:{color:GRID} },
-            y:{ stacked, ticks:{color:TICK,font:{size:11}}, grid:{color:GRID}, beginAtZero:true }
+
+        function officeColor(label) {
+            if (label.includes('365')) return '#0078d4';
+            if (label.includes('2024')) return '#107c41';
+            if (label.includes('2021')) return '#217346';
+            if (label.includes('2019')) return '#d83b01';
+            if (label.includes('2016')) return '#ca5010';
+            if (label.includes('2013')) return '#986f0b';
+            if (['LibreOffice', 'Apache OpenOffice', 'WPS Office'].includes(label)) return '#6366f1';
+            return '#9ba3b8';
         }
-    };
-}
-function doughnut() {
-    return { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, cutout:'60%' };
-}
 
-/* 1. Division bar */
-let divBarChart = new Chart(document.getElementById('divBarChart'), {
-    type:'bar',
-    data:{ labels:DIV_LABELS, datasets:[{
-        label:'Users', data:DIV_TOTAL,
-        backgroundColor:'#3b82f6', borderRadius:4, borderSkipped:false
-    }]},
-    options:vBar(false)
-});
-
-/* 2. Other devices */
-new Chart(document.getElementById('otherDevChart'), {
-    type:'bar',
-    data:{ labels:OTHER_LABELS, datasets:[{
-        label:'Count', data:OTHER_DATA,
-        backgroundColor:OTHER_COLORS, borderRadius:4, borderSkipped:false
-    }]},
-    options:{ ...vBar(false), plugins:{ legend:{ display:false } } }
-});
-
-/* 3. All devices per division */
-new Chart(document.getElementById('devDivChart'), {
-    type:'bar',
-    data:{
-        labels:DIV_LABELS,
-        datasets:[
-            { label:'Laptops',   data:DEV_LAPTOPS,   backgroundColor:'#3b82f6' },
-            { label:'Desktops',  data:DEV_DESKTOPS,  backgroundColor:'#8b5cf6' },
-            { label:'Printers',  data:DEV_PRINTERS,  backgroundColor:'#f59e0b' },
-            { label:'Cameras',   data:DEV_CAMERAS,   backgroundColor:'#10b981' },
-            { label:'Headsets',  data:DEV_HEADSETS,  backgroundColor:'#ec4899' },
-            { label:'Switches',  data:DEV_SWITCHES,  backgroundColor:'#6366f1' },
-            { label:'Routers',   data:DEV_ROUTERS,   backgroundColor:'#14b8a6' },
-            { label:'Firewalls', data:DEV_FIREWALLS, backgroundColor:'#ef4444' }
-        ].map(ds => ({ ...ds, borderRadius:4, borderSkipped:false }))
-    },
-    options:{
-        responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ display:true, position:'top', labels:{ boxWidth:12, font:{size:11} } } },
-        scales:{
-            x:{ ticks:{color:TICK,font:{size:10}}, grid:{color:GRID} },
-            y:{ beginAtZero:true, ticks:{color:TICK,font:{size:11}}, grid:{color:GRID} }
+        function hBar(tickSize) {
+            tickSize = tickSize || 11;
+            return {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: TICK,
+                            font: {
+                                size: tickSize
+                            }
+                        },
+                        grid: {
+                            color: GRID
+                        },
+                        beginAtZero: true
+                    },
+                    y: {
+                        ticks: {
+                            color: TICK,
+                            font: {
+                                size: tickSize
+                            }
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            };
         }
-    }
-});
 
-/* 4. OS generation doughnut */
-new Chart(document.getElementById('osGenChart'), {
-    type:'doughnut',
-    data:{ labels:OS_GEN_LABELS, datasets:[{
-        data:OS_GEN_DATA,
-        backgroundColor:['#3b82f6','#8b5cf6'],
-        borderWidth:0, hoverOffset:6
-    }]},
-    options:doughnut()
-});
+        function vBar(stacked) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked,
+                        ticks: {
+                            color: TICK,
+                            font: {
+                                size: 10
+                            }
+                        },
+                        grid: {
+                            color: GRID
+                        }
+                    },
+                    y: {
+                        stacked,
+                        ticks: {
+                            color: TICK,
+                            font: {
+                                size: 11
+                            }
+                        },
+                        grid: {
+                            color: GRID
+                        },
+                        beginAtZero: true
+                    }
+                }
+            };
+        }
 
-/* 5. OS editions — all 19, colour by generation */
-new Chart(document.getElementById('osDetailChart'), {
-    type:'bar',
-    data:{ labels:OS_ALL_LABELS, datasets:[{
-        label:'Devices', data:OS_ALL_DATA,
-        backgroundColor:OS_ALL_LABELS.map(osColor),
-        borderRadius:4, borderSkipped:false
-    }]},
-    options: hBar(11)
-});
+        function doughnut() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                cutout: '60%'
+            };
+        }
 
-/* 6. Endpoint security bar */
-new Chart(document.getElementById('epBarChart'), {
-    type:'bar',
-    data:{ labels:EP_LABELS, datasets:[{
-        label:'Devices', data:EP_DATA,
-        backgroundColor:EP_COLORS, borderRadius:4, borderSkipped:false
-    }]},
-    options:hBar(11)
-});
+        /* 1. Division bar */
+        let divBarChart = new Chart(document.getElementById('divBarChart'), {
+            type: 'bar',
+            data: {
+                labels: DIV_LABELS,
+                datasets: [{
+                    label: 'Users',
+                    data: DIV_TOTAL,
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 4,
+                    borderSkipped: false
+                }]
+            },
+            options: vBar(false)
+        });
 
-/* 7. Office apps — all 26, colour by version family */
-new Chart(document.getElementById('officeChart'), {
-    type:'bar',
-    data:{
-        labels:OFFICE_LABELS,
-        datasets:[{
-            label:'Devices',
-            data:OFFICE_DATA,
-            backgroundColor:OFFICE_LABELS.map(officeColor),
-            borderRadius:4,
-            borderSkipped:false
-        }]
-    },
-    options: hBar(11)
-});
+        /* 2. Other devices */
+        new Chart(document.getElementById('otherDevChart'), {
+            type: 'bar',
+            data: {
+                labels: OTHER_LABELS,
+                datasets: [{
+                    label: 'Count',
+                    data: OTHER_DATA,
+                    backgroundColor: OTHER_COLORS,
+                    borderRadius: 4,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                ...vBar(false),
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
 
-/* TAB TOGGLE */
-function switchView(view, e) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    e.target.classList.add('active');
-    const isUsers = view === 'users';
-    document.getElementById('barTitle').textContent = isUsers ? 'Users per division' : 'Personnels per division';
-    divBarChart.data.datasets[0].data  = isUsers ? DIV_TOTAL : PERS_TOTAL;
-    divBarChart.data.datasets[0].label = isUsers ? 'Users' : 'Personnels';
-    divBarChart.update();
-}
-</script>
+        /* 3. All devices per division */
+        new Chart(document.getElementById('devDivChart'), {
+            type: 'bar',
+            data: {
+                labels: DIV_LABELS,
+                datasets: [{
+                        label: 'Laptops',
+                        data: DEV_LAPTOPS,
+                        backgroundColor: '#3b82f6'
+                    },
+                    {
+                        label: 'Desktops',
+                        data: DEV_DESKTOPS,
+                        backgroundColor: '#8b5cf6'
+                    },
+                    {
+                        label: 'Printers',
+                        data: DEV_PRINTERS,
+                        backgroundColor: '#f59e0b'
+                    },
+                    {
+                        label: 'Cameras',
+                        data: DEV_CAMERAS,
+                        backgroundColor: '#10b981'
+                    },
+                    {
+                        label: 'Headsets',
+                        data: DEV_HEADSETS,
+                        backgroundColor: '#ec4899'
+                    },
+                    {
+                        label: 'Switches',
+                        data: DEV_SWITCHES,
+                        backgroundColor: '#6366f1'
+                    },
+                    {
+                        label: 'Routers',
+                        data: DEV_ROUTERS,
+                        backgroundColor: '#14b8a6'
+                    },
+                    {
+                        label: 'Firewalls',
+                        data: DEV_FIREWALLS,
+                        backgroundColor: '#ef4444'
+                    }
+                ].map(ds => ({
+                    ...ds,
+                    borderRadius: 4,
+                    borderSkipped: false
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            boxWidth: 12,
+                            font: {
+                                size: 11
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: TICK,
+                            font: {
+                                size: 10
+                            }
+                        },
+                        grid: {
+                            color: GRID
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: TICK,
+                            font: {
+                                size: 11
+                            }
+                        },
+                        grid: {
+                            color: GRID
+                        }
+                    }
+                }
+            }
+        });
 
-<script>
-/* SIDEBAR TOGGLE */
-const sidebarEl = document.getElementById("sidebar");
-const hamburger = document.querySelector(".hamburger");
-if (sidebarEl && hamburger) {
-    if (localStorage.getItem("sidebar") === "collapsed") sidebarEl.classList.add("collapsed");
-    hamburger.addEventListener("click", () => {
-        sidebarEl.classList.toggle("collapsed");
-        localStorage.setItem("sidebar", sidebarEl.classList.contains("collapsed") ? "collapsed" : "expanded");
-    });
-}
-</script>
+        /* 4. OS generation doughnut */
+        new Chart(document.getElementById('osGenChart'), {
+            type: 'doughnut',
+            data: {
+                labels: OS_GEN_LABELS,
+                datasets: [{
+                    data: OS_GEN_DATA,
+                    backgroundColor: ['#3b82f6', '#8b5cf6'],
+                    borderWidth: 0,
+                    hoverOffset: 6
+                }]
+            },
+            options: doughnut()
+        });
+
+        /* 5. OS editions — all 19, colour by generation */
+        new Chart(document.getElementById('osDetailChart'), {
+            type: 'bar',
+            data: {
+                labels: OS_ALL_LABELS,
+                datasets: [{
+                    label: 'Devices',
+                    data: OS_ALL_DATA,
+                    backgroundColor: OS_ALL_LABELS.map(osColor),
+                    borderRadius: 4,
+                    borderSkipped: false
+                }]
+            },
+            options: hBar(11)
+        });
+
+        /* 6. Endpoint security bar */
+        new Chart(document.getElementById('epBarChart'), {
+            type: 'bar',
+            data: {
+                labels: EP_LABELS,
+                datasets: [{
+                    label: 'Devices',
+                    data: EP_DATA,
+                    backgroundColor: EP_COLORS,
+                    borderRadius: 4,
+                    borderSkipped: false
+                }]
+            },
+            options: hBar(11)
+        });
+
+        /* 7. Office apps — all 26, colour by version family */
+        new Chart(document.getElementById('officeChart'), {
+            type: 'bar',
+            data: {
+                labels: OFFICE_LABELS,
+                datasets: [{
+                    label: 'Devices',
+                    data: OFFICE_DATA,
+                    backgroundColor: OFFICE_LABELS.map(officeColor),
+                    borderRadius: 4,
+                    borderSkipped: false
+                }]
+            },
+            options: hBar(11)
+        });
+
+        /* TAB TOGGLE */
+        function switchView(view, e) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            const isUsers = view === 'users';
+            document.getElementById('barTitle').textContent = isUsers ? 'Users per division' : 'Personnels per division';
+            divBarChart.data.datasets[0].data = isUsers ? DIV_TOTAL : PERS_TOTAL;
+            divBarChart.data.datasets[0].label = isUsers ? 'Users' : 'Personnels';
+            divBarChart.update();
+        }
+    </script>
+
+    <script>
+        /* SIDEBAR TOGGLE */
+        const sidebarEl = document.getElementById("sidebar");
+        const hamburger = document.querySelector(".hamburger");
+        if (sidebarEl && hamburger) {
+            if (localStorage.getItem("sidebar") === "collapsed") sidebarEl.classList.add("collapsed");
+            hamburger.addEventListener("click", () => {
+                sidebarEl.classList.toggle("collapsed");
+                localStorage.setItem("sidebar", sidebarEl.classList.contains("collapsed") ? "collapsed" : "expanded");
+            });
+        }
+    </script>
 </body>
+
 </html>
