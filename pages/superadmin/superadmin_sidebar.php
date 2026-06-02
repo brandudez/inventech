@@ -137,56 +137,116 @@
     const toggleBtn = document.getElementById("toggleBtn");
     const sidebar = document.getElementById("sidebar");
 
-    /* ===== LOAD SIDEBAR STATE ===== */
+    /* =========================
+       LOAD SIDEBAR STATE
+    ========================= */
     if (localStorage.getItem("sidebar") === "collapsed") {
-
         sidebar.classList.add("collapsed");
-
     }
 
-    /* ===== TOGGLE SIDEBAR ===== */
+    /* =========================
+       RESTORE SCROLL POSITION
+    ========================= */
+    window.addEventListener("load", () => {
+
+        const savedScroll =
+            localStorage.getItem("sidebarScroll");
+
+        if (savedScroll !== null) {
+
+            sidebar.scrollTop = parseInt(savedScroll);
+
+        }
+
+    });
+
+    /* =========================
+       SAVE SCROLL POSITION
+    ========================= */
+    sidebar.addEventListener("scroll", () => {
+
+        localStorage.setItem(
+            "sidebarScroll",
+            sidebar.scrollTop
+        );
+
+    });
+
+    /* =========================
+       SAVE POSITION BEFORE LINK CLICK
+    ========================= */
+    document.querySelectorAll(".sidebar a").forEach(link => {
+
+        link.addEventListener("click", () => {
+
+            localStorage.setItem(
+                "sidebarScroll",
+                sidebar.scrollTop
+            );
+
+        });
+
+    });
+
+    /* =========================
+       TOGGLE SIDEBAR
+    ========================= */
     toggleBtn.addEventListener("click", () => {
 
         sidebar.classList.toggle("collapsed");
 
         if (sidebar.classList.contains("collapsed")) {
 
-            localStorage.setItem("sidebar", "collapsed");
+            localStorage.setItem(
+                "sidebar",
+                "collapsed"
+            );
 
         } else {
 
-            localStorage.setItem("sidebar", "expanded");
+            localStorage.setItem(
+                "sidebar",
+                "expanded"
+            );
 
         }
 
     });
 
-    /* ===== DEVICE DROPDOWN ===== */
+    /* =========================
+       DEVICE DROPDOWN
+    ========================= */
     const deviceDropdownBtn =
         document.getElementById("deviceDropdownBtn");
 
     const deviceDropdown =
         document.getElementById("deviceDropdown");
 
-    /* ===== LOAD DROPDOWN STATE ===== */
+    /* LOAD DROPDOWN STATE */
     if (localStorage.getItem("devicesDropdown") === "open") {
 
         deviceDropdown.classList.add("show");
 
     }
 
-    /* ===== TOGGLE DROPDOWN ===== */
+    /* TOGGLE DROPDOWN */
     deviceDropdownBtn.addEventListener("click", () => {
 
         deviceDropdown.classList.toggle("show");
 
         if (deviceDropdown.classList.contains("show")) {
 
-            localStorage.setItem("devicesDropdown", "open");
+            localStorage.setItem(
+                "devicesDropdown",
+                "open"
+            );
 
         } else {
 
-            localStorage.setItem("devicesDropdown", "closed");
+            localStorage.setItem(
+                "devicesDropdown",
+                "closed"
+            );
 
         }
 
