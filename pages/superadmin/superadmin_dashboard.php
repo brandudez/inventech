@@ -36,7 +36,6 @@ $osList = [
     "Windows 11 Education",
     "Windows 11 SE",
     "Windows 11 IoT Enterprise"
-    // "Other" intentionally excluded — show every real edition only
 ];
 
 $officeAppsList = [
@@ -66,7 +65,6 @@ $officeAppsList = [
     "LibreOffice",
     "Apache OpenOffice",
     "WPS Office"
-    // "Other" intentionally excluded
 ];
 
 /* ════════════════════════════════════════════
@@ -90,9 +88,9 @@ while ($row = $users_div_result->fetch_assoc()) {
     $div_active[]   = (int)$row['active'];
     $div_inactive[] = (int)$row['inactive'];
 }
-$grand_total      = array_sum($div_active); // active users only
-$grand_active     = array_sum($div_active);
-$grand_inactive   = array_sum($div_inactive);
+$grand_total    = array_sum($div_active);
+$grand_active   = array_sum($div_active);
+$grand_inactive = array_sum($div_inactive);
 
 /* ════════════════════════════════════════════
    2.  PERSONNELS PER DIVISION
@@ -152,9 +150,8 @@ $total_routers   = array_sum($dev_routers);
 $total_firewalls = array_sum($dev_firewalls);
 
 /* ════════════════════════════════════════════
-   4.  OS — ALL editions from list, every one shown
+   4.  OS — ALL editions from list
    ════════════════════════════════════════════ */
-// Seed every known edition to 0
 $os_count_map = array_fill_keys($osList, 0);
 
 $r = $conn->query("
@@ -167,16 +164,13 @@ while ($row = $r->fetch_assoc()) {
     if (array_key_exists($key, $os_count_map)) {
         $os_count_map[$key] += (int)$row['cnt'];
     }
-    // unknown values silently ignored — no "Other" bucket
 }
 
-// Sort highest to lowest, then extract
 arsort($os_count_map);
 $os_all_labels = array_keys($os_count_map);
 $os_all_data   = array_values($os_count_map);
-$os_all_count  = count($os_all_labels);        // always 19
+$os_all_count  = count($os_all_labels);
 
-// Win10 / Win11 split for doughnut
 $win10 = $win11 = 0;
 foreach ($os_count_map as $name => $cnt) {
     if (str_starts_with($name, 'Windows 10'))     $win10 += $cnt;
@@ -209,7 +203,7 @@ while ($row = $r->fetch_assoc()) {
 }
 
 /* ════════════════════════════════════════════
-   6.  OFFICE APPS — ALL from list, every one shown
+   6.  OFFICE APPS
    ════════════════════════════════════════════ */
 $office_count_map = array_fill_keys($officeAppsList, 0);
 
@@ -227,14 +221,12 @@ while ($row = $r->fetch_assoc()) {
     if (array_key_exists($key, $office_count_map)) {
         $office_count_map[$key] += (int)$row['cnt'];
     }
-    // unknown values silently ignored
 }
 
-// Sort highest to lowest, then extract
 arsort($office_count_map);
 $office_labels = array_keys($office_count_map);
 $office_data   = array_values($office_count_map);
-$office_count  = count($office_labels); // always 26
+$office_count  = count($office_labels);
 
 /* ════════════════════════════════════════════
    7.  OTHER DEVICE COUNTS
@@ -250,9 +242,23 @@ $cnt_headsets  = countTable($conn, 'headsets');
 $cnt_switches  = countTable($conn, 'switches');
 $cnt_routers   = countTable($conn, 'routers');
 $cnt_firewalls = countTable($conn, 'firewalls');
-$total_devices = $total_laptops + $total_desktops + $cnt_printers + $cnt_cameras
-    + $cnt_headsets + $cnt_switches + $cnt_routers + $cnt_firewalls;
 
+// Sort Device Count Inventory highest to lowest
+$inventory = [
+    'Laptops'   => $total_laptops,
+    'Desktops'  => $total_desktops,
+    'Printers'  => $cnt_printers,
+    'Cameras'   => $cnt_cameras,
+    'Headsets'  => $cnt_headsets,
+    'Switches'  => $cnt_switches,
+    'Routers'   => $cnt_routers,
+    'Firewalls' => $cnt_firewalls,
+];
+arsort($inventory);
+$inventory_labels = array_keys($inventory);
+$inventory_data   = array_values($inventory);
+$j_inventory_labels = json_encode($inventory_labels);
+$j_inventory_data   = json_encode($inventory_data);
 $conn->close();
 
 /* ─── PHP → JS ─── */
@@ -280,13 +286,9 @@ $j_ep_data       = json_encode($ep_data);
 $j_office_labels = json_encode($office_labels);
 $j_office_data   = json_encode($office_data);
 
-$j_other_labels  = json_encode(['Printers', 'Cameras', 'Headsets', 'Switches', 'Routers', 'Firewalls']);
-$j_other_data    = json_encode([$cnt_printers, $cnt_cameras, $cnt_headsets, $cnt_switches, $cnt_routers, $cnt_firewalls]);
-
-// Chart heights — 38px per bar
-$os_chart_h     = $os_all_count  * 38 + 40;   // 19 bars = ~762px
+$os_chart_h     = $os_all_count  * 38 + 40;
 $ep_chart_h     = max(200, count($ep_labels) * 42 + 40);
-$office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
+$office_chart_h = $office_count * 38 + 40;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -314,14 +316,14 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
 
         .page-sub {
             font-size: 13px;
-            color: #9ba3b8;
+            color: #717681;
             margin-bottom: 1.75rem;
         }
 
         .section-label {
             font-size: 10.5px;
             font-weight: 700;
-            color: #9ba3b8;
+            color: #3f4145;
             text-transform: uppercase;
             letter-spacing: .07em;
             border-bottom: 1px solid #eef0f6;
@@ -329,33 +331,91 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
             margin: 2rem 0 1rem;
         }
 
+        /* ── KPI GRID ── */
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 12px;
             margin-bottom: 2rem;
         }
 
         .kpi {
-            background: #f8f9fb;
-            border: 1px solid #e8eaf0;
-            border-radius: 12px;
-            padding: 18px 20px;
+            background: #f0efef;
+            border: 1px solid #e2e4ec;
+            border-radius: 14px;
+            padding: 20px 22px;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 6px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
-        .kpi-label {
+        .kpi-icon-bg {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+        }
+
+        .kpi-users .kpi-icon-bg {
+            background: #dbeafe;
+        }
+
+        .kpi-pers .kpi-icon-bg {
+            background: #ede9fe;
+        }
+
+        /* coloured pill tag */
+        .kpi-tag {
             font-size: 11px;
             font-weight: 700;
-            color: #7c85a0;
-            text-transform: uppercase;
             letter-spacing: .06em;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 99px;
+            width: fit-content;
+        }
+
+        .kpi-users .kpi-tag {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .kpi-pers .kpi-tag {
+            background: #f5f3ff;
+            color: #6d28d9;
+        }
+
+        /* short accent bar */
+        .kpi-divider {
+            width: 28px;
+            height: 3px;
+            border-radius: 99px;
+            margin: 2px 0;
+        }
+
+        .kpi-users .kpi-divider {
+            background: #3b82f6;
+        }
+
+        .kpi-pers .kpi-divider {
+            background: #8b5cf6;
         }
 
         .kpi-value {
-            font-size: 36px;
+            font-size: 38px;
             font-weight: 800;
             color: #1a1a2e;
             line-height: 1.1;
@@ -366,11 +426,38 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
             color: #9ba3b8;
         }
 
+        /* ── OS KPI strip ── */
+        .os-kpi-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .kpi-win10 {
+            border-left: 4px solid #3b82f6;
+            border-radius: 12px;
+        }
+
+        .kpi-win11 {
+            border-left: 4px solid #8b5cf6;
+            border-radius: 12px;
+        }
+
+        .kpi-win10 .kpi-value {
+            color: #3b82f6;
+        }
+
+        .kpi-win11 .kpi-value {
+            color: #8b5cf6;
+        }
+
         .cc {
-            background: #fff;
+            background: #f0efef;
             border: 1px solid #e8eaf0;
             border-radius: 12px;
             padding: 1.2rem 1.3rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .cc-title {
@@ -382,7 +469,7 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
 
         .cc-sub {
             font-size: 12px;
-            color: #9ba3b8;
+            color: #525762;
             margin: 0 0 .85rem;
         }
 
@@ -410,7 +497,6 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
             border-color: #1a1a2e;
         }
 
-        /* colour legend */
         .clr-legend {
             display: flex;
             gap: 14px;
@@ -433,18 +519,6 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
             display: inline-block;
             flex-shrink: 0;
         }
-
-        /* section divider inside a card for grouping */
-        .group-divider {
-            font-size: 10px;
-            font-weight: 700;
-            color: #9ba3b8;
-            text-transform: uppercase;
-            letter-spacing: .06em;
-            border-top: 1px dashed #eef0f6;
-            margin: 6px 0 4px;
-            padding-top: 6px;
-        }
     </style>
 </head>
 
@@ -461,21 +535,45 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
 
             <!-- ── KPI STRIP ── -->
             <div class="kpi-grid">
-                <div class="kpi">
-                    <div class="kpi-label">Total Users</div>
+
+                <!-- Total Users -->
+                <div class="kpi kpi-users">
+                    <div class="kpi-icon-bg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-1a4 4 0 00-5.196-3.796M9 20H4v-1a4 4 0 015.196-3.796M15 7a4 4 0 11-8 0 4 4 0 018 0zm6 4a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </div>
+                    <div class="kpi-tag">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="8" r="4" />
+                            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                        </svg>
+                        Total Users
+                    </div>
+                    <div class="kpi-divider"></div>
                     <div class="kpi-value"><?= $grand_total ?></div>
                     <div class="kpi-sub">across all divisions</div>
                 </div>
-                <div class="kpi">
-                    <div class="kpi-label">Total Personnels</div>
+
+                <!-- Total Personnels -->
+                <div class="kpi kpi-pers">
+                    <div class="kpi-icon-bg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#8b5cf6" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V4a2 2 0 114 0v2m-4 0a2 2 0 104 0" />
+                        </svg>
+                    </div>
+                    <div class="kpi-tag">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <rect x="4" y="4" width="16" height="16" rx="3" />
+                            <path stroke-linecap="round" d="M9 10h6M9 14h4" />
+                        </svg>
+                        Total Personnels
+                    </div>
+                    <div class="kpi-divider"></div>
                     <div class="kpi-value"><?= $grand_pers_active ?></div>
                     <div class="kpi-sub">across all divisions</div>
                 </div>
-                <div class="kpi">
-                    <div class="kpi-label">Total Devices</div>
-                    <div class="kpi-value"><?= $total_devices ?></div>
-                    <div class="kpi-sub">across all types</div>
-                </div>
+
             </div>
 
             <!-- ── USERS / PERSONNELS PER DIVISION ── -->
@@ -492,11 +590,11 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
                 </div>
             </div>
 
-            <!-- ── OTHER DEVICE INVENTORY ── -->
+            <!-- ── DEVICE COUNT INVENTORY ── -->
             <div class="cc mb-3">
                 <p class="cc-title">Device Count Inventory</p>
-                <p class="cc-sub">Total count</p>
-                <div style="position:relative;width:100%;height:220px;">
+                <p class="cc-sub">Total count per device type</p>
+                <div style="position:relative;width:100%;height:260px;">
                     <canvas id="otherDevChart"></canvas>
                 </div>
             </div>
@@ -513,8 +611,22 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
 
             <!-- ── OPERATING SYSTEMS ── -->
             <div class="section-label">Operating Systems</div>
+
+            <!-- Win10 / Win11 KPI cards -->
+            <div class="os-kpi-grid">
+                <div class="kpi kpi-win10" style="background:#f8f9fb;">
+                    <div class="kpi-label" style="font-size:11px;font-weight:700;color:#7c85a0;text-transform:uppercase;letter-spacing:.06em;">Windows 10 Total</div>
+                    <div class="kpi-value"><?= $win10 ?></div>
+                    <div class="kpi-sub">across all editions</div>
+                </div>
+                <div class="kpi kpi-win11" style="background:#f8f9fb;">
+                    <div class="kpi-label" style="font-size:11px;font-weight:700;color:#7c85a0;text-transform:uppercase;letter-spacing:.06em;">Windows 11 Total</div>
+                    <div class="kpi-value"><?= $win11 ?></div>
+                    <div class="kpi-sub">across all editions</div>
+                </div>
+            </div>
+
             <div class="g2 mb-3">
-                <!-- hBar: ALL 19 editions -->
                 <div class="cc">
                     <p class="cc-title">All OS editions</p>
                     <p class="cc-sub">Every edition in the system — count per type</p>
@@ -538,13 +650,11 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
                 </div>
             </div>
 
-            <!-- ── OFFICE APPLICATIONS — all 26 one-by-one ── -->
+            <!-- ── OFFICE APPLICATIONS ── -->
             <div class="section-label">Office Applications</div>
             <div class="cc mb-3">
                 <p class="cc-title">Office application distribution</p>
                 <p class="cc-sub">Every application in the system — count per type</p>
-
-                <!-- colour legend for version families -->
                 <div class="clr-legend">
                     <span><i style="background:#0078d4"></i>Microsoft 365</span>
                     <span><i style="background:#107c41"></i>Office 2024</span>
@@ -554,7 +664,6 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
                     <span><i style="background:#986f0b"></i>Office 2013</span>
                     <span><i style="background:#6366f1"></i>Alternatives</span>
                 </div>
-
                 <div style="position:relative;width:100%;height:<?= $office_chart_h ?>px;">
                     <canvas id="officeChart"></canvas>
                 </div>
@@ -588,14 +697,25 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
         const OFFICE_LABELS = <?= $j_office_labels ?>;
         const OFFICE_DATA = <?= $j_office_data ?>;
 
-        const OTHER_LABELS = <?= $j_other_labels ?>;
-        const OTHER_DATA = <?= $j_other_data ?>;
+        // Device Count Inventory — Laptops & Desktops first, then peripherals
+        const OTHER_LABELS = <?= $j_inventory_labels ?>;
+        const OTHER_DATA = <?= $j_inventory_data ?>;
 
+        // Match colors dynamically to sorted label order
+        const COLOR_MAP = {
+            'Laptops': '#3b82f6',
+            'Desktops': '#8b5cf6',
+            'Printers': '#6366f1',
+            'Cameras': '#f97316',
+            'Headsets': '#14b8a6',
+            'Switches': '#10b981',
+            'Routers': '#ec4899',
+            'Firewalls': '#ef4444'
+        };
+        const OTHER_COLORS = OTHER_LABELS.map(l => COLOR_MAP[l]);
         /* ── helpers ── */
         const GRID = 'rgba(0,0,0,.05)';
-        const TICK = '#9ba3b8';
-
-        const OTHER_COLORS = ['#6366f1', '#f97316', '#14b8a6', '#3b82f6', '#10b981', '#ef4444'];
+        const TICK = '#4b5563';
         const EP_COLORS = ['#3b82f6', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#ef4444', '#6b7280', '#14b8a6'];
 
         function osColor(label) {
@@ -693,19 +813,6 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
             };
         }
 
-        function doughnut() {
-            return {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                cutout: '60%'
-            };
-        }
-
         /* 1. Division bar */
         let divBarChart = new Chart(document.getElementById('divBarChart'), {
             type: 'bar',
@@ -722,7 +829,7 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
             options: vBar(false)
         });
 
-        /* 2. Other devices */
+        /* 2. Device Count Inventory */
         new Chart(document.getElementById('otherDevChart'), {
             type: 'bar',
             data: {
@@ -807,7 +914,8 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
                             boxWidth: 12,
                             font: {
                                 size: 11
-                            }
+                            },
+                            color: '#4b5563'
                         }
                     }
                 },
@@ -839,22 +947,7 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
             }
         });
 
-        /* 4. OS generation doughnut */
-        new Chart(document.getElementById('osGenChart'), {
-            type: 'doughnut',
-            data: {
-                labels: OS_GEN_LABELS,
-                datasets: [{
-                    data: OS_GEN_DATA,
-                    backgroundColor: ['#3b82f6', '#8b5cf6'],
-                    borderWidth: 0,
-                    hoverOffset: 6
-                }]
-            },
-            options: doughnut()
-        });
-
-        /* 5. OS editions — all 19, colour by generation */
+        /* 4. OS editions — all 19 */
         new Chart(document.getElementById('osDetailChart'), {
             type: 'bar',
             data: {
@@ -870,7 +963,7 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
             options: hBar(11)
         });
 
-        /* 6. Endpoint security bar */
+        /* 5. Endpoint security */
         new Chart(document.getElementById('epBarChart'), {
             type: 'bar',
             data: {
@@ -886,7 +979,7 @@ $office_chart_h = $office_count * 38 + 40;     // 26 bars = ~1028px
             options: hBar(11)
         });
 
-        /* 7. Office apps — all 26, colour by version family */
+        /* 6. Office apps — all 26 */
         new Chart(document.getElementById('officeChart'), {
             type: 'bar',
             data: {
