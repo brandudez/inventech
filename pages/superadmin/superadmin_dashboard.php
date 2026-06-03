@@ -35,7 +35,8 @@ $osList = [
     "Windows 11 Enterprise LTSC",
     "Windows 11 Education",
     "Windows 11 SE",
-    "Windows 11 IoT Enterprise"
+    "Windows 11 IoT Enterprise",
+    "Other",
 ];
 
 $officeAppsList = [
@@ -52,7 +53,7 @@ $officeAppsList = [
     "Microsoft Office Home & Student 2021",
     "Microsoft Office Home & Business 2021",
     "Microsoft Office Professional 2021",
-    "Microsoft Office LTSC 2021",
+    "Microsoft Office LTSC Professional Plus 2021",
     "Microsoft Office Home & Student 2019",
     "Microsoft Office Home & Business 2019",
     "Microsoft Office Professional Plus 2019",
@@ -64,7 +65,8 @@ $officeAppsList = [
     "Microsoft Office Professional Plus 2013",
     "LibreOffice",
     "Apache OpenOffice",
-    "WPS Office"
+    "WPS Office",
+    "Other",
 ];
 
 /* ════════════════════════════════════════════
