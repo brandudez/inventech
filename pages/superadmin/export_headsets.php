@@ -12,30 +12,42 @@ if ($_SESSION['user']['role_id'] != 1) {
 
 include "../../config/db.php";
 
-/* ──────────────────────────────────────────────
-   Previous Handlers Helper
-────────────────────────────────────────────── */
+/* =========================
+   EXPORT FOLDER (FIXED PATH)
+   pages/superadmin/folder/headsets/
+========================= */
+
+$exportDir = $_SERVER['DOCUMENT_ROOT'] . "/inventech/pages/superadmin/exports/";
+
+if (!is_dir($exportDir)) {
+    mkdir($exportDir, 0777, true);
+}
+
+/* =========================
+   FILENAME
+========================= */
+
+$filename = 'headsets_export_' . date('Ymd_His') . '.xls';
+$filePath = $exportDir . $filename;
+
+/* =========================
+   HELPER FUNCTION
+========================= */
+
 function getPreviousOwnersNamesExport($conn, $json)
 {
     if (empty($json)) return '';
 
     $ids = json_decode($json, true);
 
-    if (!is_array($ids) || empty($ids)) {
-        return '';
-    }
+    if (!is_array($ids) || empty($ids)) return '';
 
     $ids = implode(',', array_map('intval', $ids));
 
     $result = $conn->query("
-        SELECT
-            r.rank,
-            p.first_name,
-            p.middle_name,
-            p.last_name
+        SELECT r.rank, p.first_name, p.middle_name, p.last_name
         FROM personnels p
-        LEFT JOIN ranks r
-            ON p.rank_id = r.id
+        LEFT JOIN ranks r ON p.rank_id = r.id
         WHERE p.id IN ($ids)
     ");
 
@@ -53,9 +65,10 @@ function getPreviousOwnersNamesExport($conn, $json)
     return implode(', ', $names);
 }
 
-/* ──────────────────────────────────────────────
-   Filters (same as device_headsets.php)
-────────────────────────────────────────────── */
+/* =========================
+   FILTERS (UNCHANGED)
+========================= */
+
 $search = trim($_GET['search'] ?? '');
 
 $division_raw = $_GET['division'] ?? [];
@@ -63,10 +76,7 @@ $division_filter = is_array($division_raw)
     ? array_filter(array_map('trim', $division_raw))
     : [];
 
-$active_filter = isset($_GET['is_active'])
-    ? trim($_GET['is_active'])
-    : '';
-
+$active_filter = $_GET['is_active'] ?? '';
 $acq_filter = trim($_GET['filter_acq'] ?? '');
 
 $where = [];
@@ -74,17 +84,12 @@ $params = [];
 $types = '';
 
 if (!empty($search)) {
-
     $where[] = "(
         h.brand LIKE ?
         OR h.model LIKE ?
         OR h.serial_no LIKE ?
         OR h.acquisition_details LIKE ?
-        OR CONCAT(
-            per.first_name,' ',
-            per.middle_name,' ',
-            per.last_name
-        ) LIKE ?
+        OR CONCAT(per.first_name,' ',per.middle_name,' ',per.last_name) LIKE ?
     )";
 
     $sv = "%$search%";
@@ -96,12 +101,7 @@ if (!empty($search)) {
 }
 
 if (!empty($division_filter)) {
-
-    $placeholders = implode(
-        ',',
-        array_fill(0, count($division_filter), '?')
-    );
-
+    $placeholders = implode(',', array_fill(0, count($division_filter), '?'));
     $where[] = "d.division IN ($placeholders)";
 
     foreach ($division_filter as $div) {
@@ -111,25 +111,15 @@ if (!empty($division_filter)) {
 }
 
 if ($active_filter !== '') {
-
     $where[] = "h.is_active = ?";
-
     $params[] = $active_filter;
     $types .= 'i';
 }
 
 if ($acq_filter === 'lt5') {
-
-    $where[] = "
-        h.acquisition_date >=
-        DATE_SUB(CURDATE(), INTERVAL 5 YEAR)
-    ";
+    $where[] = "h.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 } elseif ($acq_filter === 'gt5') {
-
-    $where[] = "
-        h.acquisition_date <
-        DATE_SUB(CURDATE(), INTERVAL 5 YEAR)
-    ";
+    $where[] = "h.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 }
 
 $whereSQL = !empty($where)
@@ -138,17 +128,15 @@ $whereSQL = !empty($where)
 
 $baseJoin = "
     FROM headsets h
-    LEFT JOIN personnels per
-        ON h.personnel_id = per.id
-    LEFT JOIN ranks r
-        ON per.rank_id = r.id
-    LEFT JOIN divisions d
-        ON h.division_id = d.id
+    LEFT JOIN personnels per ON h.personnel_id = per.id
+    LEFT JOIN ranks r ON per.rank_id = r.id
+    LEFT JOIN divisions d ON h.division_id = d.id
 ";
 
-/* ──────────────────────────────────────────────
-   Fetch Export Data
-────────────────────────────────────────────── */
+/* =========================
+   QUERY
+========================= */
+
 $sql = "
     SELECT
         h.*,
@@ -176,36 +164,17 @@ if (!empty($params)) {
 }
 
 $stmt->execute();
-
 $result = $stmt->get_result();
 
-/* ──────────────────────────────────────────────
-   Excel Output
-────────────────────────────────────────────── */
-$filename = 'headsets_export_' . date('Ymd_His') . '.xls';
+/* =========================
+   BUILD EXPORT CONTENT
+========================= */
 
-header('Content-Type: application/vnd.ms-excel');
-header('Content-Disposition: attachment; filename="' . $filename . '"');
-header('Cache-Control: max-age=0');
+ob_start();
 
-echo '<html xmlns:o="urn:schemas-microsoft-com:office:office"
-             xmlns:x="urn:schemas-microsoft-com:office:excel"
-             xmlns="http://www.w3.org/TR/REC-html40">';
+echo '<html><head><meta charset="UTF-8"></head><body><table border="1">';
 
-echo '<head>
-<meta charset="UTF-8">
-<style>
-td{
-    font-family:Arial;
-    font-size:11pt;
-}
-</style>
-</head>';
-
-echo '<body>';
-echo '<table border="1">';
-
-/* Header */
+/* HEADER */
 echo '
 <tr style="background:#0d6ea8;color:white;font-weight:bold;">
     <td>Personnel</td>
@@ -221,7 +190,7 @@ echo '
 </tr>
 ';
 
-/* Data */
+/* DATA */
 while ($row = $result->fetch_assoc()) {
 
     echo '<tr>';
@@ -234,10 +203,7 @@ while ($row = $result->fetch_assoc()) {
         $row['serial_no'] ?? '',
         $row['acquisition_details'] ?? '',
         $row['acquisition_date'] ?? '',
-        getPreviousOwnersNamesExport(
-            $conn,
-            $row['previous_owners_id']
-        ),
+        getPreviousOwnersNamesExport($conn, $row['previous_owners_id']),
         ($row['is_active'] == 1 ? 'YES' : 'NO'),
         substr($row['created_date'] ?? '', 0, 10)
     ];
@@ -249,8 +215,23 @@ while ($row = $result->fetch_assoc()) {
     echo '</tr>';
 }
 
-echo '</table>';
-echo '</body>';
-echo '</html>';
+echo '</table></body></html>';
 
+$html = ob_get_clean();
+
+/* =========================
+   SAVE FILE TO FOLDER
+========================= */
+
+file_put_contents($filePath, $html);
+
+/* =========================
+   DOWNLOAD ALSO
+========================= */
+
+header('Content-Type: application/vnd.ms-excel');
+header('Content-Disposition: attachment; filename="' . $filename . '"');
+header('Cache-Control: max-age=0');
+
+echo $html;
 exit();
