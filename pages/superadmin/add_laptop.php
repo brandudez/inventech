@@ -47,7 +47,10 @@ if (!is_array($previous_owners_id)) {
     $previous_owners_id = [$previous_owners_id];
 }
 
-$previous_owners_json = json_encode(array_values($previous_owners_id));
+$previous_owners_json = !empty($previous_owners_id)
+    ? json_encode(array_values($previous_owners_id))
+    : null;
+
 
 /* =========================
    OTHER FIELDS
@@ -179,4 +182,3 @@ if ($stmt->execute()) {
 } else {
     die("SQL ERROR: " . $stmt->error);
 }
-?>

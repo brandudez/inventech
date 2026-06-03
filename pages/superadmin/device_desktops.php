@@ -61,105 +61,86 @@ $os_filter       = is_array($os_filter_raw)       ? array_filter(array_map('trim
 $office_filter   = is_array($office_filter_raw)   ? array_filter(array_map('trim', $office_filter_raw))   : [];
 $active_filter   = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
 
-// NEW: Acquisition date filter  (lt5 = less than 5 years old, gt5 = more than 5 years old)
 $acq_filter = trim($_GET['filter_acq'] ?? '');
 
 // ── Build base WHERE + params ─────────────────────────────────────────────────
-$where  = [];
-$params = [];
-$types  = '';
+$baseWhere  = [];
+$baseParams = [];
+$baseTypes  = '';
 
 if (! empty($search)) {
-    $where[] = "(d.device_name LIKE ? OR CONCAT(p.first_name,' ',p.middle_name,' ',p.last_name) LIKE ? OR d.ip_address LIKE ? OR d.guid LIKE ? OR d.mac_address LIKE ?)";
+    $baseWhere[] = "(d.device_name LIKE ? OR CONCAT(p.first_name,' ',p.middle_name,' ',p.last_name) LIKE ? OR d.ip_address LIKE ? OR d.guid LIKE ? OR d.mac_address LIKE ?)";
     $sv = "%$search%";
     for ($i = 0; $i < 5; $i++) {
-        $params[] = $sv;
-        $types   .= 's';
+        $baseParams[] = $sv;
+        $baseTypes .= 's';
     }
 }
 if (! empty($division_filter)) {
     $ph = implode(',', array_fill(0, count($division_filter), '?'));
-    $where[] = "dv.division IN ($ph)";
+    $baseWhere[] = "dv.division IN ($ph)";
     foreach ($division_filter as $v) {
-        $params[] = $v;
-        $types .= 's';
+        $baseParams[] = $v;
+        $baseTypes .= 's';
     }
 }
 if (! empty($os_filter)) {
     $ph = implode(',', array_fill(0, count($os_filter), '?'));
-    $where[] = "d.os IN ($ph)";
+    $baseWhere[] = "d.os IN ($ph)";
     foreach ($os_filter as $v) {
-        $params[] = $v;
-        $types .= 's';
+        $baseParams[] = $v;
+        $baseTypes .= 's';
     }
 }
 if (! empty($office_filter)) {
     $ph = implode(',', array_fill(0, count($office_filter), '?'));
-    $where[] = "d.office_application IN ($ph)";
+    $baseWhere[] = "d.office_application IN ($ph)";
     foreach ($office_filter as $v) {
-        $params[] = $v;
-        $types .= 's';
+        $baseParams[] = $v;
+        $baseTypes .= 's';
     }
 }
 if ($active_filter !== '') {
-    $where[] = "d.is_active = ?";
-    $params[] = $active_filter;
-    $types   .= 'i';
+    $baseWhere[] = "d.is_active = ?";
+    $baseParams[] = $active_filter;
+    $baseTypes .= 'i';
 }
-// Acquisition date filter — uses no bound params (dates are computed server-side)
 if ($acq_filter === 'lt5') {
-    $where[] = "d.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+    $baseWhere[] = "d.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 } elseif ($acq_filter === 'gt5') {
-    $where[] = "d.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+    $baseWhere[] = "d.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 }
 
-$whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+$whereSQL = !empty($baseWhere) ? "WHERE " . implode(" AND ", $baseWhere) : "";
 $baseJoin = "FROM desktops d
              LEFT JOIN personnels p  ON d.personnel_id = p.id
              LEFT JOIN ranks r       ON p.rank_id = r.id
              LEFT JOIN divisions dv  ON d.division_id = dv.id";
 
-// ── Counts — NO LIMIT, full filtered set ─────────────────────────────────────
-// Total matching the current filters (not paginated)
+// ── Total count (respects all active filters including is_active) ─────────────
 $st = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $whereSQL");
-if (!empty($params)) $st->bind_param($types, ...$params);
+if (!empty($baseParams)) $st->bind_param($baseTypes, ...$baseParams);  // FIXED: was $params
 $st->execute();
 $totalDevices = $st->get_result()->fetch_assoc()['total'] ?? 0;
 $totalPages   = (int)ceil($totalDevices / $limit);
 
-// Active count — same filters but force is_active = 1
-// Build a separate WHERE that layers is_active on top of current filters
-$activeWhere  = $where;
-$activeParams = $params;
-$activeTypes  = $types;
-// Only add the is_active=1 clause if not already filtering on is_active
-if ($active_filter === '') {
-    $activeWhere[]  = "d.is_active = 1";
-} elseif ($active_filter == '1') {
-    // already filtered to active — count equals total
-} else {
-    // filtered to inactive — active count = 0
-}
-$aSQL = !empty($activeWhere) ? "WHERE " . implode(" AND ", $activeWhere) : "";
-$sa = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $aSQL");
-if (!empty($activeParams)) $sa->bind_param($activeTypes, ...$activeParams);
+// ── Stat-box counts: layer active/inactive on top of ALL current filters ──────
+// When is_active filter is set to YES, Inactive shows 0 (and vice versa).
+$activeWhere = $baseWhere;
+$activeWhere[] = "d.is_active = 1";
+$activeSQL = "WHERE " . implode(" AND ", $activeWhere);
+
+$inactiveWhere = $baseWhere;
+$inactiveWhere[] = "d.is_active = 0";
+$inactiveSQL = "WHERE " . implode(" AND ", $inactiveWhere);
+
+$sa = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $activeSQL");
+if (!empty($baseParams)) $sa->bind_param($baseTypes, ...$baseParams);
 $sa->execute();
 $activeDevices = $sa->get_result()->fetch_assoc()['total'] ?? 0;
 
-// Inactive count
-$inactiveWhere  = $where;
-$inactiveParams = $params;
-$inactiveTypes  = $types;
-if ($active_filter === '') {
-    $inactiveWhere[]  = "d.is_active = 0";
-} elseif ($active_filter == '0') {
-    // already filtered to inactive — count equals total
-} else {
-    // filtered to active — inactive count = 0
-}
-$iSQL = !empty($inactiveWhere) ? "WHERE " . implode(" AND ", $inactiveWhere) : "";
-$si = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $iSQL");
-if (!empty($inactiveParams)) $si->bind_param($inactiveTypes, ...$inactiveParams);
+$si = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $inactiveSQL");
+if (!empty($baseParams)) $si->bind_param($baseTypes, ...$baseParams);
 $si->execute();
 $inactiveDevices = $si->get_result()->fetch_assoc()['total'] ?? 0;
 
@@ -170,8 +151,8 @@ $stmt = $conn->prepare("
            dv.division AS division_name
     $baseJoin $whereSQL ORDER BY d.device_name ASC LIMIT ?,?
 ");
-$fp  = $params;
-$ft  = $types . 'ii';
+$fp  = $baseParams;
+$ft = $baseTypes . 'ii';
 $fp[] = $offset;
 $fp[] = $limit;
 $stmt->bind_param($ft, ...$fp);
@@ -468,17 +449,17 @@ $exportParams = http_build_query([
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-4"><label class="form-label">IP Address</label><input type="text" class="form-control" name="ip_address" required></div>
+                            <div class="col-md-4"><label class="form-label">IP Address</label><input type="text" class="form-control" name="ip_address"></div>
                             <div class="col-md-4">
                                 <label class="form-label">Operating System</label>
-                                <select name="os" class="form-select" required>
+                                <select name="os" class="form-select">
                                     <option value="" disabled selected hidden>Select Operating System</option>
                                     <?php foreach ($osList as $os): ?><option value="<?= htmlspecialchars($os) ?>"><?= htmlspecialchars($os) ?></option><?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Is OS Licensed?</label>
-                                <select name="is_os_licensed" class="form-select" required>
+                                <select name="is_os_licensed" class="form-select">
                                     <option value="" disabled selected hidden>Select</option>
                                     <option value="1">Yes</option>
                                     <option value="0">No</option>
@@ -487,7 +468,7 @@ $exportParams = http_build_query([
                             <div class="col-md-6"><label class="form-label">OS License Key</label><input type="text" class="form-control" name="os_license_key"></div>
                             <div class="col-md-6">
                                 <label class="form-label">Office Application</label>
-                                <select name="office_application" class="form-select" required>
+                                <select name="office_application" class="form-select">
                                     <option value="" disabled selected hidden>Select Office Application</option>
                                     <?php foreach ($officeAppsList as $app): ?><option value="<?= htmlspecialchars($app) ?>"><?= htmlspecialchars($app) ?></option><?php endforeach; ?>
                                 </select>
@@ -495,7 +476,7 @@ $exportParams = http_build_query([
                             <div class="col-md-6"><label class="form-label">Office License Key</label><input type="text" class="form-control" name="office_license_key"></div>
                             <div class="col-md-6">
                                 <label class="form-label">Is Office Licensed?</label>
-                                <select name="is_office_licensed" class="form-select" required>
+                                <select name="is_office_licensed" class="form-select">
                                     <option value="" disabled selected hidden>Select</option>
                                     <option value="1">Yes</option>
                                     <option value="0">No</option>
@@ -514,19 +495,19 @@ $exportParams = http_build_query([
                                     <?php endforeach; ?>
                                 </div>
                             </div>
-                            <div class="col-md-4"><label class="form-label"># of Installed Antivirus</label><input type="number" class="form-control" name="no_of_installed_anti_virus" required></div>
+                            <div class="col-md-4"><label class="form-label"># of Installed Antivirus</label><input type="number" class="form-control" name="no_of_installed_anti_virus"></div>
                             <div class="col-md-4"><label class="form-label">Date Installed</label><input type="date" class="form-control" name="date_installed"></div>
                             <div class="col-md-6"><label class="form-label">GUID</label><input type="text" class="form-control" name="guid"></div>
-                            <div class="col-md-6"><label class="form-label">MAC Address</label><input type="text" class="form-control" name="mac_address" required></div>
-                            <div class="col-md-4"><label class="form-label">CPU Brand</label><input type="text" class="form-control" name="cpu_brand" required></div>
-                            <div class="col-md-4"><label class="form-label"># of CPU Cores</label><input type="number" class="form-control" name="cpu_cores" required></div>
-                            <div class="col-md-4"><label class="form-label">GBs of RAM</label><input type="number" class="form-control" name="gb_ram" required></div>
-                            <div class="col-md-4"><label class="form-label">Monitor Brand</label><input type="text" class="form-control" name="monitor_brand" required></div>
-                            <div class="col-md-4"><label class="form-label">Monitor Size</label><input type="text" class="form-control" name="monitor_size_inches" required></div>
-                            <div class="col-md-4"><label class="form-label"># of User Accounts</label><input type="number" class="form-control" name="no_of_user_accounts" required></div>
-                            <div class="col-md-6"><label class="form-label">User Account Type</label><input type="text" class="form-control" name="user_account_type" required></div>
-                            <div class="col-md-6"><label class="form-label">Authorized Software</label><textarea class="form-control" name="authorized_software" required></textarea></div>
-                            <div class="col-md-6"><label class="form-label">Unauthorized Software</label><textarea class="form-control" name="unauthorized_software" required></textarea></div>
+                            <div class="col-md-6"><label class="form-label">MAC Address</label><input type="text" class="form-control" name="mac_address"></div>
+                            <div class="col-md-4"><label class="form-label">CPU Brand</label><input type="text" class="form-control" name="cpu_brand"></div>
+                            <div class="col-md-4"><label class="form-label"># of CPU Cores</label><input type="number" class="form-control" name="cpu_cores"></div>
+                            <div class="col-md-4"><label class="form-label">GBs of RAM</label><input type="number" class="form-control" name="gb_ram"></div>
+                            <div class="col-md-4"><label class="form-label">Monitor Brand</label><input type="text" class="form-control" name="monitor_brand"></div>
+                            <div class="col-md-4"><label class="form-label">Monitor Size</label><input type="text" class="form-control" name="monitor_size_inches"></div>
+                            <div class="col-md-4"><label class="form-label"># of User Accounts</label><input type="number" class="form-control" name="no_of_user_accounts"></div>
+                            <div class="col-md-6"><label class="form-label">User Account Type</label><input type="text" class="form-control" name="user_account_type"></div>
+                            <div class="col-md-6"><label class="form-label">Authorized Software</label><textarea class="form-control" name="authorized_software"></textarea></div>
+                            <div class="col-md-6"><label class="form-label">Unauthorized Software</label><textarea class="form-control" name="unauthorized_software"></textarea></div>
                             <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" class="form-control" name="acquisition_date"></div>
                             <div class="col-md-6"><label class="form-label">PAR Serial Number</label><input type="text" name="par_serial_no" class="form-control"></div>
                             <div class="col-md-6">
@@ -546,7 +527,7 @@ $exportParams = http_build_query([
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Is Remotely Accessible?</label>
-                                <select class="form-select" name="is_remote_acc" required>
+                                <select class="form-select" name="is_remote_acc">
                                     <option value="" disabled selected hidden>Select</option>
                                     <option value="1">Yes</option>
                                     <option value="0">No</option>
@@ -554,7 +535,7 @@ $exportParams = http_build_query([
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Is Active?</label>
-                                <select class="form-select" name="is_active" required>
+                                <select class="form-select" name="is_active">
                                     <option value="" disabled selected hidden>Select</option>
                                     <option value="1">Yes</option>
                                     <option value="0">No</option>
@@ -935,7 +916,6 @@ $exportParams = http_build_query([
 
         <div class="table-footer">
             <div class="user-stats">
-                <!-- Counts come from DB-side queries (full filtered set, no pagination) -->
                 <div class="stat-box total">
                     <span class="label">Total Devices</span>
                     <span class="value"><?= $totalDevices ?></span>
@@ -995,7 +975,6 @@ $exportParams = http_build_query([
                 alert("Select at least one Endpoint Security");
                 return;
             }
-
         });
 
         // ── View → Edit transition ────────────────────────────────────────────

@@ -16,16 +16,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $id = $_POST['id'];
 
-if (
-    empty($_POST['par_serial_no']) ||
-    empty($_POST['previous_owners_id']) ||
-    empty($_POST['endpoint_security'])
-) {
-    $_SESSION['toast_error'] = "PAR Serial, Endpoint Security, and Previous Handlers are required.";
-
-    header("Location: device_desktops.php?edit=" . $_POST['id']);
-    exit();
-}
+    if (empty($_POST['endpoint_security'])) {
+        $_SESSION['toast_error'] = "Endpoint Security is required.";
+        header("Location: device_desktops.php?edit=" . $id);
+        exit();
+    }
     // BASIC
     $device_name = $_POST['device_name'];
     $personnel_id = $_POST['personnel_id'];
@@ -74,8 +69,8 @@ if (
     $is_active = $_POST['is_active'];
 
     // MULTI SELECTS (FIXED TO JSON)
-$previous_handlers = json_encode($_POST['previous_owners_id'] ?? []);
-$endpoint_security = json_encode($_POST['endpoint_security'] ?? []);
+    $previous_handlers = json_encode($_POST['previous_owners_id'] ?? []);
+    $endpoint_security = json_encode($_POST['endpoint_security'] ?? []);
 
     $query = "
         UPDATE desktops SET
@@ -129,4 +124,3 @@ $endpoint_security = json_encode($_POST['endpoint_security'] ?? []);
         echo "Error: " . mysqli_error($conn);
     }
 }
-?>

@@ -479,34 +479,34 @@ $exportParams = http_build_query([
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-4"><label class="form-label">IP Address</label><input type="text" class="form-control" name="ip_address" required></div>
+                            <div class="col-md-4"><label class="form-label">IP Address</label><input type="text" class="form-control" name="ip_address"></div>
                             <div class="col-md-4">
                                 <label class="form-label">Operating System</label>
-                                <select name="os" class="form-select" required>
+                                <select name="os" class="form-select">
                                     <option value="" disabled selected hidden>Select Operating System</option>
                                     <?php foreach ($osList as $os): ?><option value="<?= htmlspecialchars($os) ?>"><?= htmlspecialchars($os) ?></option><?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Is OS Licensed?</label>
-                                <select name="is_os_licensed" class="form-select" required>
+                                <select name="is_os_licensed" class="form-select">
                                     <option value="" disabled selected hidden>Select</option>
                                     <option value="1">Yes</option>
                                     <option value="0">No</option>
                                 </select>
                             </div>
-                            <div class="col-md-6"><label class="form-label">OS License Key</label><input type="text" class="form-control" name="os_license_key" required></div>
+                            <div class="col-md-6"><label class="form-label">OS License Key</label><input type="text" class="form-control" name="os_license_key"></div>
                             <div class="col-md-6">
                                 <label class="form-label">Office Application</label>
-                                <select name="office_application" class="form-select" required>
+                                <select name="office_application" class="form-select">
                                     <option value="" disabled selected hidden>Select Office Application</option>
                                     <?php foreach ($officeAppsList as $app): ?><option value="<?= htmlspecialchars($app) ?>"><?= htmlspecialchars($app) ?></option><?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-6"><label class="form-label">Office License Key</label><input type="text" class="form-control" name="office_license_key" required></div>
+                            <div class="col-md-6"><label class="form-label">Office License Key</label><input type="text" class="form-control" name="office_license_key"></div>
                             <div class="col-md-6">
                                 <label class="form-label">Is Office Licensed?</label>
-                                <select name="is_office_licensed" class="form-select" required>
+                                <select name="is_office_licensed" class="form-select">
                                     <option value="" disabled selected hidden>Select</option>
                                     <option value="1">Yes</option>
                                     <option value="0">No</option>
@@ -525,20 +525,20 @@ $exportParams = http_build_query([
                                     <?php endforeach; ?>
                                 </div>
                             </div>
-                            <div class="col-md-4"><label class="form-label"># of Installed Antivirus</label><input type="number" class="form-control" name="no_of_installed_anti_virus" required></div>
-                            <div class="col-md-4"><label class="form-label">Date Installed</label><input type="date" class="form-control" name="date_installed" required></div>
-                            <div class="col-md-6"><label class="form-label">GUID</label><input type="text" class="form-control" name="guid" required></div>
-                            <div class="col-md-6"><label class="form-label">MAC Address</label><input type="text" class="form-control" name="mac_address" required></div>
-                            <div class="col-md-4"><label class="form-label">CPU Brand</label><input type="text" class="form-control" name="cpu_brand" required></div>
-                            <div class="col-md-4"><label class="form-label"># of CPU Cores</label><input type="number" class="form-control" name="cpu_cores" required></div>
-                            <div class="col-md-4"><label class="form-label">GBs of RAM</label><input type="number" class="form-control" name="gb_ram" required></div>
-                            <div class="col-md-4"><label class="form-label">Monitor Brand</label><input type="text" class="form-control" name="monitor_brand" required></div>
-                            <div class="col-md-4"><label class="form-label">Monitor Size</label><input type="text" class="form-control" name="monitor_size_inches" required></div>
-                            <div class="col-md-4"><label class="form-label"># of User Accounts</label><input type="number" class="form-control" name="no_of_user_accounts" required></div>
-                            <div class="col-md-6"><label class="form-label">User Account Type</label><input type="text" class="form-control" name="user_account_type" required></div>
-                            <div class="col-md-6"><label class="form-label">Authorized Software</label><textarea class="form-control" name="authorized_software" required></textarea></div>
-                            <div class="col-md-6"><label class="form-label">Unauthorized Software</label><textarea class="form-control" name="unauthorized_software" required></textarea></div>
-                            <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" class="form-control" name="acquisition_date" required></div>
+                            <div class="col-md-4"><label class="form-label"># of Installed Antivirus</label><input type="number" class="form-control" name="no_of_installed_anti_virus"></div>
+                            <div class="col-md-4"><label class="form-label">Date Installed</label><input type="date" class="form-control" name="date_installed"></div>
+                            <div class="col-md-6"><label class="form-label">GUID</label><input type="text" class="form-control" name="guid"></div>
+                            <div class="col-md-6"><label class="form-label">MAC Address</label><input type="text" class="form-control" name="mac_address"></div>
+                            <div class="col-md-4"><label class="form-label">CPU Brand</label><input type="text" class="form-control" name="cpu_brand"></div>
+                            <div class="col-md-4"><label class="form-label"># of CPU Cores</label><input type="number" class="form-control" name="cpu_cores"></div>
+                            <div class="col-md-4"><label class="form-label">GBs of RAM</label><input type="number" class="form-control" name="gb_ram"></div>
+                            <div class="col-md-4"><label class="form-label">Monitor Brand</label><input type="text" class="form-control" name="monitor_brand"></div>
+                            <div class="col-md-4"><label class="form-label">Monitor Size</label><input type="text" class="form-control" name="monitor_size_inches"></div>
+                            <div class="col-md-4"><label class="form-label"># of User Accounts</label><input type="number" class="form-control" name="no_of_user_accounts"></div>
+                            <div class="col-md-6"><label class="form-label">User Account Type</label><input type="text" class="form-control" name="user_account_type"></div>
+                            <div class="col-md-6"><label class="form-label">Authorized Software</label><textarea class="form-control" name="authorized_software"></textarea></div>
+                            <div class="col-md-6"><label class="form-label">Unauthorized Software</label><textarea class="form-control" name="unauthorized_software"></textarea></div>
+                            <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" class="form-control" name="acquisition_date"></div>
                             <div class="col-md-6"><label class="form-label">PAR Serial Number</label><input type="text" name="par_serial_no" class="form-control"></div>
                             <div class="col-md-6">
                                 <label class="form-label">Previous Handler/s</label>
@@ -557,7 +557,7 @@ $exportParams = http_build_query([
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Is Remotely Accessible?</label>
-                                <select class="form-select" name="is_remote_acc" required>
+                                <select class="form-select" name="is_remote_acc">
                                     <option value="" disabled selected hidden>Select</option>
                                     <option value="1">Yes</option>
                                     <option value="0">No</option>
@@ -565,7 +565,7 @@ $exportParams = http_build_query([
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Is Active?</label>
-                                <select class="form-select" name="is_active" required>
+                                <select class="form-select" name="is_active">
                                     <option value="" disabled selected hidden>Select</option>
                                     <option value="1">Yes</option>
                                     <option value="0">No</option>
@@ -617,6 +617,7 @@ $exportParams = http_build_query([
                         <th>PREVIOUS HANDLER/S</th>
                         <th>IS REMOTELY ACCESSIBLE?</th>
                         <th>IS ACTIVE?</th>
+                        <th>ACTION</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -653,6 +654,11 @@ $exportParams = http_build_query([
                                 <td><?= getPersonnelNames($conn, $row['previous_owners_id']) ?></td>
                                 <td><?= $row['is_remote_acc'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
                                 <td><?= $row['is_active']     ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
+                                <td onclick="event.stopPropagation();">
+                                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal<?= $row['id'] ?>">
+                                        <i class="bi bi-gear-fill"></i>
+                                    </button>
+                                </td>
                             </tr>
 
                             <!-- VIEW MODAL -->
@@ -824,7 +830,7 @@ $exportParams = http_build_query([
                                                             <?php endwhile; ?>
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-4"><label class="form-label">IP Address</label><input type="text" class="form-control" name="ip_address" value="<?= htmlspecialchars($row['ip_address'] ?? '') ?>" required></div>
+                                                    <div class="col-md-4"><label class="form-label">IP Address</label><input type="text" class="form-control" name="ip_address" value="<?= htmlspecialchars($row['ip_address'] ?? '') ?>"></div>
                                                     <div class="col-md-4"><label class="form-label">MAC Address</label><input type="text" class="form-control" name="mac_address" value="<?= htmlspecialchars($row['mac_address'] ?? '') ?>"></div>
                                                     <div class="col-md-4">
                                                         <label class="form-label">Is Remotely Accessible?</label>
@@ -835,7 +841,7 @@ $exportParams = http_build_query([
                                                     </div>
                                                     <div class="col-md-4">
                                                         <label class="form-label">Operating System</label>
-                                                        <select name="os" class="form-select" required>
+                                                        <select name="os" class="form-select">
                                                             <?php foreach ($osList as $os): ?><option value="<?= $os ?>" <?= ($row['os'] ?? '') == $os ? 'selected' : '' ?>><?= $os ?></option><?php endforeach; ?>
                                                         </select>
                                                     </div>
@@ -846,14 +852,14 @@ $exportParams = http_build_query([
                                                             <option value="0" <?= ($row['is_os_licensed'] ?? 0) == 0 ? 'selected' : '' ?>>No</option>
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-6"><label class="form-label">OS License Key</label><input type="text" class="form-control" name="os_license_key" value="<?= htmlspecialchars($row['os_license_key'] ?? '') ?>" required></div>
+                                                    <div class="col-md-6"><label class="form-label">OS License Key</label><input type="text" class="form-control" name="os_license_key" value="<?= htmlspecialchars($row['os_license_key'] ?? '') ?>"></div>
                                                     <div class="col-md-6">
                                                         <label class="form-label">Office Application</label>
-                                                        <select name="office_application" class="form-select" required>
+                                                        <select name="office_application" class="form-select">
                                                             <?php foreach ($officeAppsList as $app): ?><option value="<?= $app ?>" <?= ($row['office_application'] ?? '') == $app ? 'selected' : '' ?>><?= $app ?></option><?php endforeach; ?>
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-6"><label class="form-label">Office License Key</label><input type="text" class="form-control" name="office_license_key" value="<?= htmlspecialchars($row['office_license_key'] ?? '') ?>" required></div>
+                                                    <div class="col-md-6"><label class="form-label">Office License Key</label><input type="text" class="form-control" name="office_license_key" value="<?= htmlspecialchars($row['office_license_key'] ?? '') ?>"></div>
                                                     <div class="col-md-4">
                                                         <label class="form-label">Is Office Licensed?</label>
                                                         <select class="form-select" name="is_office_licensed">
@@ -868,7 +874,7 @@ $exportParams = http_build_query([
                                                     <div class="col-md-4"><label class="form-label">Monitor Size</label><input type="number" class="form-control" name="monitor_size_inches" value="<?= htmlspecialchars($row['monitor_size_inches'] ?? '') ?>"></div>
                                                     <div class="col-md-4"><label class="form-label"># User Accounts</label><input type="number" class="form-control" name="no_of_user_accounts" value="<?= htmlspecialchars($row['no_of_user_accounts'] ?? '') ?>"></div>
                                                     <div class="col-md-4"><label class="form-label">User Account Type</label><input type="text" class="form-control" name="user_account_type" value="<?= htmlspecialchars($row['user_account_type'] ?? '') ?>"></div>
-                                                    <div class="col-md-4"><label class="form-label">Date Installed</label><input type="date" class="form-control" name="date_installed" value="<?= htmlspecialchars($row['date_installed'] ?? '') ?>" required></div>
+                                                    <div class="col-md-4"><label class="form-label">Date Installed</label><input type="date" class="form-control" name="date_installed" value="<?= htmlspecialchars($row['date_installed'] ?? '') ?>"></div>
                                                     <div class="col-md-12">
                                                         <label class="form-label">Endpoint Security</label>
                                                         <div class="row">
@@ -885,10 +891,10 @@ $exportParams = http_build_query([
                                                             <?php endwhile; ?>
                                                         </div>
                                                     </div>
-                                                    <div class="col-md-4"><label class="form-label"># of Installed Antivirus</label><input type="number" class="form-control" name="no_of_installed_anti_virus" value="<?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?>" required></div>
-                                                    <div class="col-md-6"><label class="form-label">GUID</label><input type="text" class="form-control" name="guid" value="<?= htmlspecialchars($row['guid'] ?? '') ?>" required></div>
+                                                    <div class="col-md-4"><label class="form-label"># of Installed Antivirus</label><input type="number" class="form-control" name="no_of_installed_anti_virus" value="<?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?>"></div>
+                                                    <div class="col-md-6"><label class="form-label">GUID</label><input type="text" class="form-control" name="guid" value="<?= htmlspecialchars($row['guid'] ?? '') ?>"></div>
                                                     <div class="col-md-4"><label class="form-label">Acquisition Date</label><input type="date" class="form-control" name="acquisition_date" value="<?= htmlspecialchars($row['acquisition_date'] ?? '') ?>"></div>
-                                                    <div class="col-md-6"><label class="form-label">PAR Serial Number</label><input type="text" class="form-control" name="par_serial_no" value="<?= htmlspecialchars($row['par_serial_no'] ?? '') ?>" required></div>
+                                                    <div class="col-md-6"><label class="form-label">PAR Serial Number</label><input type="text" class="form-control" name="par_serial_no" value="<?= htmlspecialchars($row['par_serial_no'] ?? '') ?>"></div>
                                                     <div class="col-md-4"><label class="form-label">Authorized Software</label><textarea class="form-control" name="authorized_software"><?= htmlspecialchars($row['authorized_software'] ?? '') ?></textarea></div>
                                                     <div class="col-md-4"><label class="form-label">Unauthorized Software</label><textarea class="form-control" name="unauthorized_software"><?= htmlspecialchars($row['unauthorized_software'] ?? '') ?></textarea></div>
                                                     <div class="col-md-6">
