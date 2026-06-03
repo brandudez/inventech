@@ -139,37 +139,23 @@ $st->execute();
 $totalDevices = $st->get_result()->fetch_assoc()['total'] ?? 0;
 $totalPages   = (int)ceil($totalDevices / $limit);
 
-// Active count
-$activeWhere  = $where;
-$activeParams = $params;
-$activeTypes  = $types;
-if ($active_filter === '') {
-    $activeWhere[] = "l.is_active = 1";
-} elseif ($active_filter == '1') {
-    // already filtered to active — count equals total
-} else {
-    // filtered to inactive — active count = 0
-}
-$aSQL = !empty($activeWhere) ? "WHERE " . implode(" AND ", $activeWhere) : "";
-$sa = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $aSQL");
-if (!empty($activeParams)) $sa->bind_param($activeTypes, ...$activeParams);
+// Stat-box counts: layer active/inactive on top of ALL current filters.
+// When is_active filter is set to YES, Inactive shows 0 (and vice versa).
+$activeWhere   = $where;
+$activeWhere[] = "l.is_active = 1";
+$activeSQL     = "WHERE " . implode(" AND ", $activeWhere);
+
+$inactiveWhere   = $where;
+$inactiveWhere[] = "l.is_active = 0";
+$inactiveSQL     = "WHERE " . implode(" AND ", $inactiveWhere);
+
+$sa = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $activeSQL");
+if (!empty($params)) $sa->bind_param($types, ...$params);
 $sa->execute();
 $activeDevices = $sa->get_result()->fetch_assoc()['total'] ?? 0;
 
-// Inactive count
-$inactiveWhere  = $where;
-$inactiveParams = $params;
-$inactiveTypes  = $types;
-if ($active_filter === '') {
-    $inactiveWhere[] = "l.is_active = 0";
-} elseif ($active_filter == '0') {
-    // already filtered to inactive — count equals total
-} else {
-    // filtered to active — inactive count = 0
-}
-$iSQL = !empty($inactiveWhere) ? "WHERE " . implode(" AND ", $inactiveWhere) : "";
-$si = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $iSQL");
-if (!empty($inactiveParams)) $si->bind_param($inactiveTypes, ...$inactiveParams);
+$si = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $inactiveSQL");
+if (!empty($params)) $si->bind_param($types, ...$params);
 $si->execute();
 $inactiveDevices = $si->get_result()->fetch_assoc()['total'] ?? 0;
 

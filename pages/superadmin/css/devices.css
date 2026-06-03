@@ -95,6 +95,28 @@
 }
 
 /* =========================
+   EXPORT / ADD-LAPTOP BUTTON
+   (used by Export as Excel link)
+========================= */
+.add-laptop-btn {
+  background: #0fa90fd3;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.add-laptop-btn:hover {
+  background: linear-gradient(135deg, #155e34, #187a40);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(26, 125, 68, 0.35);
+}
+
+/* =========================
    RIGHT SIDE
 ========================= */
 .right-side {
@@ -114,6 +136,8 @@
   padding: 12px 18px;
   border-radius: 14px;
   font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.3s ease;
 }
 
 .filter-btn:hover {
@@ -127,7 +151,7 @@
    DROPDOWN
 ========================= */
 .dropdown-menu {
-  min-width: 320px;
+  min-width: 220px;
   max-width: 450px;
   width: max-content;
   white-space: nowrap;
@@ -138,6 +162,11 @@
 .dropdown-menu.dropdown-scroll {
   max-height: 280px;
   overflow-y: auto;
+}
+
+/* wide variant for OS / Office / Division lists */
+.dropdown-menu.wide-dropdown {
+  min-width: 300px;
 }
 
 /* scrollbar */
@@ -168,7 +197,7 @@
 }
 
 /* =========================
-   ADD BUTTON
+   ADD BUTTON  (green "Add Printer / Add Device")
 ========================= */
 .add-btn {
   background: #0fa90fd3;
@@ -182,10 +211,10 @@
 }
 
 .add-btn:hover {
-  background: #0fa90fd3;
+  background: #0c960cd3;
   color: #ffffff;
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(13, 110, 168, 0.35);
+  box-shadow: 0 6px 18px rgba(15, 169, 15, 0.35);
 }
 
 /* =========================
@@ -199,10 +228,12 @@
   transition: all 0.3s ease;
   overflow: visible;
 }
+
 .table-container {
   overflow-x: auto;
   white-space: nowrap;
 }
+
 /* sidebar collapsed */
 .sidebar.collapsed ~ .contenttable {
   margin-left: var(--sidebar-collapsed);
@@ -234,6 +265,9 @@
   width: 100%;
   border-collapse: collapse;
   min-width: 1200px;
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
 }
 
 /* HEADER */
@@ -282,15 +316,10 @@
   background-color: #dfe6e9;
   transition: 0.2s ease;
 }
-.users-table {
-  background: white;
-  border-radius: 14px;
-  overflow: hidden;
-}
 
-/* ====EDIT MODAL =====*/
-
-/* MODAL CONTAINER */
+/* =========================
+   EDIT MODAL
+========================= */
 .editModal .modal-content {
   border: none;
   border-radius: 20px;
@@ -298,7 +327,6 @@
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
-/* HEADER */
 .editModal .modal-header {
   background-color: #0d6ea8;
   border-bottom: none;
@@ -311,7 +339,6 @@
   font-size: 20px;
 }
 
-/* BODY */
 .editModal .modal-body {
   background-color: #f8f9fa;
   padding: 25px;
@@ -327,14 +354,12 @@
   padding: 10px;
 }
 
-/* FOOTER */
 .editModal .modal-footer {
   background-color: #0d6ea8;
   border-top: none;
   padding: 15px 25px;
 }
 
-/* BUTTONS */
 .editModal .cancelBtn {
   background-color: white;
   color: black;
@@ -353,7 +378,7 @@
 }
 
 .editModal .saveBtn:hover {
-  background-color: #06b006;
+  background-color: #049b04;
 }
 
 /* =========================
@@ -375,7 +400,7 @@
 }
 
 /* =========================
-   FOOTER
+   TABLE FOOTER
 ========================= */
 .table-footer {
   margin-top: 20px;
@@ -474,10 +499,13 @@
   box-shadow: 0 6px 14px rgba(13, 110, 168, 0.25);
 }
 
-.pagination .active {
+/* active page — used as class="active-page" in PHP pagination loop */
+.pagination .active,
+.pagination a.active-page {
   background: linear-gradient(135deg, #0d6ea8, #2c5aa0);
   color: white;
   border: none;
+  box-shadow: 0 4px 12px rgba(13, 110, 168, 0.3);
 }
 
 .pagination .dots {
@@ -485,32 +513,6 @@
   border: none;
   box-shadow: none;
   color: #888;
-}
-
-/* =========================
-   RESPONSIVE
-========================= */
-@media screen and (max-width: 992px) {
-  .contenttable {
-    margin-left: var(--sidebar-collapsed);
-    margin-right: 15px;
-  }
-
-  .table-wrapper {
-    padding: 15px;
-    border-radius: 14px;
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .table-wrapper {
-    padding: 12px;
-    border-radius: 12px;
-  }
-
-  .users-table {
-    min-width: 900px;
-  }
 }
 
 /* =========================
@@ -524,7 +526,7 @@
 }
 
 /* =========================
-   HEADER
+   MODAL HEADER
 ========================= */
 .custom-header {
   background: #0d6ea8;
@@ -540,18 +542,20 @@
   font-size: 18px;
 }
 
-/* CLOSE BUTTON (X) */
-.custom-header .btn-close {
-  filter: brightness(0) invert(1); /* makes X white */
+/* CLOSE BUTTON (X) — white on blue header */
+.custom-header .btn-close,
+.modal-header .btn-close-white {
+  filter: brightness(0) invert(1);
   opacity: 1;
 }
 
-.custom-header .btn-close:hover {
+.custom-header .btn-close:hover,
+.modal-header .btn-close-white:hover {
   opacity: 0.7;
 }
 
 /* =========================
-   BODY
+   MODAL BODY
 ========================= */
 .modal-body {
   padding: 25px;
@@ -586,7 +590,7 @@
 }
 
 /* =========================
-   FOOTER
+   MODAL FOOTER
 ========================= */
 .modal-footer {
   border-top: none;
@@ -641,4 +645,44 @@
   background: #095a8a;
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(13, 110, 168, 0.35);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media screen and (max-width: 992px) {
+  .contenttable {
+    margin-left: var(--sidebar-collapsed);
+    margin-right: 15px;
+  }
+
+  .table-wrapper {
+    padding: 15px;
+    border-radius: 14px;
+  }
+
+  .top-bar {
+    flex-wrap: wrap;
+    margin-left: var(--sidebar-collapsed);
+    margin-right: 15px;
+  }
+
+  .search-input {
+    width: 220px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .table-wrapper {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .users-table {
+    min-width: 900px;
+  }
+
+  .right-side {
+    flex-wrap: wrap;
+  }
 }
