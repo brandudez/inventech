@@ -971,15 +971,10 @@ $exportParams = http_build_query([
 
         document.getElementById("addLaptopForm").addEventListener("submit", function(e) {
             const ep = document.querySelectorAll("#addLaptopModal input[name='endpoint_security[]']:checked");
-            const ph = document.querySelectorAll("#addLaptopModal input[name='previous_owners_id[]']:checked");
+
             if (ep.length === 0) {
                 e.preventDefault();
                 alert("Select at least one Endpoint Security");
-                return;
-            }
-            if (ph.length === 0) {
-                e.preventDefault();
-                alert("Select at least one Previous Handler");
                 return;
             }
         });

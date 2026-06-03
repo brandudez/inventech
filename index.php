@@ -5,36 +5,38 @@ session_start();
 ========================= */
 if (isset($_SESSION['user'])) {
 
-    $role = (int)$_SESSION['user']['role_id'];
+  $role = (int)$_SESSION['user']['role_id'];
 
-    if ($role === 1) {
-        header("Location: pages/superadmin/superadmin_dashboard.php");
-        exit();
-    }
-
-    if ($role === 2) {
-        header("Location: pages/admin/admin_dashboard.php");
-        exit();
-    }
-
-    if ($role === 3) {
-        header("Location: pages/encoder/encoder_dashboard.php");
-        exit();
-    }
-
-    // fallback
-    session_destroy();
-    header("Location: index.php");
+  if ($role === 1) {
+    header("Location: pages/superadmin/superadmin_dashboard.php");
     exit();
+  }
+
+  if ($role === 2) {
+    header("Location: pages/admin/admin_dashboard.php");
+    exit();
+  }
+
+  if ($role === 3) {
+    header("Location: pages/encoder/encoder_dashboard.php");
+    exit();
+  }
+
+  // fallback
+  session_destroy();
+  header("Location: index.php");
+  exit();
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>ITMS Inventech</title>
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
+
 <body>
 
   <!-- ================= NAVBAR ================= -->
@@ -60,7 +62,6 @@ if (isset($_SESSION['user'])) {
       <form id="loginForm">
         <label>Email</label>
         <input type="email" id="email" name="email" required>
-
         <label>Password</label>
         <input type="password" id="password" name="password" required>
 
@@ -76,48 +77,49 @@ if (isset($_SESSION['user'])) {
     const loginError = document.getElementById("loginError");
 
     function openModal() {
-        modal.style.display = "flex";
+      modal.style.display = "flex";
     }
 
     function closeModal() {
-        modal.style.display = "none";
-        loginError.textContent = "";
+      modal.style.display = "none";
+      loginError.textContent = "";
     }
 
     window.onclick = function(event) {
-        if (event.target === modal) closeModal();
+      if (event.target === modal) closeModal();
     };
 
     loginForm.addEventListener("submit", async function(e) {
-        e.preventDefault();
+      e.preventDefault();
 
-        const formData = new FormData(loginForm);
+      const formData = new FormData(loginForm);
 
-        try {
-            const response = await fetch('auth/login.php', {
-                method: 'POST',
-                body: formData
-            });
+      try {
+        const response = await fetch('auth/login.php', {
+          method: 'POST',
+          body: formData
+        });
 
-            const result = await response.json();
+        const result = await response.json();
 
-            if (result.success) {
-                window.location.href = result.redirect;
-            } else {
-                loginError.textContent = result.message;
+        if (result.success) {
+          window.location.href = result.redirect;
+        } else {
+          loginError.textContent = result.message;
 
-                // Preserve email, clear password
-                document.getElementById("password").value = "";
+          // Preserve email, clear password
+          document.getElementById("password").value = "";
 
-                openModal();
-            }
-        } catch (error) {
-            loginError.textContent = "Something went wrong. Please try again.";
-            document.getElementById("password").value = "";
-            openModal();
+          openModal();
         }
+      } catch (error) {
+        loginError.textContent = "Something went wrong. Please try again.";
+        document.getElementById("password").value = "";
+        openModal();
+      }
     });
   </script>
 
 </body>
+
 </html>
