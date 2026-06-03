@@ -70,19 +70,22 @@ $os_filter       = is_array($os_filter_raw)       ? array_filter(array_map('trim
 $office_filter   = is_array($office_filter_raw)   ? array_filter(array_map('trim', $office_filter_raw))   : [];
 $active_filter   = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
 
+// Acquisition date filter (lt5 = less than 5 years old, gt5 = more than 5 years old)
+$acq_filter = trim($_GET['filter_acq'] ?? '');
+
 /* =========================
    WHERE BUILDER
 ========================= */
-$where = [];
+$where  = [];
 $params = [];
-$types = '';
+$types  = '';
 
 if (!empty($search)) {
     $where[] = "(l.device_name LIKE ? OR CONCAT(p.first_name,' ',p.middle_name,' ',p.last_name) LIKE ? OR l.ip_address LIKE ? OR l.guid LIKE ? OR l.mac_address LIKE ?)";
     $sv = "%$search%";
     for ($i = 0; $i < 5; $i++) {
         $params[] = $sv;
-        $types .= 's';
+        $types   .= 's';
     }
 }
 if (!empty($division_filter)) {
@@ -112,34 +115,61 @@ if (!empty($office_filter)) {
 if ($active_filter !== '') {
     $where[] = "l.is_active = ?";
     $params[] = $active_filter;
-    $types .= 'i';
+    $types   .= 'i';
+}
+// Acquisition date filter — no bound params (computed server-side)
+if ($acq_filter === 'lt5') {
+    $where[] = "l.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+} elseif ($acq_filter === 'gt5') {
+    $where[] = "l.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 }
 
 $whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
-$baseJoin = "FROM laptops l LEFT JOIN personnels p ON l.personnel_id = p.id LEFT JOIN ranks r ON p.rank_id = r.id LEFT JOIN divisions dv ON l.division_id = dv.id";
+$baseJoin = "FROM laptops l
+             LEFT JOIN personnels p  ON l.personnel_id = p.id
+             LEFT JOIN ranks r       ON p.rank_id = r.id
+             LEFT JOIN divisions dv  ON l.division_id = dv.id";
 
 /* =========================
-   COUNTS
+   COUNTS — full filtered set, no pagination
 ========================= */
 $st = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $whereSQL");
 if (!empty($params)) $st->bind_param($types, ...$params);
 $st->execute();
 $totalDevices = $st->get_result()->fetch_assoc()['total'] ?? 0;
-$totalPages   = ceil($totalDevices / $limit);
+$totalPages   = (int)ceil($totalDevices / $limit);
 
-$aw = $where;
-$aw[] = "l.is_active = 1";
-$aSQL = "WHERE " . implode(" AND ", $aw);
+// Active count
+$activeWhere  = $where;
+$activeParams = $params;
+$activeTypes  = $types;
+if ($active_filter === '') {
+    $activeWhere[] = "l.is_active = 1";
+} elseif ($active_filter == '1') {
+    // already filtered to active — count equals total
+} else {
+    // filtered to inactive — active count = 0
+}
+$aSQL = !empty($activeWhere) ? "WHERE " . implode(" AND ", $activeWhere) : "";
 $sa = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $aSQL");
-if (!empty($params)) $sa->bind_param($types, ...$params);
+if (!empty($activeParams)) $sa->bind_param($activeTypes, ...$activeParams);
 $sa->execute();
 $activeDevices = $sa->get_result()->fetch_assoc()['total'] ?? 0;
 
-$iw = $where;
-$iw[] = "l.is_active = 0";
-$iSQL = "WHERE " . implode(" AND ", $iw);
+// Inactive count
+$inactiveWhere  = $where;
+$inactiveParams = $params;
+$inactiveTypes  = $types;
+if ($active_filter === '') {
+    $inactiveWhere[] = "l.is_active = 0";
+} elseif ($active_filter == '0') {
+    // already filtered to inactive — count equals total
+} else {
+    // filtered to active — inactive count = 0
+}
+$iSQL = !empty($inactiveWhere) ? "WHERE " . implode(" AND ", $inactiveWhere) : "";
 $si = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $iSQL");
-if (!empty($params)) $si->bind_param($types, ...$params);
+if (!empty($inactiveParams)) $si->bind_param($inactiveTypes, ...$inactiveParams);
 $si->execute();
 $inactiveDevices = $si->get_result()->fetch_assoc()['total'] ?? 0;
 
@@ -150,8 +180,8 @@ $stmt = $conn->prepare("
     SELECT l.*, CONCAT(r.rank,'  ',p.last_name,', ',p.first_name,' ',p.middle_name) AS personnel_name, dv.division AS division_name
     $baseJoin $whereSQL ORDER BY l.device_name ASC LIMIT ?,?
 ");
-$fp = $params;
-$ft = $types . 'ii';
+$fp  = $params;
+$ft  = $types . 'ii';
 $fp[] = $offset;
 $fp[] = $limit;
 $stmt->bind_param($ft, ...$fp);
@@ -228,6 +258,16 @@ $eq = mysqli_query($conn, "SELECT id, antivirus FROM endpoint_security ORDER BY 
 while ($r = mysqli_fetch_assoc($eq)) $addEpRows[] = $r;
 
 $addHandlerRows = $addPersonnelRows;
+
+// Build export query string (mirrors all active filters)
+$exportParams = http_build_query([
+    'search'        => $search,
+    'division'      => $division_filter,
+    'filter_os'     => $os_filter,
+    'filter_office' => $office_filter,
+    'is_active'     => $active_filter,
+    'filter_acq'    => $acq_filter,
+]);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -275,18 +315,25 @@ $addHandlerRows = $addPersonnelRows;
         <div class="search-container">
             <form class="search-form" method="GET" action="device_laptops.php">
                 <?php foreach ($division_filter as $v): ?><input type="hidden" name="division[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
-                <?php foreach ($os_filter as $v): ?><input type="hidden" name="filter_os[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
-                <?php foreach ($office_filter as $v): ?><input type="hidden" name="filter_office[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
+                <?php foreach ($os_filter      as $v): ?><input type="hidden" name="filter_os[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
+                <?php foreach ($office_filter  as $v): ?><input type="hidden" name="filter_office[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
                 <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
+                <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
                 <input type="text" name="search" class="search-input" placeholder="Search laptops..." value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
+                <!-- EXPORT BUTTON -->
+                <a href="export_laptops.php?<?= htmlspecialchars($exportParams) ?>" class="btn add-laptop-btn" title="Export current filtered data to Excel">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
+                </a>
             </form>
         </div>
+
         <div class="right-side">
             <div class="filters">
                 <form method="GET" action="device_laptops.php" id="filterForm">
                     <input type="hidden" name="search" value="<?= htmlspecialchars($search) ?>">
                     <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
+                    <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
 
                     <!-- DIVISION -->
                     <div class="dropdown">
@@ -324,30 +371,7 @@ $addHandlerRows = $addPersonnelRows;
                                     <label class="form-check-label" for="allOS">All</label>
                                 </div>
                             </li>
-                            <?php foreach (
-                                [
-                                    "Windows 10 Home",
-                                    "Windows 10 Home Single Language",
-                                    "Windows 10 Pro",
-                                    "Windows 10 Pro Education",
-                                    "Windows 10 Pro for Workstations",
-                                    "Windows 10 Enterprise",
-                                    "Windows 10 Enterprise LTSC",
-                                    "Windows 10 Education",
-                                    "Windows 10 IoT Enterprise",
-                                    "Windows 11 Home",
-                                    "Windows 11 Home Single Language",
-                                    "Windows 11 Pro",
-                                    "Windows 11 Pro Education",
-                                    "Windows 11 Pro for Workstations",
-                                    "Windows 11 Enterprise",
-                                    "Windows 11 Enterprise LTSC",
-                                    "Windows 11 Education",
-                                    "Windows 11 SE",
-                                    "Windows 11 IoT Enterprise",
-                                    "Other"
-                                ] as $os
-                            ): ?>
+                            <?php foreach ($osList as $os): ?>
                                 <li class="mb-2">
                                     <div class="form-check">
                                         <input class="form-check-input os-checkbox" type="checkbox" name="filter_os[]" value="<?= htmlspecialchars($os) ?>" id="os_<?= md5($os) ?>" <?= in_array($os, $os_filter) ? 'checked' : '' ?>>
@@ -370,37 +394,7 @@ $addHandlerRows = $addPersonnelRows;
                                     <label class="form-check-label" for="allOffice">All</label>
                                 </div>
                             </li>
-                            <?php foreach (
-                                [
-                                    "Microsoft 365 Personal",
-                                    "Microsoft 365 Family",
-                                    "Microsoft 365 Business Basic",
-                                    "Microsoft 365 Business Standard",
-                                    "Microsoft 365 Business Premium",
-                                    "Microsoft 365 Apps for Business",
-                                    "Microsoft 365 Apps for Enterprise",
-                                    "Microsoft Office Home 2024",
-                                    "Microsoft Office Home & Business 2024",
-                                    "Microsoft Office LTSC 2024",
-                                    "Microsoft Office Home & Student 2021",
-                                    "Microsoft Office Home & Business 2021",
-                                    "Microsoft Office Professional 2021",
-                                    "Microsoft Office LTSC 2021",
-                                    "Microsoft Office Home & Student 2019",
-                                    "Microsoft Office Home & Business 2019",
-                                    "Microsoft Office Professional Plus 2019",
-                                    "Microsoft Office Home & Student 2016",
-                                    "Microsoft Office Home & Business 2016",
-                                    "Microsoft Office Professional Plus 2016",
-                                    "Microsoft Office Home & Student 2013",
-                                    "Microsoft Office Home & Business 2013",
-                                    "Microsoft Office Professional Plus 2013",
-                                    "LibreOffice",
-                                    "Apache OpenOffice",
-                                    "WPS Office",
-                                    "Other"
-                                ] as $office
-                            ): ?>
+                            <?php foreach ($officeAppsList as $office): ?>
                                 <li class="mb-2">
                                     <div class="form-check">
                                         <input class="form-check-input office-checkbox" type="checkbox" name="filter_office[]" value="<?= htmlspecialchars($office) ?>" id="office_<?= md5($office) ?>" <?= in_array($office, $office_filter) ? 'checked' : '' ?>>
@@ -410,21 +404,47 @@ $addHandlerRows = $addPersonnelRows;
                             <?php endforeach; ?>
                         </ul>
                     </div>
+                </form><!-- /filterForm -->
+            </div><!-- /filters -->
 
-                </form>
+            <!-- ACQUISITION DATE FILTER -->
+            <div class="dropdown">
+                <?php
+                $acqLabel = 'Acquisition Date';
+                if ($acq_filter === 'lt5') $acqLabel = 'Age < 5 Years';
+                elseif ($acq_filter === 'gt5') $acqLabel = 'Age > 5 Years';
+                $acqBase = '?search=' . urlencode($search) . '&' . http_build_query([
+                    'division'      => $division_filter,
+                    'filter_os'     => $os_filter,
+                    'filter_office' => $office_filter,
+                    'is_active'     => $active_filter,
+                ]);
+                ?>
+                <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown"><?= htmlspecialchars($acqLabel) ?></button>
+                <ul class="dropdown-menu p-3">
+                    <li><a class="dropdown-item" href="<?= $acqBase ?>">All</a></li>
+                    <li><a class="dropdown-item" href="<?= $acqBase ?>&filter_acq=lt5">Less than 5 years</a></li>
+                    <li><a class="dropdown-item" href="<?= $acqBase ?>&filter_acq=gt5">More than 5 years</a></li>
+                </ul>
             </div>
 
             <!-- IS ACTIVE FILTER -->
             <div class="dropdown">
-                <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown"><?= $active_filter === '' ? 'Is Active?' : ($active_filter == 1 ? 'YES' : 'NO') ?></button>
+                <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
+                    <?= $active_filter === '' ? 'Is Active?' : ($active_filter == 1 ? 'YES' : 'NO') ?>
+                </button>
                 <ul class="dropdown-menu p-3">
-                    <?php $base = '?search=' . urlencode($search) . '&' . http_build_query(['division' => $division_filter, 'filter_os' => $os_filter, 'filter_office' => $office_filter]); ?>
+                    <?php $base = '?search=' . urlencode($search) . '&' . http_build_query([
+                        'division'      => $division_filter,
+                        'filter_os'     => $os_filter,
+                        'filter_office' => $office_filter,
+                        'filter_acq'    => $acq_filter,
+                    ]); ?>
                     <li><a class="dropdown-item" href="<?= $base ?>">All</a></li>
                     <li><a class="dropdown-item" href="<?= $base ?>&is_active=1">YES</a></li>
                     <li><a class="dropdown-item" href="<?= $base ?>&is_active=0">NO</a></li>
                 </ul>
             </div>
-
             <button type="button" class="btn add-laptop-btn" data-bs-toggle="modal" data-bs-target="#addLaptopModal">Add Laptop</button>
         </div>
     </div>
@@ -597,7 +617,6 @@ $addHandlerRows = $addPersonnelRows;
                         <th>PREVIOUS HANDLER/S</th>
                         <th>IS REMOTELY ACCESSIBLE?</th>
                         <th>IS ACTIVE?</th>
-                        <th>ACTION</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -633,12 +652,7 @@ $addHandlerRows = $addPersonnelRows;
                                 <td><?= htmlspecialchars($row['par_serial_no'] ?? '') ?></td>
                                 <td><?= getPersonnelNames($conn, $row['previous_owners_id']) ?></td>
                                 <td><?= $row['is_remote_acc'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
-                                <td><?= $row['is_active'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
-                                <td onclick="event.stopPropagation();">
-                                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal<?= $row['id'] ?>">
-                                        <i class="bi bi-gear-fill"></i>
-                                    </button>
-                                </td>
+                                <td><?= $row['is_active']     ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
                             </tr>
 
                             <!-- VIEW MODAL -->
@@ -822,9 +836,7 @@ $addHandlerRows = $addPersonnelRows;
                                                     <div class="col-md-4">
                                                         <label class="form-label">Operating System</label>
                                                         <select name="os" class="form-select" required>
-                                                            <?php foreach ($osList as $os): ?>
-                                                                <option value="<?= $os ?>" <?= ($row['os'] ?? '') == $os ? 'selected' : '' ?>><?= $os ?></option>
-                                                            <?php endforeach; ?>
+                                                            <?php foreach ($osList as $os): ?><option value="<?= $os ?>" <?= ($row['os'] ?? '') == $os ? 'selected' : '' ?>><?= $os ?></option><?php endforeach; ?>
                                                         </select>
                                                     </div>
                                                     <div class="col-md-4">
@@ -838,9 +850,7 @@ $addHandlerRows = $addPersonnelRows;
                                                     <div class="col-md-6">
                                                         <label class="form-label">Office Application</label>
                                                         <select name="office_application" class="form-select" required>
-                                                            <?php foreach ($officeAppsList as $app): ?>
-                                                                <option value="<?= $app ?>" <?= ($row['office_application'] ?? '') == $app ? 'selected' : '' ?>><?= $app ?></option>
-                                                            <?php endforeach; ?>
+                                                            <?php foreach ($officeAppsList as $app): ?><option value="<?= $app ?>" <?= ($row['office_application'] ?? '') == $app ? 'selected' : '' ?>><?= $app ?></option><?php endforeach; ?>
                                                         </select>
                                                     </div>
                                                     <div class="col-md-6"><label class="form-label">Office License Key</label><input type="text" class="form-control" name="office_license_key" value="<?= htmlspecialchars($row['office_license_key'] ?? '') ?>" required></div>
@@ -920,7 +930,7 @@ $addHandlerRows = $addPersonnelRows;
                         <?php endwhile; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="30" class="text-center">No devices found.</td>
+                            <td colspan="29" class="text-center">No devices found.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -929,12 +939,19 @@ $addHandlerRows = $addPersonnelRows;
 
         <div class="table-footer">
             <div class="user-stats">
-                <div class="stat-box total"><span class="label">Total Devices</span><span class="value" id="statTotal"><?= $totalDevices ?></span></div>
-                <div class="stat-box active"><span class="label">Active</span><span class="value" id="statActive"><?= $activeDevices ?></span></div>
-                <div class="stat-box inactive"><span class="label">Inactive</span><span class="value" id="statInactive"><?= $inactiveDevices ?></span></div>
+                <div class="stat-box total"><span class="label">Total Devices</span><span class="value"><?= $totalDevices ?></span></div>
+                <div class="stat-box active"><span class="label">Active</span><span class="value"><?= $activeDevices ?></span></div>
+                <div class="stat-box inactive"><span class="label">Inactive</span><span class="value"><?= $inactiveDevices ?></span></div>
             </div>
             <?php if ($totalPages > 1):
-                $pb = http_build_query(['search' => $search, 'division' => $division_filter, 'filter_os' => $os_filter, 'filter_office' => $office_filter, 'is_active' => $active_filter]); ?>
+                $pb = http_build_query([
+                    'search'        => $search,
+                    'division'      => $division_filter,
+                    'filter_os'     => $os_filter,
+                    'filter_office' => $office_filter,
+                    'is_active'     => $active_filter,
+                    'filter_acq'    => $acq_filter,
+                ]); ?>
                 <div class="pagination">
                     <?php if ($page > 1): ?><a href="?page=<?= $page - 1 ?>&<?= $pb ?>">Prev</a><?php endif; ?>
                     <?php for ($i = 1; $i <= $totalPages; $i++): ?><a href="?page=<?= $i ?>&<?= $pb ?>" class="<?= $i == $page ? 'active-page' : '' ?>"><?= $i ?></a><?php endfor; ?>
@@ -945,16 +962,20 @@ $addHandlerRows = $addPersonnelRows;
     </div>
 
     <script>
-        function updateStats() {
-            const rows = document.querySelectorAll('.users-table tbody tr[data-active]');
-            let active = 0,
-                inactive = 0;
-            rows.forEach(r => r.dataset.active === '1' ? active++ : inactive++);
-            document.getElementById('statTotal').textContent = rows.length;
-            document.getElementById('statActive').textContent = active;
-            document.getElementById('statInactive').textContent = inactive;
+        function setupFilterGroup(allSel, itemSel) {
+            const allCb = document.querySelector(allSel);
+            const items = document.querySelectorAll(itemSel);
+            if (!allCb) return;
+            allCb.addEventListener('change', () => {
+                if (allCb.checked) items.forEach(c => c.checked = false);
+            });
+            items.forEach(cb => cb.addEventListener('change', () => {
+                allCb.checked = !Array.from(items).some(c => c.checked);
+            }));
         }
-        document.addEventListener('DOMContentLoaded', updateStats);
+        setupFilterGroup('#allDivision', '.division-checkbox');
+        setupFilterGroup('#allOS', '.os-checkbox');
+        setupFilterGroup('#allOffice', '.office-checkbox');
 
         document.getElementById("addLaptopForm").addEventListener("submit", function(e) {
             const ep = document.querySelectorAll("#addLaptopModal input[name='endpoint_security[]']:checked");
@@ -970,21 +991,6 @@ $addHandlerRows = $addPersonnelRows;
                 return;
             }
         });
-
-        function setupFilterGroup(allSel, itemSel) {
-            const allCb = document.querySelector(allSel);
-            const items = document.querySelectorAll(itemSel);
-            if (!allCb) return;
-            allCb.addEventListener('change', () => {
-                if (allCb.checked) items.forEach(c => c.checked = false);
-            });
-            items.forEach(cb => cb.addEventListener('change', () => {
-                allCb.checked = !Array.from(items).some(c => c.checked);
-            }));
-        }
-        setupFilterGroup('#allDivision', '.division-checkbox');
-        setupFilterGroup('#allOS', '.os-checkbox');
-        setupFilterGroup('#allOffice', '.office-checkbox');
 
         // View → Edit transition
         document.addEventListener('click', function(e) {
@@ -1020,7 +1026,7 @@ $addHandlerRows = $addPersonnelRows;
     <?php if (isset($_GET['edit'])): ?>
         <script>
             document.addEventListener("DOMContentLoaded", function() {
-                let modal = document.getElementById("editModal<?= $_GET['edit'] ?>");
+                let modal = document.getElementById("editModal<?= (int)$_GET['edit'] ?>");
                 if (modal) new bootstrap.Modal(modal).show();
             });
         </script>
