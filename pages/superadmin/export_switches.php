@@ -53,7 +53,10 @@ function getPreviousOwnersNamesExport($conn, $json)
     }
     return implode(', ', $names);
 }
-
+function formatDate($val) {
+    if (empty($val) || $val === '0000-00-00') return '-';
+    return $val;
+}
 /* =========================
    FILTERS (mirrors device_switches.php)
 ========================= */
@@ -172,29 +175,29 @@ echo '</tr>';
 while ($row = $result->fetch_assoc()) {
     echo '<tr>';
     $cells = [
-        trim($row['fullname']                ?? ''),
-        $row['division_name']                ?? '',
-        $row['manufacturer']                 ?? '',
-        $row['model']                        ?? '',
-        $row['serial_no']                    ?? '',
-        $row['no_of_ports']                  ?? '',
-        $row['no_of_active_ports']           ?? '',
-        $row['no_of_managed']                ?? '',
-        $row['no_of_unmanaged']              ?? '',
-        $row['firmware_version']             ?? '',
-        ($row['is_vlan_supported'] == 1) ? 'YES' : 'NO',
-        $row['location']                     ?? '',
-        ($row['is_remote_access'] == 1) ? 'YES' : 'NO',
-        $row['remote_connection_details']    ?? '',
-        $row['remarks']                      ?? '',
-        $row['pnp_focal_person']             ?? '',
-        $row['contact_details']              ?? '',
-        $row['acquisition_date']             ?? '',
-        $row['acquisition_type']             ?? '',
-        $row['acquisition_details']          ?? '',
-        getPreviousOwnersNamesExport($conn, $row['previous_owners_id']),
-        ($row['is_active'] == 1) ? 'YES' : 'NO',
-    ];
+            trim($row['fullname']             ?? '') ?: '-',
+            $row['division_name']             ?? '-',
+            $row['manufacturer']              ?? '-',
+            $row['model']                     ?? '-',
+            $row['serial_no']                 ?? '-',
+            $row['no_of_ports']               ?? '-',
+            $row['no_of_active_ports']        ?? '-',
+            $row['no_of_managed']             ?? '-',
+            $row['no_of_unmanaged']           ?? '-',
+            $row['firmware_version']          ?? '-',
+            ($row['is_vlan_supported'] == 1) ? 'YES' : 'NO',
+            $row['location']                  ?? '-',
+            ($row['is_remote_access'] == 1)  ? 'YES' : 'NO',
+            $row['remote_connection_details'] ?? '-',
+            $row['remarks']                   ?? '-',
+            $row['pnp_focal_person']          ?? '-',
+            $row['contact_details']           ?? '-',
+            formatDate($row['acquisition_date']),        // fixed
+            $row['acquisition_type']          ?? '-',
+            $row['acquisition_details']       ?? '-',
+            getPreviousOwnersNamesExport($conn, $row['previous_owners_id']) ?: '-',
+            ($row['is_active'] == 1) ? 'YES' : 'NO',
+];
     foreach ($cells as $cell) echo '<td>' . htmlspecialchars($cell) . '</td>';
     echo '</tr>';
 }

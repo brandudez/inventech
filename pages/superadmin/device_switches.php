@@ -17,9 +17,9 @@ include("../../config/db.php");
 ========================= */
 function getPreviousOwnersNames($conn, $json)
 {
-    if (empty($json)) return 'N/A';
+    if (empty($json)) return '-';
     $ids = json_decode($json, true);
-    if (!is_array($ids) || empty($ids)) return 'N/A';
+    if (!is_array($ids) || empty($ids)) return '-';
     $ids = implode(',', array_map('intval', $ids));
     $result = mysqli_query($conn, "
         SELECT r.rank, p.first_name, p.middle_name, p.last_name
@@ -27,12 +27,12 @@ function getPreviousOwnersNames($conn, $json)
         LEFT JOIN ranks r ON p.rank_id = r.id
         WHERE p.id IN ($ids)
     ");
-    if (!$result) return 'N/A';
+    if (!$result) return '-';
     $names = [];
     while ($row = mysqli_fetch_assoc($result)) {
         $names[] = trim(($row['rank'] ?? '') . ' ' . $row['first_name'] . ' ' . $row['middle_name'] . ' ' . $row['last_name']);
     }
-    return !empty($names) ? implode(",<br>", $names) : 'N/A';
+    return !empty($names) ? implode(",<br>", $names) : '-';
 }
 
 /* =========================
@@ -211,9 +211,11 @@ $exportParams = http_build_query([
                     placeholder="Search switches..." value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
                 <!-- EXPORT BUTTON -->
-                <a href="export_switches.php?<?= htmlspecialchars($exportParams) ?>" class="btn add-laptop-btn" title="Export current filtered data to Excel">
-                    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
-                </a>
+                <a href="export_switches.php?<?= htmlspecialchars($exportParams) ?>"
+   class="btn add-laptop-btn"
+   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
+    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
+</a>
             </form>
         </div>
 
@@ -432,25 +434,25 @@ $exportParams = http_build_query([
                                 data-bs-toggle="modal" data-bs-target="#viewSwitchModal<?= $row['id'] ?>">
                                 <td><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></td>
-                                <td><?= htmlspecialchars($row['manufacturer'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['model'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['serial_no'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['no_of_ports'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['no_of_active_ports'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['no_of_managed'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['no_of_unmanaged'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['firmware_version'] ?? '') ?></td>
+                                <td><?= htmlspecialchars($row['manufacturer'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['model'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['serial_no'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['no_of_ports'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['no_of_active_ports'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['no_of_managed'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['no_of_unmanaged'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['firmware_version'] ?? '') ?: '-' ?></td>
                                 <td><?= $row['is_vlan_supported'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
-                                <td><?= htmlspecialchars($row['location'] ?? '') ?></td>
+                                <td><?= htmlspecialchars($row['location'] ?? '') ?: '-' ?></td>
                                 <td><?= $row['is_remote_access'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
-                                <td><?= htmlspecialchars($row['remote_connection_details'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['remarks'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['pnp_focal_person'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['contact_details'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['acquisition_date'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['acquisition_type'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['acquisition_details'] ?? '') ?></td>
-                                <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?></td>
+                               <td><?= htmlspecialchars($row['remote_connection_details'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['remarks'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['pnp_focal_person'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['contact_details'] ?? '') ?: '-' ?></td>
+                                <td><?= (!empty($row['acquisition_date']) && $row['acquisition_date'] !== '0000-00-00') ? htmlspecialchars($row['acquisition_date']) : '-' ?></td>
+                                <td><?= htmlspecialchars($row['acquisition_type'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['acquisition_details'] ?? '') ?: '-' ?></td>
+                                <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?: '-' ?></td>
                                 <td><?= $row['is_active'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
                                 <td onclick="event.stopPropagation();">
                                     <button class="btn btn-primary btn-sm"
@@ -680,21 +682,52 @@ $exportParams = http_build_query([
         <?php endif; ?>
     </script>
 
+   <script>
+    function showToast(message, type = "success") {
+        const colors = { success: "#198754", danger: "#dc3545" };
+        const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
+        const toast  = document.createElement("div");
+        toast.style.cssText = `
+            position:fixed;bottom:24px;right:24px;z-index:9999;
+            background:${colors[type]};color:#fff;
+            padding:14px 20px;border-radius:10px;
+            display:flex;align-items:center;gap:10px;
+            box-shadow:0 4px 16px rgba(0,0,0,.2);
+            font-size:.95rem;max-width:340px;
+            animation:slideIn .3s ease;
+        `;
+        toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
+        document.body.appendChild(toast);
+        if (!document.getElementById("toastKeyframe")) {
+            const s = document.createElement("style");
+            s.id = "toastKeyframe";
+            s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
+            document.head.appendChild(s);
+        }
+        setTimeout(() => {
+            toast.style.transition = "opacity .4s";
+            toast.style.opacity = "0";
+            setTimeout(() => toast.remove(), 400);
+        }, 3500);
+    }
+    </script>
+
+    <?php if (!empty($_SESSION['toast_success'])): ?>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
+    });
+    </script>
+    <?php unset($_SESSION['toast_success']); endif; ?>
+
     <?php if (!empty($_SESSION['toast_error'])): ?>
-        <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                let toast = document.createElement("div");
-                toast.className = "toast align-items-center text-bg-danger show position-fixed bottom-0 end-0 m-3";
-                toast.style.zIndex = 9999;
-                toast.innerHTML = `<div class="d-flex"><div class="toast-body"><?= $_SESSION['toast_error'] ?></div><button type="button" class="btn-close me-2 m-auto"></button></div>`;
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 4000);
-            });
-        </script>
-        <?php unset($_SESSION['toast_error']); ?>
-    <?php endif; ?>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
+    });
+    </script>
+    <?php unset($_SESSION['toast_error']); endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 </html>

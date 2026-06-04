@@ -150,7 +150,8 @@ $stmt->bind_param(
 );
 
 if ($stmt->execute()) {
-    header("Location: device_switches.php?updated=1");
+    $_SESSION['toast_success'] = "Switch updated successfully!";
+header("Location: device_switches.php");
     exit();
 } else {
     echo "Error: " . $stmt->error;
