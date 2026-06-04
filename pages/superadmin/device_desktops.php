@@ -45,7 +45,10 @@ function getPersonnelNames($conn, $json)
     }
     return implode(",<br>", $names);
 }
-
+function dash($val) {
+    $v = trim($val ?? '');
+    return $v !== '' ? htmlspecialchars($v) : '-';
+}
 $limit  = 10;
 $page   = max(1, (int)($_GET['page'] ?? 1));
 $offset = ($page - 1) * $limit;
@@ -175,6 +178,7 @@ while ($r = mysqli_fetch_assoc($eq)) $addEpRows[] = $r;
 $addHandlerRows = $addPersonnelRows;
 
 $osList = [
+    " - ",
     "Windows 10 Home",
     "Windows 10 Home Single Language",
     "Windows 10 Pro",
@@ -198,6 +202,7 @@ $osList = [
 ];
 
 $officeAppsList = [
+     " - ",
     "Microsoft 365 Personal",
     "Microsoft 365 Family",
     "Microsoft 365 Business Basic",
@@ -597,33 +602,33 @@ $exportParams = http_build_query([
                         <?php while ($row = $result->fetch_assoc()): ?>
                             <tr class="clickable-row" data-active="<?= $row['is_active'] ? '1' : '0' ?>"
                                 data-bs-toggle="modal" data-bs-target="#viewDtModal<?= $row['id'] ?>">
-                                <td><?= htmlspecialchars($row['device_name'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['personnel_name'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['division_name'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['ip_address'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['os'] ?? '') ?></td>
+                                <td><?= dash($row['device_name'] ?? '') ?></td>
+                                <td><?= dash($row['personnel_name'] ?? '') ?></td>
+                                <td><?= dash($row['division_name'] ?? '') ?></td>
+                                <td><?= dash($row['ip_address'] ?? '') ?></td>
+                                <td><?= dash($row['os'] ?? '') ?></td>
                                 <td><?= ($row['is_os_licensed'] == 1) ? 'Yes' : 'No' ?></td>
-                                <td><?= htmlspecialchars($row['os_license_key'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['office_application'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['office_license_key'] ?? '') ?></td>
+                                <td><?= dash($row['os_license_key'] ?? '') ?></td>
+                                <td><?= dash($row['office_application'] ?? '') ?></td>
+                                <td><?= dash($row['office_license_key'] ?? '') ?></td>
                                 <td><?= ($row['is_office_licensed'] == 1) ? 'Yes' : 'No' ?></td>
-                                <td><?= getEndpointNames($conn, $row['endpoint_security_id']) ?></td>
-                                <td><?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['date_installed'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['guid'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['mac_address'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['cpu_brand'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['cpu_cores'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['gb_ram'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['monitor_brand'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['monitor_size_inches'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['no_of_user_accounts'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['user_account_type'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['authorized_software'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['unauthorized_software'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['acquisition_date'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['par_serial_no'] ?? '') ?></td>
-                                <td><?= getPersonnelNames($conn, $row['previous_owners_id']) ?></td>
+                                <td><?= getEndpointNames($conn, $row['endpoint_security_id']) ?: '-' ?></td>
+                                <td><?= dash($row['no_of_installed_anti_virus'] ?? '') ?></td>
+                                <td><?= dash($row['date_installed'] ?? '') ?></td>
+                                <td><?= dash($row['guid'] ?? '') ?></td>
+                                <td><?= dash($row['mac_address'] ?? '') ?></td>
+                                <td><?= dash($row['cpu_brand'] ?? '') ?></td>
+                                <td><?= dash($row['cpu_cores'] ?? '') ?></td>
+                                <td><?= dash($row['gb_ram'] ?? '') ?></td>
+                                <td><?= dash($row['monitor_brand'] ?? '') ?></td>
+                                <td><?= dash($row['monitor_size_inches'] ?? '') ?></td>
+                                <td><?= dash($row['no_of_user_accounts'] ?? '') ?></td>
+                                <td><?= dash($row['user_account_type'] ?? '') ?></td>
+                                <td><?= dash($row['authorized_software'] ?? '') ?></td>
+                                <td><?= dash($row['unauthorized_software'] ?? '') ?></td>
+                                <td><?= dash($row['acquisition_date'] ?? '') ?></td>
+                                <td><?= dash($row['par_serial_no'] ?? '') ?></td>
+                                <td><?= getPersonnelNames($conn, $row['previous_owners_id']) ?: '-' ?></td>
                                 <td><?= $row['is_remote_acc'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
                                 <td><?= $row['is_active']     ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
                                 <td onclick="event.stopPropagation();">
@@ -993,30 +998,31 @@ $exportParams = http_build_query([
             }
         });
     </script>
+<?php if (!empty($_SESSION['toast_success'])): ?>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    let toast = document.createElement("div");
+    toast.className = "toast align-items-center text-bg-success show position-fixed bottom-0 end-0 m-3";
+    toast.style.zIndex = 9999;
+    toast.innerHTML = `<div class="d-flex"><div class="toast-body"><?= htmlspecialchars($_SESSION['toast_success']) ?></div><button type="button" class="btn-close me-2 m-auto" onclick="this.closest('.toast').remove()"></button></div>`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+});
+</script>
+<?php unset($_SESSION['toast_success']); endif; ?>
 
-    <?php if (!empty($_SESSION['toast_error'])): ?>
-        <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                let toast = document.createElement("div");
-                toast.className = "toast align-items-center text-bg-danger show position-fixed bottom-0 end-0 m-3";
-                toast.style.zIndex = 9999;
-                toast.innerHTML = `<div class="d-flex"><div class="toast-body"><?= $_SESSION['toast_error'] ?></div><button type="button" class="btn-close me-2 m-auto"></button></div>`;
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 4000);
-            });
-        </script>
-        <?php unset($_SESSION['toast_error']); ?>
-    <?php endif; ?>
-
-    <?php if (isset($_GET['edit'])): ?>
-        <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                let modal = document.getElementById("editModal<?= (int)$_GET['edit'] ?>");
-                if (modal) new bootstrap.Modal(modal).show();
-            });
-        </script>
-    <?php endif; ?>
-
+<?php if (!empty($_SESSION['toast_error'])): ?>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    let toast = document.createElement("div");
+    toast.className = "toast align-items-center text-bg-danger show position-fixed bottom-0 end-0 m-3";
+    toast.style.zIndex = 9999;
+    toast.innerHTML = `<div class="d-flex"><div class="toast-body"><?= htmlspecialchars($_SESSION['toast_error']) ?></div><button type="button" class="btn-close me-2 m-auto" onclick="this.closest('.toast').remove()"></button></div>`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+});
+</script>
+<?php unset($_SESSION['toast_error']); endif; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

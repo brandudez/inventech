@@ -276,7 +276,7 @@ $html = ob_get_clean();
 ========================= */
 
 file_put_contents($filePath, $html);
-
+$_SESSION['toast_success'] = "Export successful.";
 /* =========================
    DOWNLOAD OUTPUT
 ========================= */
