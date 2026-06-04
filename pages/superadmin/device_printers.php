@@ -12,16 +12,16 @@ include("../../config/db.php");
 
 function getPreviousOwnersNames($conn, $json)
 {
-    if (empty($json)) return 'N/A';
+    if (empty($json)) return '-';
     $ids = json_decode($json, true);
-    if (!is_array($ids) || empty($ids)) return 'N/A';
+    if (!is_array($ids) || empty($ids)) return '-';
     $in = implode(',', array_map('intval', $ids));
     $result = mysqli_query($conn, "SELECT r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.id IN ($in)");
-    if (!$result) return 'N/A';
+    if (!$result) return '-';
     $names = [];
     while ($row = mysqli_fetch_assoc($result))
         $names[] = trim(($row['rank'] ?? '') . ' ' . $row['first_name'] . ' ' . $row['middle_name'] . ' ' . $row['last_name']);
-    return !empty($names) ? implode(",<br>", $names) : 'N/A';
+    return !empty($names) ? implode(",<br>", $names) : '-';
 }
 
 /* =========================
@@ -197,9 +197,11 @@ $exportParams = http_build_query([
                 <input type="text" name="search" class="search-input" placeholder="Search printers..." value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
                 <!-- EXPORT BUTTON -->
-                <a href="export_printers.php?<?= htmlspecialchars($exportParams) ?>" class="btn add-laptop-btn" title="Export current filtered data to Excel">
-                    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
-                </a>
+                <a href="export_printers.php?<?= htmlspecialchars($exportParams) ?>"
+   class="btn add-laptop-btn"
+   onclick="setTimeout(()=>showToast('Export downloaded!','info'),800)">
+    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
+</a>
             </form>
         </div>
 
@@ -306,14 +308,14 @@ $exportParams = http_build_query([
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" required></div>
-                            <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" required></div>
-                            <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no" required></div>
+                            <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" ></div>
+                            <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" ></div>
+                            <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no" ></div>
                             <div class="col-md-6"><label class="form-label">Acquisition Details</label><input type="text" class="form-control" name="acquisition_details"></div>
                             <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" name="acquisition_date" class="form-control"></div>
                             <div class="col-md-6">
                                 <label class="form-label">Is Active?</label>
-                                <select name="is_active" class="form-select" required>
+                                <select name="is_active" class="form-select" >
                                     <option value="" disabled selected hidden>Select</option>
                                     <option value="1">Yes</option>
                                     <option value="0">No</option>
@@ -371,14 +373,14 @@ $exportParams = http_build_query([
                                 data-bs-toggle="modal" data-bs-target="#viewPrModal<?= $row['id'] ?>">
                                 <td><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></td>
-                                <td><?= htmlspecialchars($row['brand'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['model'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['serial_no'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['acquisition_details'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['acquisition_date'] ?? '') ?></td>
+                                <td><?= htmlspecialchars($row['brand'] ?? '')  ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['model'] ?? '')  ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['serial_no'] ?? '') ?: '-'  ?></td>
+                                <td><?= htmlspecialchars($row['acquisition_details'] ?? '')  ?: '-' ?></td>
+                                <td><?= (!empty($row['acquisition_date']) && $row['acquisition_date'] !== '0000-00-00') ? htmlspecialchars($row['acquisition_date']) : '-' ?></td>
                                 <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?></td>
                                 <td><?= $row['is_active'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
-                                <td><?= htmlspecialchars(substr($row['created_date'] ?? '', 0, 10)) ?></td>
+                                <td><?= (!empty($row['created_date']) && substr($row['created_date'], 0, 10) !== '0000-00-00') ? htmlspecialchars(substr($row['created_date'], 0, 10)) : '-' ?></td>
                                 <td onclick="event.stopPropagation();">
                                     <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editPrModal<?= $row['id'] ?>">
                                         <i class="bi bi-gear-fill"></i>
@@ -480,9 +482,9 @@ $exportParams = http_build_query([
                                                             <?php endforeach; ?>
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" value="<?= htmlspecialchars($row['brand'] ?? '') ?>" required></div>
-                                                    <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" value="<?= htmlspecialchars($row['model'] ?? '') ?>" required></div>
-                                                    <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no" value="<?= htmlspecialchars($row['serial_no'] ?? '') ?>" required></div>
+                                                    <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" value="<?= htmlspecialchars($row['brand'] ?? '') ?>" ></div>
+                                                    <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" value="<?= htmlspecialchars($row['model'] ?? '') ?>" ></div>
+                                                    <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no" value="<?= htmlspecialchars($row['serial_no'] ?? '') ?>" ></div>
                                                     <div class="col-md-6"><label class="form-label">Acquisition Details</label><input type="text" class="form-control" name="acquisition_details" value="<?= htmlspecialchars($row['acquisition_details'] ?? '') ?>"></div>
                                                     <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" class="form-control" name="acquisition_date" value="<?= htmlspecialchars($row['acquisition_date'] ?? '') ?>"></div>
                                                     <div class="col-md-6">
@@ -592,20 +594,52 @@ $exportParams = http_build_query([
         <?php endif; ?>
     </script>
 
-    <?php if (!empty($_SESSION['toast_error'])): ?>
-        <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                let toast = document.createElement("div");
-                toast.className = "toast align-items-center text-bg-danger show position-fixed bottom-0 end-0 m-3";
-                toast.style.zIndex = 9999;
-                toast.innerHTML = `<div class="d-flex"><div class="toast-body"><?= $_SESSION['toast_error'] ?></div><button type="button" class="btn-close me-2 m-auto"></button></div>`;
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 4000);
-            });
-        </script>
-        <?php unset($_SESSION['toast_error']); ?>
-    <?php endif; ?>
+<?php if (!empty($_SESSION['toast_error'])): ?>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
+    });
+    </script>
+    <?php unset($_SESSION['toast_error']); endif; ?>
 
+    <?php if (!empty($_SESSION['toast_success'])): ?>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
+    });
+    </script>
+    <?php unset($_SESSION['toast_success']); endif; ?>
+
+    <!-- showToast always defined -->
+    <script>
+    function showToast(message, type = "success") {
+        const colors = { success: "#198754", danger: "#dc3545", info: "#198754" };
+        const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill", info: "bi-file-earmark-excel-fill" };
+        const toast  = document.createElement("div");
+        toast.style.cssText = `
+            position:fixed;bottom:24px;right:24px;z-index:9999;
+            background:${colors[type]};color:#fff;
+            padding:14px 20px;border-radius:10px;
+            display:flex;align-items:center;gap:10px;
+            box-shadow:0 4px 16px rgba(0,0,0,.2);
+            font-size:.95rem;max-width:340px;
+            animation:slideIn .3s ease;
+        `;
+        toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
+        document.body.appendChild(toast);
+        if (!document.getElementById("toastKeyframe")) {
+            const s = document.createElement("style");
+            s.id = "toastKeyframe";
+            s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
+            document.head.appendChild(s);
+        }
+        setTimeout(() => {
+            toast.style.transition = "opacity .4s";
+            toast.style.opacity = "0";
+            setTimeout(() => toast.remove(), 400);
+        }, 3500);
+    }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

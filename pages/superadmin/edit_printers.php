@@ -74,7 +74,8 @@ $stmt->bind_param(
 );
 
 if ($stmt->execute()) {
-    header("Location: device_printers.php?updated=1");
+   $_SESSION['toast_success'] = "Printer updated successfully!";
+header("Location: device_printers.php");
     exit();
 } else {
     echo "Error: " . $stmt->error;
