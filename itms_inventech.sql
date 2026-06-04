@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 30, 2026 at 08:51 AM
+-- Generation Time: Jun 04, 2026 at 06:54 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -49,8 +49,9 @@ CREATE TABLE `cameras` (
 --
 
 INSERT INTO `cameras` (`id`, `device_code`, `personnel_id`, `device_id`, `division_id`, `acquisition_date`, `acquisition_details`, `brand`, `model`, `serial_no`, `previous_owners_id`, `created_date`, `last_update_at`, `is_active`) VALUES
-(3, 'CAM-003', 4, 103, 3, '2026-05-27', 'Procured via bidding', 'Nikon', 'D3500', 'SN-NIK-003', '[\"7\",\"8\"]', '2026-05-28 16:00:00', NULL, 1),
-(4, 'CAM-004', 1, 104, 1, '2026-05-27', 'Office deployment', 'Canon', 'EOS 2000D', 'SN-CAN-004', '[\"7\",\"8\"]', '2026-05-26 16:00:00', NULL, 1);
+(3, 'CAM-003', 4, 103, 3, '2026-05-27', 'Procured via bidding', 'Nikon', 'D3500', 'SN-NIK-003', '[8,7]', '2026-05-28 16:00:00', '2026-05-30', 1),
+(4, 'CAM-004', 1, 104, 1, '2026-05-27', 'Office deployment', 'Canon', 'EOS 2000D', 'SN-CAN-004', '[7]', '2026-05-26 16:00:00', '2026-05-30', 1),
+(9, '', 7, 0, 3, '2026-05-30', 'Purchased', 'EPSON', 'L350', '1231231231', '[]', '2026-05-29 16:00:00', '2026-05-30', 1);
 
 -- --------------------------------------------------------
 
@@ -104,8 +105,11 @@ INSERT INTO `desktops` (`id`, `personnel_id`, `device_id`, `device_name`, `divis
 (5, 4, 0, 'DESKTOP-005', 8, '192.168.1.20', 'Windows 11 Enterprise N', 0, 0, '[\"2\",\"5\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel', 8, 16, 'Dell', 15, 1, 'Admin', 'fff', 'ff', 'Microsoft Office Home & Business 2019', 0, '[\"6\"]', '2026-05-27', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, '0000-00-00'),
 (6, 8, 0, 'DESKTOP-005', 2, '192.168.1.20', 'Windows 10 Home Single Language', 0, 1, '[\"2\",\"5\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel i5', 8, 16, 'Dell', 15, 1, 'Admin', 'asdfasd', 'agasdrgwer', 'Microsoft Office Professional Plus 2019', 0, '[\"4\"]', '2026-05-27', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, NULL),
 (7, 8, 0, 'DESKTOP-0017', 4, '192.168.1.20', 'Windows 10 Education', 0, 1, '[\"2\",\"5\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel i5', 8, 16, 'Dell', 15, 1, 'Admin', 'eryr', 'er', 'Microsoft Office Professional 2021', 0, '[\"6\"]', '2026-05-28', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, NULL),
-(23, 7, 0, 'A-', 1, '192.168.1.20', 'Windows 10 Home Single Language', 0, 1, '[\"2\",\"6\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel', 8, 16, 'Dell', 15, 1, 'Admin', 'qwerty', 'qwerty', 'Microsoft Excel', 1, '[\"4\"]', '2026-05-30', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, NULL),
-(24, 4, 0, 'A-1', 2, '192.168.1.20', 'Windows 10 Home Single Language', 1, 1, '[\"3\",\"6\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel', 8, 16, 'Dell', 15, 1, 'Admin', 'sdefqew', 'qsfqewfqew', 'Microsoft PowerPoint', 1, '[\"6\",\"4\"]', '2026-05-30', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, NULL);
+(23, 7, 0, 'A-', 1, '192.168.1.20', 'Windows 10 Home Single Language', 0, 1, '[\"6\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel', 8, 16, 'Dell', 15, 1, 'Admin', 'qwerty', 'qwerty', 'Microsoft Excel', 1, '[\"4\"]', '2026-05-30', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, '0000-00-00'),
+(24, 4, 0, 'A-1', 2, '192.168.1.20', 'Windows 10 Home Single Language', 1, 1, '[\"3\",\"6\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel', 8, 16, 'Dell', 15, 1, 'Admin', 'sdefqew', 'qsfqewfqew', 'Microsoft PowerPoint', 1, '[\"6\",\"4\"]', '2026-05-30', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, NULL),
+(25, 6, 0, 'A-11', 1, '192.168.1.20', 'Windows 10 Home N', 1, 1, '[\"5\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel', 8, 16, 'Dell', 15, 1, 'Admin', 'qw', 'dsg', 'Microsoft Excel', 1, '[\"1\",\"6\"]', '2026-05-30', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, NULL),
+(26, 1, 0, 'A-11', 2, '192.168.1.20', 'Windows 10 Pro', 1, 1, '[\"2\",\"5\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel', 8, 16, 'Dell', 15, 1, 'Admin', 'ddfgh', 'dfhgdfh', 'Microsoft Excel', 1, '[\"8\",\"7\"]', '2026-05-31', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, NULL),
+(27, 7, 0, 'A-11', 8, '192.168.1.20', 'Windows 10 Home', 0, 0, '[\"3\",\"6\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel', 8, 16, 'Dell', 15, 1, 'Admin', 'wefwe', 'wertw', 'Microsoft Excel', 1, '[\"8\",\"7\"]', '2026-05-31', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 0, '2026-06-01');
 
 -- --------------------------------------------------------
 
@@ -226,7 +230,7 @@ CREATE TABLE `firewalls` (
   `remarks` text NOT NULL,
   `pnp_focal_person` varchar(255) NOT NULL,
   `contact_details` int(11) NOT NULL,
-  `acquisition_date` date NOT NULL,
+  `acquisition_date` date DEFAULT NULL,
   `acquisition_type` varchar(255) NOT NULL,
   `acquisition_details` text NOT NULL,
   `previous_owners_id` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`previous_owners_id`)),
@@ -239,7 +243,9 @@ CREATE TABLE `firewalls` (
 --
 
 INSERT INTO `firewalls` (`id`, `personnel_id`, `division_id`, `device_id`, `manufacturer`, `model`, `serial_no`, `no_of_ports`, `no_of_active_ports`, `firmware_version`, `management_interface_type`, `location`, `is_active`, `is_remotely_accessible`, `remote_connection_details`, `remarks`, `pnp_focal_person`, `contact_details`, `acquisition_date`, `acquisition_type`, `acquisition_details`, `previous_owners_id`, `created_date`, `last_updated_at`) VALUES
-(1, 6, 3, 3, 'Cisco', 'L350', 'PAR1231232', 12, 12, '123RFWQEFWE', 'N/A', 'SMD', 1, 1, '123124124', 'N/A', 'Juan', 1243124124, '2026-05-30', '12412', 'Office deployment', '[8,7]', '2026-05-29', '2026-05-30');
+(1, 6, 3, 3, 'Cisco', 'L350', 'PAR1231232', 12, 12, '123RFWQEFWE', 'ooooo', 'SMD', 0, 1, '123124124', 'ooooo', 'Juan', 1243124124, '2026-05-30', '12412', 'Office deployment', '[8,7]', '2026-05-29', '2026-05-31'),
+(2, 6, 4, 4, 'Cisco', 'D3500', 'PAR1231232', 12, 12, '123RFWQEFWE', 'oooooqwrqewfqfqw', 'ITSD', 1, 1, 'dqwf', 'qwrefawefwe3', 'Juan', 1243124124, '2026-05-31', '12412', 'New batch procurement', '[8,7]', '2026-05-31', NULL),
+(3, 1, 1, 1, '', '', '', 0, 0, '', '', '', 0, 0, '', '', '', 0, NULL, '', '', '[]', '2026-06-04', NULL);
 
 -- --------------------------------------------------------
 
@@ -269,9 +275,11 @@ CREATE TABLE `headsets` (
 --
 
 INSERT INTO `headsets` (`id`, `device_code`, `personnel_id`, `device_id`, `division_id`, `acquisition_date`, `acquisition_details`, `brand`, `model`, `serial_no`, `previous_owners_id`, `created_date`, `last_update_at`, `is_active`) VALUES
-(5, '', 1, 205, 2, '2026-05-27', 'New batch procurement', 'Razer', 'Kraken X', 'HS-RAZ-005', '[\"4\"]', '2026-05-26 16:00:00', NULL, 1),
-(6, '', 7, 0, 7, '2026-05-27', 'Purchased', 'Acer', 'L350', 'APSDEF123', '[\"1\",\"4\"]', '2026-05-26 16:00:00', NULL, 1),
-(7, '', 7, 0, 4, '2026-05-27', 'Purchased', 'Acer', 'L350', 'APSDEF123', '[\"8\"]', '2026-05-26 16:00:00', NULL, 1);
+(5, '', 1, 205, 2, '2026-05-27', 'New batch procurement', 'Razer', 'Kraken X', 'HS-RAZ-005', '[4]', '2026-05-26 16:00:00', NULL, 1),
+(6, '', 7, 0, 7, '2026-05-30', 'Purchased form local suppliers', 'Acer', 'L350', 'APSDEF123', '[1,4]', '2026-05-26 16:00:00', NULL, 1),
+(7, '', 7, 0, 4, '2026-05-30', 'Purchased', 'Acer', 'L350', 'APSDEF123', '[8]', '2026-05-26 16:00:00', NULL, 1),
+(8, '', 6, 0, 2, '2026-05-30', 'Purchased', 'Acer', 'L350', 'APSDEF123', '[8,7]', '2026-05-29 16:00:00', NULL, 0),
+(9, '', 6, 0, 2, '2026-05-30', 'Purchased', 'Acer', 'L350', 'APSDEF123', '[8,7]', '2026-05-29 16:00:00', NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -321,10 +329,12 @@ CREATE TABLE `laptops` (
 
 INSERT INTO `laptops` (`id`, `personnel_id`, `device_id`, `device_name`, `division_id`, `ip_address`, `os`, `is_os_licensed`, `is_remote_acc`, `endpoint_security_id`, `no_of_installed_anti_virus`, `date_installed`, `guid`, `mac_address`, `cpu_brand`, `cpu_cores`, `gb_ram`, `monitor_brand`, `monitor_size_inches`, `no_of_user_accounts`, `user_account_type`, `authorized_software`, `unauthorized_software`, `office_application`, `is_office_licensed`, `previous_owners_id`, `created_date`, `last_updated_at`, `os_license_key`, `office_license_key`, `par_serial_no`, `is_active`, `acquisition_date`) VALUES
 (1, 1, 1, 'LAPTOP-001', 2, '192.168.1.20', 'Windows 11 Pro', 1, 1, '[\"1\",\"4\"]', 2, '2026-01-01', 'GUID-123', 'AA:BB:CC:DD', 'Intel', 8, 16, 'Dell', 15, 1, 'Admin', 'Chrome, Zoom', 'None', 'Microsoft Office 2021', 1, '[\"8\",\"7\"]', '2026-01-01', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, '0000-00-00'),
-(2, 7, 0, 'DESKTOP-002', 3, '192.168.1.20', 'Windows 10 Pro', 0, 1, '[\"1\",\"4\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel i5', 8, 16, 'Dell', 15, 1, 'Admin', 'N/A', 'N/A', 'Microsoft Office Home & Business 2019', 0, '[\"6\",\"7\"]', '2026-05-27', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, '0000-00-00'),
-(3, 1, 0, 'DESKTOP-002', 3, '192.168.1.20', 'Windows 10 Enterprise N', 0, 0, '[\"2\",\"5\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel i5', 8, 16, 'Dell', 15, 1, 'Admin', 'n/a', 'n/a', 'Microsoft Word', 0, '[\"4\"]', '2026-05-27', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, NULL),
+(2, 7, 0, 'DESKTOP-002', 3, '192.168.1.20', 'Windows 10 Pro', 0, 1, '[\"1\",\"4\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel i5', 8, 16, 'Dell', 15, 1, 'Admin', 'N/A', 'N/A', 'Microsoft Office Home & Business 2019', 0, '[\"6\",\"7\"]', '2026-05-27', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, '2026-05-31'),
+(3, 1, 0, 'DESKTOP-002', 3, '192.168.1.20', 'Windows 10 Enterprise N', 1, 0, '[\"2\",\"5\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel i5', 8, 16, 'Dell', 15, 1, 'Admin', 'n/a', 'n/a', 'Microsoft Word', 1, '[\"4\"]', '2026-05-27', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, '0000-00-00'),
 (4, 4, 0, 'DESKTOP-002', 9, '192.168.1.20', 'Windows 10 IoT Enterprise', 0, 1, '[\"1\",\"3\",\"6\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel i5', 8, 16, 'Dell', 15, 1, 'Admin', 'n/a', 'n/a', 'Microsoft Office LTSC 2021', 0, '[\"7\"]', '2026-05-27', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, NULL),
-(5, 1, 0, 'DESKTOP-005', 2, '192.168.1.20', 'Windows 10 Home Single Language', 0, 1, '[\"2\",\"5\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel i5', 8, 16, 'Dell', 15, 1, 'Admin', ' ///', '////', 'Microsoft Excel', 0, '[\"8\"]', '2026-05-27', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, NULL);
+(5, 1, 0, 'DESKTOP-005', 2, '192.168.1.20', 'Windows 10 Home Single Language', 0, 1, '[\"2\",\"5\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel i5', 8, 16, 'Dell', 15, 1, 'Admin', ' ///', '////', 'Microsoft Excel', 0, '[\"8\"]', '2026-05-27', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, NULL),
+(11, 6, 0, 'A-1', 2, '192.168.1.20', 'Windows 10 Home', 0, 1, '[\"3\",\"6\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel', 8, 16, 'Dell', 15, 1, 'Admin', 'qw', 'we', 'Microsoft Office Home & Business 2019', 0, '[\"6\",\"4\"]', '2026-05-30', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, '0000-00-00'),
+(12, 7, 0, 'A-11', 2, '192.168.1.20', 'Windows 10 Home', 1, 1, '[\"3\",\"4\"]', 2, '2026-05-27', 'GUID-123', 'AA:BB:CC:DD:EE:01', 'Intel', 8, 16, 'Dell', 15, 1, 'Admin', 'qw', 'qw', 'Microsoft Office Professional Plus 2019', 1, '[\"4\",\"8\"]', '2026-05-31', NULL, 'XXXXX-KEY', 'OFFICE-KEY', 'PAR-001', 1, '2026-05-31');
 
 -- --------------------------------------------------------
 
@@ -352,7 +362,8 @@ INSERT INTO `personnels` (`id`, `division_id`, `rank_id`, `first_name`, `middle_
 (4, 2, 2, 'Mark', 'Naruto', 'Uzumaki', 12, 1),
 (6, 17, 4, 'Zandro', 'James', 'Fernandez Diaz', 19, 1),
 (7, 12, 1, 'Gian', 'Sabiniano', 'Diaz', 1, 1),
-(8, 5, 2, 'Alejandro', 'Castro', 'Aquino', 1, 0);
+(8, 5, 2, 'Alejandro', 'Castro', 'Aquino', 1, 1),
+(9, 16, 4, 'Zandro', 'James', 'Fernandez Aquino', 1, 1);
 
 -- --------------------------------------------------------
 
@@ -383,9 +394,11 @@ CREATE TABLE `printers` (
 INSERT INTO `printers` (`id`, `personnel_id`, `device_id`, `division_id`, `acquisition_date`, `acquisition_details`, `brand`, `model`, `previous_owners_id`, `created_date`, `last_update_at`, `serial_no`, `is_active`) VALUES
 (1, 1, 1, 1, '2026-05-27', 'Purchased', 'EPSON', 'L360', '[\"6\",\"7\"]', '2026-05-18', NULL, '0C78H0C84HF804', 1),
 (3, 8, 0, 12, '2026-05-27', 'Purchased', 'Acer', 'L350', '[\"6\",\"7\"]', '2026-05-27', NULL, 'PAR1231232', 1),
-(4, 1, 0, 11, '2026-05-27', 'Purchased form local suppliers', 'Acer', 'L350', '[]', '2026-05-27', NULL, 'PAR1231232', 1),
+(4, 1, 0, 11, '2026-05-27', 'Purchased form local suppliers', 'Acer', 'L350', '[8,7]', '2026-05-27', '2026-05-30', 'PAR1231232', 1),
 (5, 7, 0, 3, '2026-05-27', 'Purchased', 'Acer', 'L350', '[]', '2026-05-27', NULL, 'PAR1231232', 1),
-(6, 4, 0, 2, '2026-05-27', 'Purchased', 'Acer', 'L350', '[\"4\"]', '2026-05-27', NULL, 'PAR1231232', 1);
+(6, 4, 0, 2, '2026-05-27', 'Purchased', 'Acer', 'L350', '[\"4\"]', '2026-05-27', NULL, 'PAR1231232', 1),
+(7, 1, 0, 14, '2026-05-30', 'Purchased', 'EPSON', 'L350', '[4,8]', '0000-00-00', '2026-05-30', 'PAR', 1),
+(8, 4, 0, 16, '2026-05-30', 'Purchased', 'EPSON', 'L350', '[4,8]', '2026-05-30', '2026-05-30', 'APSDEF123', 1);
 
 -- --------------------------------------------------------
 
@@ -463,7 +476,7 @@ CREATE TABLE `routers` (
   `remarks` text NOT NULL,
   `pnp_focal_person` varchar(255) NOT NULL,
   `contact_details` int(11) NOT NULL,
-  `acquisition_date` date NOT NULL,
+  `acquisition_date` date DEFAULT NULL,
   `acquisition_type` varchar(255) NOT NULL,
   `previous_owners_id` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`previous_owners_id`)),
   `created_date` date NOT NULL DEFAULT current_timestamp(),
@@ -476,7 +489,14 @@ CREATE TABLE `routers` (
 --
 
 INSERT INTO `routers` (`id`, `personnel_id`, `device_id`, `manufacturer`, `model`, `serial_no`, `no_of_ports`, `no_of_active_ports`, `active_port_ip_address_range`, `firmware_version`, `location`, `is_active`, `is_remotely_accessible`, `remote_connection_details`, `remarks`, `pnp_focal_person`, `contact_details`, `acquisition_date`, `acquisition_type`, `previous_owners_id`, `created_date`, `last_update_at`, `division_id`) VALUES
-(1, 6, 0, 'Cisco', 'EOS 2000D', 'PAR1231232', 12, 12, '21312412', 'IOS XE 17.1.1', 'SMD', 1, 1, 'SSH access via VPN', 'Core switch for all departments', 'Juan Cruz Dela Rosa', 2147483647, '0000-00-00', 'Purchased', '[4]', '2026-05-29', NULL, 1);
+(1, 6, 0, 'Cisco', 'EOS 2000D', 'PAR1231232', 12, 12, '21312412', 'IOS XE 17.1.1', 'SMD', 0, 1, 'SSH access via VPN', 'Core switch for all departments', 'Juan Cruz Dela Rosa', 2147483647, '2026-05-31', 'Purchased', '[4,7]', '2026-05-29', NULL, 6),
+(2, 8, 0, 'Cisco', 'Kraken X', 'APSDEF123', 12, 12, '21312412', 'IOS XE 17.1.1', 'SMD', 1, 1, 'wewvsfdfbh', 'Core switch for all departments', 'Juan Cruz Dela Rosa', 2147483647, '2026-05-31', 'Purchased', '[8,7]', '2026-05-31', NULL, 4),
+(3, 1, 0, 'Cisco', 'Kraken X', 'APSDEF123', 12, 12, '21312412', 'IOS XE 17.1.1', 'SMD', 1, 1, 'wewvsfdfbh', 'Core switch for all departments', 'Juan Cruz Dela Rosa', 2147483647, '2026-05-31', 'Purchased', '[8,7]', '2026-05-31', NULL, 5),
+(4, 4, 0, 'Cisco', 'Kraken X', 'APSDEF123', 12, 12, '21312412', 'IOS XE 17.1.1', 'SMD', 1, 1, 'wewvsfdfbh', 'Core switch for all departments', 'Juan Cruz Dela Rosa', 2147483647, '2026-05-31', 'Purchased', '[8,7]', '2026-05-31', NULL, 1),
+(5, 1, 0, '', '', '', 0, 0, '', '', '', 0, 0, '', '', '', 0, '0000-00-00', '', '[]', '2026-06-04', NULL, 1),
+(6, 1, 0, '', '', '', 0, 0, '', '', '', 1, 0, '', '', '', 0, NULL, '', '[]', '2026-06-04', NULL, 1),
+(7, 6, 0, '', '', '', 0, 0, '', '', '', 0, 0, '', '', '', 0, '0000-00-00', '', '[]', '2026-06-04', NULL, 2),
+(8, 1, 0, '', '', '', 0, 0, '', '', '', 0, 0, '', '', '', 0, '0000-00-00', '', '[]', '2026-06-04', NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -506,7 +526,7 @@ CREATE TABLE `switches` (
   `remarks` text NOT NULL,
   `pnp_focal_person` varchar(255) NOT NULL,
   `contact_details` varchar(50) NOT NULL,
-  `acquisition_date` date NOT NULL,
+  `acquisition_date` date DEFAULT NULL,
   `acquisition_type` varchar(255) NOT NULL,
   `acquisition_details` text NOT NULL,
   `previous_owners_id` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`previous_owners_id`)),
@@ -525,7 +545,11 @@ INSERT INTO `switches` (`id`, `personnel_id`, `division_id`, `device_id`, `manuf
 (4, 7, 4, 0, 'Cisco', 'EOS 2000D', 'FOC12312ABC', 12, 12, 0, 0, 'IOS XE 17.1.1', 1, 'SMD', 0, 1, 1, 'SSH access via VPN', 'Core switch for all departments', 'Juan Cruz Dela Rosa', '09837284092', '2026-05-29', 'Purchased', 'Purchased from Cisco', '[\"6\"]', '2026-05-29', '2026-05-29'),
 (5, 1, 9, 0, 'Cisco', 'EOS 2000D', 'FOC12312ABC', 12, 12, 12, 0, '0', 1, 'SMD', 0, 1, 1, 'SSH access via VPN', 'Core switch for all departments', 'Juan Cruz Dela Rosa', '09837284092', '2026-05-29', 'Purchased', 'Purchased from Cisco', '[\"6\"]', '2026-05-29', NULL),
 (6, 4, 14, 0, 'Cisco', 'EOS 2000D', 'FOC12312ABC', 12, 12, 12, 0, '0', 1, 'SMD', 0, 1, 1, 'SSH access via VPN', 'Core switch for all departments', 'Juan Cruz Dela Rosa', '09837284092', '2026-05-29', 'Purchased', 'Purchased from Cisco', '[\"6\"]', '2026-05-29', NULL),
-(7, 1, 1, 0, 'Cisco', 'EOS 2000D', 'FOC12312ABC', 111, 110, 111, 0, '0', 1, 'ITSD', 0, 1, 1, 'wewvsfdfbh', 'Core switch for all departments', 'Juan Cruz Dela Rosa', '09837284092', '0000-00-00', 'Purchased', 'Purchased from Cisco', '[\"4\",\"8\"]', '2026-05-30', NULL);
+(7, 1, 1, 0, 'Cisco', 'EOS 2000D', 'FOC12312ABC', 111, 110, 111, 0, '0', 1, 'ITSD', 0, 1, 1, 'wewvsfdfbh', 'Core switch for all departments', 'Juan Cruz Dela Rosa', '09837284092', '2026-06-04', 'Purchased', 'Purchased from Cisco', '[\"4\",\"8\"]', '2026-05-30', '2026-06-04'),
+(8, 8, 6, 0, 'Cisco', 'EOS 2000D', 'FOC12312ABC', 111, 110, 111, 0, '0', 1, 'ITSD', 0, 1, 1, 'wewvsfdfbh', 'Core switch for all departments', 'Juan Cruz Dela Rosa', '09837284092', '2026-05-31', 'Purchased', 'Purchased from Cisco', '[\"8\",\"7\"]', '2026-05-31', '2026-05-31'),
+(9, 1, 1, 0, '', '', '', 0, 0, 0, 0, '0', 0, '', 0, 0, 0, '', '', '', '', '0000-00-00', '', '', '[]', '2026-06-04', '2026-06-04'),
+(10, 1, 1, 0, '', '', '', 0, 0, 0, 0, '0', 0, '', 0, 0, 0, '', '', '', '', '0000-00-00', '', '', '[]', '2026-06-04', NULL),
+(11, 1, 1, 0, '', '', '', 0, 0, 0, 0, '0', 0, '', 0, 0, 0, '', '', '', '', NULL, '', '', '[]', '2026-06-04', NULL);
 
 -- --------------------------------------------------------
 
@@ -564,8 +588,9 @@ INSERT INTO `users` (`id`, `role_id`, `division_id`, `email`, `password`, `rank_
 (15, 2, 9, 'ci.admin@itms.com', '$2y$10$SVfdCN4qRe1BvlVIXObHtegsb8VrnU9QnPUTZrnC8duTzhbVmOg4u', 2, 'Alejandro Jay', 'Fernandez', 'Diaz', 'diazaf', 1, 1, '2026-05-12', NULL),
 (16, 2, 14, 'sao.admin@itms.com', '$2y$10$gSbtzDihiFla7JkPb4WT1ucJy83Iii7gCUzMBW2AInEZGRIePMALm', 13, 'Balmond', 'Valentina', 'Fanny', 'fannybv', 1, 1, '2026-05-12', NULL),
 (17, 2, 6, 'dmd.admin@itms.com', '$2y$10$3KySSBrx.RAG9P1cUnPrnObh5bThevzWTSfLVKVoDp3v0hv/v8gz2', 3, 'ALUCARD', 'SELENA', 'GOMEZ', 'gomezas', 1, 1, '2026-05-12', NULL),
-(18, 2, 8, 'ptdlab.admin@itms.com', '$2y$10$g8FRMAFXTDzK5KZtgbpLFOAruvQlPErL8Jed2qZbS33NJWbRFOAVG', 13, 'LAYLA', 'LESLY', 'VALENTINA', 'valentinall', 1, 1, '2026-05-12', NULL),
-(19, 2, 11, 'ls.admin@itms.com', '$2y$10$sq5WA7sGauUNC6GPiHNn..nNDHYjy26pfUtVg1tqjfIAr7aQF8O8C', 13, 'ZANDRO JAMES', 'FERNANDEZ', 'DIAZ', 'diazzf', 1, 1, '2026-05-21', NULL);
+(18, 2, 8, 'ptdlab.admin@itms.com', '$2y$10$bA6hJnIU0ydN6gyqgqfVIeg9Au3j6Yd6ndLP7BFhocNWzIXiJkRDi', 13, 'LAYLA', 'LESLY', 'VALENTINA', 'valentinall', 1, 1, '2026-05-12', NULL),
+(19, 2, 11, 'ls.admin@itms.com', '$2y$10$zaxeE9EbrQdNktWaeGrJne/OqBxjD8aCgf6DETRkNBZcIIXQ3hPuO', 13, 'ZANDRO JAMES', 'FERNANDEZ', 'DIAZ', 'diazzf', 1, 1, '2026-05-21', NULL),
+(20, 2, 10, 'pcr.admin@itms.com', '$2y$10$6PrR/jkNzb1m0XMImBfODeKfwi/dSC08.hw5XUbAxCwxGhyzxT.nS', 1, 'PRINCESS', 'ZAKE', 'SANTA MESA', 'santa mesapz', 1, 1, '2026-05-31', NULL);
 
 --
 -- Indexes for dumped tables
@@ -678,13 +703,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `cameras`
 --
 ALTER TABLE `cameras`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `desktops`
 --
 ALTER TABLE `desktops`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `devices`
@@ -708,31 +733,31 @@ ALTER TABLE `endpoint_security`
 -- AUTO_INCREMENT for table `firewalls`
 --
 ALTER TABLE `firewalls`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `headsets`
 --
 ALTER TABLE `headsets`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `laptops`
 --
 ALTER TABLE `laptops`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `personnels`
 --
 ALTER TABLE `personnels`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `printers`
 --
 ALTER TABLE `printers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `ranks`
@@ -744,19 +769,19 @@ ALTER TABLE `ranks`
 -- AUTO_INCREMENT for table `routers`
 --
 ALTER TABLE `routers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `switches`
 --
 ALTER TABLE `switches`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
