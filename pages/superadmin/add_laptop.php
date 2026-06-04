@@ -177,7 +177,8 @@ $stmt->bind_param(
    EXECUTE
 ========================= */
 if ($stmt->execute()) {
-    header("Location: device_laptops.php?success=1");
+   $_SESSION['toast_success'] = "Laptop added successfully!";
+header("Location: device_laptops.php");
     exit();
 } else {
     die("SQL ERROR: " . $stmt->error);

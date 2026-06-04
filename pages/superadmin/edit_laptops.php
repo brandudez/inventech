@@ -136,7 +136,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     ";
 
    if (mysqli_query($conn, $query)) {
-      header("Location: device_laptops.php?updated=1");
+      $_SESSION['toast_success'] = "Laptop updated successfully!";
+header("Location: device_laptops.php");
       exit();
    } else {
       echo "Error: " . mysqli_error($conn);

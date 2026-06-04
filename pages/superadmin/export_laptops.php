@@ -78,7 +78,10 @@ function getPersonnelNamesExport($conn, $json)
 
     return implode(', ', $names);
 }
-
+function formatDate($val) {
+    if (empty($val) || $val === '0000-00-00') return '-';
+    return $val;
+}
 /* =========================
    FILTERS (UNCHANGED LOGIC)
 ========================= */
@@ -247,7 +250,7 @@ while ($row = $result->fetch_assoc()) {
         $row['office_license_key'] ?? '',
         getEndpointNamesExport($conn, $row['endpoint_security_id']),
         $row['no_of_installed_anti_virus'] ?? '',
-        $row['date_installed'] ?? '',
+        formatDate($row['date_installed'] ?? ''),
         $row['cpu_brand'] ?? '',
         $row['cpu_cores'] ?? '',
         $row['gb_ram'] ?? '',
@@ -257,7 +260,7 @@ while ($row = $result->fetch_assoc()) {
         $row['user_account_type'] ?? '',
         $row['authorized_software'] ?? '',
         $row['unauthorized_software'] ?? '',
-        $row['acquisition_date'] ?? '',
+        formatDate($row['acquisition_date']), 
         $row['par_serial_no'] ?? '',
         getPersonnelNamesExport($conn, $row['previous_owners_id']),
         ($row['is_remote_acc'] ? 'YES' : 'NO'),
@@ -280,7 +283,8 @@ $html = ob_get_clean();
 ========================= */
 
 file_put_contents($filePath, $html);
-
+// Add this BEFORE the header() calls for download
+$_SESSION['toast_info'] = "Export downloaded successfully!";
 /* =========================
    DOWNLOAD
 ========================= */
