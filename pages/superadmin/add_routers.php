@@ -41,9 +41,15 @@ $remarks        = $_POST['remarks'] ?? '';
 $pnp_focal      = $_POST['pnp_focal'] ?? '';
 $contact        = $_POST['contact'] ?? '';
 
-$acq_date = !empty($_POST['acq_date'])
-    ? $_POST['acq_date']
-    : null;
+/* =========================
+   ACQUISITION DATE
+   STORE NULL IF EMPTY
+========================= */
+$acq_date = trim($_POST['acq_date'] ?? '');
+
+if ($acq_date === '') {
+    $acq_date = null;
+}
 
 $acq_type = $_POST['acq_type'] ?? '';
 
@@ -110,7 +116,7 @@ if (!$stmt) {
 /* =========================
    TYPES (20 FIELDS)
 ========================= */
-$types = str_repeat("s", 20);
+$types = "iiisssiisssiisssssss";
 
 $stmt->bind_param(
 
@@ -152,4 +158,7 @@ if ($stmt->execute()) {
     die("SQL ERROR: " . $stmt->error);
 
 }
+
+$stmt->close();
+$conn->close();
 ?>

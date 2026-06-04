@@ -46,7 +46,9 @@ $remarks = mysqli_real_escape_string($conn, $_POST['remarks']);
 $pnp_focal_person = mysqli_real_escape_string($conn, $_POST['pnp_focal']);
 $contact_details = mysqli_real_escape_string($conn, $_POST['contact']);
 
-$acquisition_date = $_POST['acq_date'];
+$acquisition_date = !empty($_POST['acq_date'])
+    ? $_POST['acq_date']
+    : null;
 $acquisition_type = mysqli_real_escape_string($conn, $_POST['acq_type']);
 $acquisition_details = mysqli_real_escape_string($conn, $_POST['acq_details']);
 
