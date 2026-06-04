@@ -63,7 +63,10 @@ function getPreviousOwnersNamesExport($conn, $json)
 
     return implode(', ', $names);
 }
-
+function formatDate($val) {
+    if (empty($val) || $val === '0000-00-00') return '-';
+    return $val;
+}
 /* =========================
    FILTERS
 ========================= */
@@ -123,9 +126,9 @@ if ($active_filter !== '') {
 }
 
 if ($acq_filter === 'lt5') {
-    $where[] = "f.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+    $where[] = "f.acquisition_date IS NOT NULL AND f.acquisition_date != '0000-00-00' AND f.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 } elseif ($acq_filter === 'gt5') {
-    $where[] = "f.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+    $where[] = "f.acquisition_date IS NOT NULL AND f.acquisition_date != '0000-00-00' AND f.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 }
 
 $whereSQL = !empty($where)
@@ -222,28 +225,28 @@ echo '</tr>';
 /* DATA */
 while ($row = $result->fetch_assoc()) {
 
-    $cells = [
-        trim($row['fullname'] ?? ''),
-        $row['division_name'] ?? '',
-        $row['manufacturer'] ?? '',
-        $row['model'] ?? '',
-        $row['serial_no'] ?? '',
-        $row['no_of_ports'] ?? '',
-        $row['no_of_active_ports'] ?? '',
-        $row['firmware_version'] ?? '',
-        $row['management_interface_type'] ?? '',
-        $row['location'] ?? '',
-        ($row['is_remotely_accessible'] == 1) ? 'YES' : 'NO',
-        $row['remote_connection_details'] ?? '',
-        $row['remarks'] ?? '',
-        $row['pnp_focal_person'] ?? '',
-        $row['contact_details'] ?? '',
-        $row['acquisition_date'] ?? '',
-        $row['acquisition_type'] ?? '',
-        $row['acquisition_details'] ?? '',
-        getPreviousOwnersNamesExport($conn, $row['previous_owners_id']),
-        ($row['is_active'] == 1) ? 'YES' : 'NO'
-    ];
+   $cells = [
+    trim($row['fullname']                    ?? '') ?: '-',
+    $row['division_name']                    ?? '-',
+    $row['manufacturer']                     ?? '-',
+    $row['model']                            ?? '-',
+    $row['serial_no']                        ?? '-',
+    $row['no_of_ports']                      ?? '-',
+    $row['no_of_active_ports']               ?? '-',
+    $row['firmware_version']                 ?? '-',
+    $row['management_interface_type']        ?? '-',
+    $row['location']                         ?? '-',
+    ($row['is_remotely_accessible'] == 1)   ? 'YES' : 'NO',
+    $row['remote_connection_details']        ?? '-',
+    $row['remarks']                          ?? '-',
+    $row['pnp_focal_person']                 ?? '-',
+    $row['contact_details']                  ?? '-',
+    formatDate($row['acquisition_date']),             // fixed
+    $row['acquisition_type']                 ?? '-',
+    $row['acquisition_details']              ?? '-',
+    getPreviousOwnersNamesExport($conn, $row['previous_owners_id']) ?: '-',
+    ($row['is_active'] == 1) ? 'YES' : 'NO',
+];
 
     echo '<tr>';
 

@@ -138,7 +138,8 @@ $stmt->bind_param(
 ========================= */
 
 if ($stmt->execute()) {
-    header("Location: device_routers.php?success=1");
+    $_SESSION['toast_success'] = "Router updated successfully!";
+header("Location: device_routers.php");
     exit();
 } else {
     die("Update failed: " . $stmt->error);

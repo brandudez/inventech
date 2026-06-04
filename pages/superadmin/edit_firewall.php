@@ -48,8 +48,8 @@ $previous_owners_json = !empty($previous_owners_ids)
 /* =========================
    BASIC VALIDATION
 ========================= */
-if (!$id || !$personnel_id || !$division_id || empty($manufacturer) || empty($model) || empty($serial_no)) {
-    $_SESSION['toast_error'] = "Please fill in all required fields.";
+if (!$id || !$personnel_id || !$division_id) {
+    $_SESSION['toast_error'] = "Personnel and Division are required.";
     header("Location: device_firewalls.php");
     exit();
 }
@@ -115,7 +115,8 @@ $stmt->bind_param(
 );
 
 if ($stmt->execute()) {
-    header("Location: device_firewalls.php?success=updated");
+    $_SESSION['toast_success'] = "Firewall updated successfully!";
+header("Location: device_firewalls.php");
 } else {
     $_SESSION['toast_error'] = "Failed to update firewall: " . $conn->error;
     header("Location: device_firewalls.php");

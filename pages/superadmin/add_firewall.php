@@ -163,7 +163,8 @@ $stmt->bind_param(
 );
 
 if ($stmt->execute()) {
-    header("Location: device_firewalls.php?success=1");
+    $_SESSION['toast_success'] = "Firewall added successfully!";
+header("Location: device_firewalls.php");
     exit();
 } else {
     echo "Error: " . $stmt->error;
