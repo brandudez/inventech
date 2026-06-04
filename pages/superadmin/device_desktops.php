@@ -295,9 +295,11 @@ $exportParams = http_build_query([
                 <input type="text" name="search" class="search-input" placeholder="Search desktops..." value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
                 <!-- EXPORT BUTTON -->
-                <a href="export_desktops.php?<?= htmlspecialchars($exportParams) ?>" class="btn add-desktop-btn" title="Export current filtered data to Excel">
-                    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
-                </a>
+<a href="export_desktops.php?<?= htmlspecialchars($exportParams) ?>"
+   class="btn add-desktop-btn"
+   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
+    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
+</a>
             </form>
         </div>
 
@@ -997,33 +999,55 @@ $exportParams = http_build_query([
                 bsView.hide();
             }
         });
-    </script>
-<?php if (!empty($_SESSION['toast_success'])): ?>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    let toast = document.createElement("div");
-    toast.className = "toast align-items-center text-bg-success show position-fixed bottom-0 end-0 m-3";
-    toast.style.zIndex = 9999;
-    toast.innerHTML = `<div class="d-flex"><div class="toast-body"><?= htmlspecialchars($_SESSION['toast_success']) ?></div><button type="button" class="btn-close me-2 m-auto" onclick="this.closest('.toast').remove()"></button></div>`;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
-});
-</script>
-<?php unset($_SESSION['toast_success']); endif; ?>
+      </script>
 
-<?php if (!empty($_SESSION['toast_error'])): ?>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    let toast = document.createElement("div");
-    toast.className = "toast align-items-center text-bg-danger show position-fixed bottom-0 end-0 m-3";
-    toast.style.zIndex = 9999;
-    toast.innerHTML = `<div class="d-flex"><div class="toast-body"><?= htmlspecialchars($_SESSION['toast_error']) ?></div><button type="button" class="btn-close me-2 m-auto" onclick="this.closest('.toast').remove()"></button></div>`;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
-});
-</script>
-<?php unset($_SESSION['toast_error']); endif; ?>
+    <!-- showToast always defined first -->
+    <script>
+    function showToast(message, type = "success") {
+        const colors = { success: "#198754", danger: "#dc3545" };
+        const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
+        const toast  = document.createElement("div");
+        toast.style.cssText = `
+            position:fixed;bottom:24px;right:24px;z-index:9999;
+            background:${colors[type]};color:#fff;
+            padding:14px 20px;border-radius:10px;
+            display:flex;align-items:center;gap:10px;
+            box-shadow:0 4px 16px rgba(0,0,0,.2);
+            font-size:.95rem;max-width:340px;
+            animation:slideIn .3s ease;
+        `;
+        toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
+        document.body.appendChild(toast);
+        if (!document.getElementById("toastKeyframe")) {
+            const s = document.createElement("style");
+            s.id = "toastKeyframe";
+            s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
+            document.head.appendChild(s);
+        }
+        setTimeout(() => {
+            toast.style.transition = "opacity .4s";
+            toast.style.opacity = "0";
+            setTimeout(() => toast.remove(), 400);
+        }, 3500);
+    }
+    </script>
+
+    <?php if (!empty($_SESSION['toast_success'])): ?>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
+    });
+    </script>
+    <?php unset($_SESSION['toast_success']); endif; ?>
+
+    <?php if (!empty($_SESSION['toast_error'])): ?>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
+    });
+    </script>
+    <?php unset($_SESSION['toast_error']); endif; ?>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>

@@ -312,7 +312,7 @@ $exportParams = http_build_query([
                 <!-- EXPORT BUTTON -->
                 <a href="export_laptops.php?<?= htmlspecialchars($exportParams) ?>"
    class="btn add-laptop-btn"
-   onclick="setTimeout(()=>showToast('Export downloaded!','info'),800)">
+   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
     <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
 </a>
             </form>
@@ -1000,69 +1000,57 @@ $exportParams = http_build_query([
         });
     </script>
 
- <?php if (!empty($_SESSION['toast_error'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
-    });
-    </script>
-    <?php unset($_SESSION['toast_error']); endif; ?>
+<?php if (!empty($_SESSION['toast_error'])): ?>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
+});
+</script>
+<?php unset($_SESSION['toast_error']); endif; ?>
 
-    <?php if (!empty($_SESSION['toast_success'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
-    });
-    </script>
-    <?php unset($_SESSION['toast_success']); endif; ?>
+<?php if (!empty($_SESSION['toast_success'])): ?>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
+});
+</script>
+<?php unset($_SESSION['toast_success']); endif; ?>
 
-    <?php if (!empty($_SESSION['toast_info'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_info']) ?>", "info");
-    });
-    </script>
-    <?php unset($_SESSION['toast_info']); endif; ?>
-
-    <!-- showToast must always be defined, outside any PHP condition -->
-    <script>
-    function showToast(message, type = "success") {
-        const colors = {
-            success: "#198754",
-            danger:  "#dc3545",
-            info:    "#198754"
-        };
-        const icons = {
-            success: "bi-check-circle-fill",
-            danger:  "bi-x-circle-fill",
-            info:    "bi-file-earmark-excel-fill"
-        };
-        const toast = document.createElement("div");
-        toast.style.cssText = `
-            position:fixed;bottom:24px;right:24px;z-index:9999;
-            background:${colors[type]};color:#fff;
-            padding:14px 20px;border-radius:10px;
-            display:flex;align-items:center;gap:10px;
-            box-shadow:0 4px 16px rgba(0,0,0,.2);
-            font-size:.95rem;max-width:340px;
-            animation:slideIn .3s ease;
-        `;
-        toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
-        document.body.appendChild(toast);
-
-        if (!document.getElementById("toastKeyframe")) {
-            const style = document.createElement("style");
-            style.id = "toastKeyframe";
-            style.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
-            document.head.appendChild(style);
-        }
-        setTimeout(() => {
-            toast.style.transition = "opacity .4s";
-            toast.style.opacity = "0";
-            setTimeout(() => toast.remove(), 400);
-        }, 3500);
+<script>
+function showToast(message, type = "success") {
+    const colors = {
+        success: "#198754",
+        danger:  "#dc3545"
+    };
+    const icons = {
+        success: "bi-check-circle-fill",
+        danger:  "bi-x-circle-fill"
+    };
+    const toast = document.createElement("div");
+    toast.style.cssText = `
+        position:fixed;bottom:24px;right:24px;z-index:9999;
+        background:${colors[type]};color:#fff;
+        padding:14px 20px;border-radius:10px;
+        display:flex;align-items:center;gap:10px;
+        box-shadow:0 4px 16px rgba(0,0,0,.2);
+        font-size:.95rem;max-width:340px;
+        animation:slideIn .3s ease;
+    `;
+    toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
+    document.body.appendChild(toast);
+    if (!document.getElementById("toastKeyframe")) {
+        const style = document.createElement("style");
+        style.id = "toastKeyframe";
+        style.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
+        document.head.appendChild(style);
     }
-    </script>
+    setTimeout(() => {
+        toast.style.transition = "opacity .4s";
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 400);
+    }, 3500);
+}
+</script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

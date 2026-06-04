@@ -283,8 +283,6 @@ $html = ob_get_clean();
 ========================= */
 
 file_put_contents($filePath, $html);
-// Add this BEFORE the header() calls for download
-$_SESSION['toast_info'] = "Export downloaded successfully!";
 /* =========================
    DOWNLOAD
 ========================= */

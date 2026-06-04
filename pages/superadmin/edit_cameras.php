@@ -74,7 +74,8 @@ $stmt->bind_param(
 );
 
 if ($stmt->execute()) {
-    header("Location: device_cameras.php?updated=1");
+    $_SESSION['toast_success'] = "Camera updated successfully!";
+header("Location: device_cameras.php");
     exit();
 } else {
     echo "Error: " . $stmt->error;

@@ -105,7 +105,8 @@ $stmt->bind_param(
 ========================= */
 
 if ($stmt->execute()) {
-    header("Location: device_cameras.php?added=1");
+    $_SESSION['toast_success'] = "Camera added successfully!";
+header("Location: device_cameras.php");
     exit();
 } else {
     echo "Error: " . $stmt->error;

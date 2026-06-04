@@ -105,7 +105,8 @@ $stmt->bind_param(
 ========================= */
 
 if ($stmt->execute()) {
-    header("Location: device_headsets.php?added=1");
+    $_SESSION['toast_success'] = "Headset added successfully!";
+header("Location: device_headsets.php");
     exit();
 } else {
     echo "Error: " . $stmt->error;

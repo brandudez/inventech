@@ -101,7 +101,8 @@ $stmt->bind_param(
 ========================= */
 
 if ($stmt->execute()) {
-    header("Location: device_headsets.php?updated=1");
+    $_SESSION['toast_success'] = "Headset updated successfully!";
+header("Location: device_headsets.php");
     exit();
 } else {
     echo "Error updating headset: " . $stmt->error;

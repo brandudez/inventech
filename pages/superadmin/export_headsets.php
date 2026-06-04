@@ -64,7 +64,10 @@ function getPreviousOwnersNamesExport($conn, $json)
 
     return implode(', ', $names);
 }
-
+function formatDate($val) {
+    if (empty($val) || $val === '0000-00-00') return '-';
+    return $val;
+}
 /* =========================
    FILTERS (UNCHANGED)
 ========================= */
@@ -196,17 +199,17 @@ while ($row = $result->fetch_assoc()) {
     echo '<tr>';
 
     $cells = [
-        trim($row['fullname'] ?? ''),
-        $row['division_name'] ?? '',
-        $row['brand'] ?? '',
-        $row['model'] ?? '',
-        $row['serial_no'] ?? '',
-        $row['acquisition_details'] ?? '',
-        $row['acquisition_date'] ?? '',
-        getPreviousOwnersNamesExport($conn, $row['previous_owners_id']),
-        ($row['is_active'] == 1 ? 'YES' : 'NO'),
-        substr($row['created_date'] ?? '', 0, 10)
-    ];
+    trim($row['fullname'] ?? '') ?: '-',
+    $row['division_name']        ?? '-',
+    $row['brand']                ?? '-',
+    $row['model']                ?? '-',
+    $row['serial_no']            ?? '-',
+    $row['acquisition_details']  ?? '-',
+    formatDate($row['acquisition_date']),
+    getPreviousOwnersNamesExport($conn, $row['previous_owners_id']) ?: '-',
+    ($row['is_active'] == 1 ? 'YES' : 'NO'),
+    formatDate(substr($row['created_date'] ?? '', 0, 10)),
+];
 
     foreach ($cells as $cell) {
         echo '<td>' . htmlspecialchars($cell) . '</td>';

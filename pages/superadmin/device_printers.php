@@ -199,7 +199,7 @@ $exportParams = http_build_query([
                 <!-- EXPORT BUTTON -->
                 <a href="export_printers.php?<?= htmlspecialchars($exportParams) ?>"
    class="btn add-laptop-btn"
-   onclick="setTimeout(()=>showToast('Export downloaded!','info'),800)">
+   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)"
     <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
 </a>
             </form>
@@ -378,7 +378,7 @@ $exportParams = http_build_query([
                                 <td><?= htmlspecialchars($row['serial_no'] ?? '') ?: '-'  ?></td>
                                 <td><?= htmlspecialchars($row['acquisition_details'] ?? '')  ?: '-' ?></td>
                                 <td><?= (!empty($row['acquisition_date']) && $row['acquisition_date'] !== '0000-00-00') ? htmlspecialchars($row['acquisition_date']) : '-' ?></td>
-                                <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?></td>
+                                <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id'])?: '-' ?></td>
                                 <td><?= $row['is_active'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
                                 <td><?= (!empty($row['created_date']) && substr($row['created_date'], 0, 10) !== '0000-00-00') ? htmlspecialchars(substr($row['created_date'], 0, 10)) : '-' ?></td>
                                 <td onclick="event.stopPropagation();">
@@ -612,9 +612,9 @@ $exportParams = http_build_query([
 
     <!-- showToast always defined -->
     <script>
-    function showToast(message, type = "success") {
-        const colors = { success: "#198754", danger: "#dc3545", info: "#198754" };
-        const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill", info: "bi-file-earmark-excel-fill" };
+   function showToast(message, type = "success") {
+    const colors = { success: "#198754", danger: "#dc3545" };
+    const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
         const toast  = document.createElement("div");
         toast.style.cssText = `
             position:fixed;bottom:24px;right:24px;z-index:9999;
