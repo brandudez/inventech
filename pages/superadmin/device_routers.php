@@ -105,9 +105,9 @@ if ($active_filter !== '') {
     $types   .= 'i';
 }
 if ($acq_filter === 'lt5') {
-    $where[] = "r.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+    $where[] = "r.acquisition_date IS NOT NULL AND r.acquisition_date != '0000-00-00' AND r.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 } elseif ($acq_filter === 'gt5') {
-    $where[] = "r.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+    $where[] = "r.acquisition_date IS NOT NULL AND r.acquisition_date != '0000-00-00' AND r.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 }
 
 $whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
@@ -649,13 +649,6 @@ $exportParams = http_build_query([
                 bsView.hide();
             }
         });
-
-        <?php if (isset($_GET['edit'])): ?>
-        document.addEventListener("DOMContentLoaded", function () {
-            let modal = document.getElementById("editRouterModal<?= (int)$_GET['edit'] ?>");
-            if (modal) new bootstrap.Modal(modal).show();
-        });
-        <?php endif; ?>
     </script>
  <script>
     function showToast(message, type = "success") {

@@ -84,9 +84,9 @@ if ($active_filter !== '') {
 }
 // Acquisition date filter — no bound params (computed server-side)
 if ($acq_filter === 'lt5') {
-    $where[] = "h.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+    $where[] = "h.acquisition_date IS NOT NULL AND h.acquisition_date != '0000-00-00' AND h.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 } elseif ($acq_filter === 'gt5') {
-    $where[] = "h.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+    $where[] = "h.acquisition_date IS NOT NULL AND h.acquisition_date != '0000-00-00' AND h.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 }
 
 $whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
@@ -585,12 +585,7 @@ $exportParams = http_build_query([
                 bsView.hide();
             }
         });
-        <?php if (isset($_GET['edit'])): ?>
-            document.addEventListener("DOMContentLoaded", function() {
-                let modal = document.getElementById("editHsModal<?= (int)$_GET['edit'] ?>");
-                if (modal) new bootstrap.Modal(modal).show();
-            });
-        <?php endif; ?>
+   
     </script>
 
     <script>

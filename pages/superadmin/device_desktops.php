@@ -109,9 +109,9 @@ if ($active_filter !== '') {
     $baseTypes .= 'i';
 }
 if ($acq_filter === 'lt5') {
-    $baseWhere[] = "d.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+    $baseWhere[] = "d.acquisition_date IS NOT NULL AND d.acquisition_date != '0000-00-00' AND d.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 } elseif ($acq_filter === 'gt5') {
-    $baseWhere[] = "d.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+    $baseWhere[] = "d.acquisition_date IS NOT NULL AND d.acquisition_date != '0000-00-00' AND d.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 }
 
 $whereSQL = !empty($baseWhere) ? "WHERE " . implode(" AND ", $baseWhere) : "";
@@ -999,9 +999,8 @@ $exportParams = http_build_query([
                 bsView.hide();
             }
         });
-      </script>
+</script>
 
-    <!-- showToast always defined first -->
     <script>
     function showToast(message, type = "success") {
         const colors = { success: "#198754", danger: "#dc3545" };

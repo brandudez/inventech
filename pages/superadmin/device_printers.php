@@ -84,11 +84,10 @@ if ($active_filter !== '') {
 }
 // Acquisition date filter — no bound params (computed server-side)
 if ($acq_filter === 'lt5') {
-    $where[] = "p.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+    $where[] = "p.acquisition_date IS NOT NULL AND p.acquisition_date != '0000-00-00' AND p.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 } elseif ($acq_filter === 'gt5') {
-    $where[] = "p.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+    $where[] = "p.acquisition_date IS NOT NULL AND p.acquisition_date != '0000-00-00' AND p.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 }
-
 $whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
 $baseJoin = "FROM printers p
              LEFT JOIN personnels per ON p.personnel_id = per.id
@@ -197,9 +196,9 @@ $exportParams = http_build_query([
                 <input type="text" name="search" class="search-input" placeholder="Search printers..." value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
                 <!-- EXPORT BUTTON -->
-                <a href="export_printers.php?<?= htmlspecialchars($exportParams) ?>"
+      <a href="export_printers.php?<?= htmlspecialchars($exportParams) ?>"
    class="btn add-laptop-btn"
-   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)"
+   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
     <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
 </a>
             </form>
@@ -586,35 +585,13 @@ $exportParams = http_build_query([
             }
         });
 
-        <?php if (isset($_GET['edit'])): ?>
-            document.addEventListener("DOMContentLoaded", function() {
-                let modal = document.getElementById("editPrModal<?= (int)$_GET['edit'] ?>");
-                if (modal) new bootstrap.Modal(modal).show();
-            });
-        <?php endif; ?>
-    </script>
+     
+   </script>
 
-<?php if (!empty($_SESSION['toast_error'])): ?>
     <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
-    });
-    </script>
-    <?php unset($_SESSION['toast_error']); endif; ?>
-
-    <?php if (!empty($_SESSION['toast_success'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
-    });
-    </script>
-    <?php unset($_SESSION['toast_success']); endif; ?>
-
-    <!-- showToast always defined -->
-    <script>
-   function showToast(message, type = "success") {
-    const colors = { success: "#198754", danger: "#dc3545" };
-    const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
+    function showToast(message, type = "success") {
+        const colors = { success: "#198754", danger: "#dc3545" };
+        const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
         const toast  = document.createElement("div");
         toast.style.cssText = `
             position:fixed;bottom:24px;right:24px;z-index:9999;
@@ -640,7 +617,23 @@ $exportParams = http_build_query([
         }, 3500);
     }
     </script>
+
+    <?php if (!empty($_SESSION['toast_success'])): ?>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
+    });
+    </script>
+    <?php unset($_SESSION['toast_success']); endif; ?>
+
+    <?php if (!empty($_SESSION['toast_error'])): ?>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
+    });
+    </script>
+    <?php unset($_SESSION['toast_error']); endif; ?>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>

@@ -650,12 +650,6 @@ $exportParams = http_build_query([
             }
         });
 
-        <?php if (isset($_GET['edit'])): ?>
-        document.addEventListener("DOMContentLoaded", function () {
-            let modal = document.getElementById("editFirewallModal<?= (int)$_GET['edit'] ?>");
-            if (modal) new bootstrap.Modal(modal).show();
-        });
-        <?php endif; ?>
     </script>
 
      <script>
