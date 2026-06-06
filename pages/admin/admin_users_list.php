@@ -26,7 +26,7 @@ $rankFilters     = array_filter(array_map('intval', (array)($_GET['ranks']     ?
 $divisionFilters = array_filter(array_map('intval', (array)($_GET['divisions'] ?? [])));
 
 /* ─── BASE WHERE ─── */
-$where  = "WHERE u.is_active = 1";
+$where  = "WHERE u.is_active = 1 AND u.role_id != 1";
 $params = [];
 $types  = '';
 
@@ -80,7 +80,7 @@ $baseSql = "
 ";
 
 /* ─── TOTAL (unfiltered active) ─── */
-$totalUsers = (int)$conn->query("SELECT COUNT(*) AS total FROM users WHERE is_active = 1")->fetch_assoc()['total'];
+$totalUsers = (int)$conn->query("SELECT COUNT(*) AS total FROM users WHERE is_active = 1 AND role_id != 1")->fetch_assoc()['total'];
 
 /* ─── FILTERED COUNT ─── */
 $countStmt = $conn->prepare("SELECT COUNT(*) AS total FROM ($baseSql) t");
@@ -106,7 +106,7 @@ while ($row = $result->fetch_assoc()) $rows[] = $row;
 
 /* ─── FILTER OPTIONS (pre-fetched arrays) ─── */
 $allRoles     = [];
-$rq = $conn->query("SELECT id, role_name FROM roles ORDER BY id ASC");
+$rq = $conn->query("SELECT id, role_name FROM roles WHERE id != 1 ORDER BY id ASC");
 while ($r = $rq->fetch_assoc()) $allRoles[] = $r;
 
 $allRanks     = [];
@@ -126,9 +126,9 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
     <title>Users List</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="assets/admin_users_list_personnel_list.css">
-    <link rel="stylesheet" href="assets/admin_navbar.css">
-    <link rel="stylesheet" href="assets/admin_sidebar.css">
+    <link rel="stylesheet" href="../admin/css/admin.css">
+    <link rel="stylesheet" href="css/admin_navbar.css">
+    <link rel="stylesheet" href="./css/admin_sidebar.css">
     <style>
         #toastContainer {
             position: fixed;
@@ -158,7 +158,7 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
     <div id="toastContainer" aria-live="polite" aria-atomic="true">
         <?php foreach (
             [
-                ['toastInactiveSuccess', 'success', 'check-circle',   'User marked as inactive.'],
+                ['toastInactiveSuccess', 'success', 'check-circle',   'User deactivated successfully.'],
                 ['toastInactiveError',   'danger',  'x-circle',        'Failed to deactivate user. Please try again.'],
                 ['toastEditSuccess',     'success', 'check-circle',   'User updated successfully.'],
                 ['toastEditError',       'danger',  'x-circle',        'Failed to update user. Please try again.'],
@@ -180,7 +180,7 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
 
         <!-- SEARCH (preserves all active filters) -->
         <div class="search-container">
-            <form method="GET" class="search-form" action="users_list.php">
+            <form method="GET" class="search-form" action="admin_users_list.php">
                 <?php foreach ($roleFilters     as $v): ?><input type="hidden" name="roles[]" value="<?= $v ?>"><?php endforeach; ?>
                 <?php foreach ($rankFilters     as $v): ?><input type="hidden" name="ranks[]" value="<?= $v ?>"><?php endforeach; ?>
                 <?php foreach ($divisionFilters as $v): ?><input type="hidden" name="divisions[]" value="<?= $v ?>"><?php endforeach; ?>
@@ -191,7 +191,7 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
 
         <!-- FILTERS -->
         <div class="right-side">
-            <form method="GET" action="users_list.php" id="filterForm" style="display:contents;">
+            <form method="GET" action="admin_users_list.php" id="filterForm" style="display:contents;">
                 <input type="hidden" name="search" value="<?= htmlspecialchars($search) ?>">
 
                 <!-- ROLE -->
@@ -416,7 +416,7 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="changePasswordForm" method="POST" action="../superadmin/change_password.php">
+                    <form id="changePasswordForm" method="POST" action="../admin/change_password.php">
                         <input type="hidden" name="user_id" id="password_user_id">
                         <div class="mb-3">
                             <label class="form-label">New Password</label>
@@ -443,15 +443,14 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
         <div class="edit-modal-content">
             <span class="close-modal" onclick="closeEditModal()">&times;</span>
             <h2>Edit User</h2>
-            <form method="POST" action="update_user.php">
+            <form method="POST" action="admin_update_user.php">
                 <input type="hidden" name="user_id" id="edit_id">
                 <div class="form-group">
                     <label>Role</label>
-                    <select id="edit_role" name="role">
-                        <option value="1">Superadmin</option>
-                        <option value="2">Admin</option>
-                        <option value="3">Encoder</option>
-                    </select>
+                   <div class="form-group">
+                        <input type="text" id="edit_role_display" readonly>
+                        <input type="hidden" id="edit_role" name="role">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Rank</label>
@@ -617,7 +616,9 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
             document.getElementById('edit_name').value = name;
             document.getElementById('edit_email').value = email;
             document.getElementById('edit_created_by').value = created_by;
+            const roleMap = { '1': 'Superadmin', '2': 'Admin', '3': 'Encoder' };
             document.getElementById('edit_role').value = role;
+            document.getElementById('edit_role_display').value = roleMap[role] ?? 'Unknown';
             document.getElementById('edit_rank').value = rank;
             document.getElementById('edit_division').value = division;
             document.getElementById('edit_status').value = status;

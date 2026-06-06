@@ -1,49 +1,50 @@
 <?php
 session_start();
-include("../config/db.php");
+header('Content-Type: application/json');
 
 if (!isset($_SESSION['user'])) {
-    header("Location: ../index.php");
+    echo json_encode([
+        'success' => false,
+        'message' => 'Unauthorized'
+    ]);
     exit();
 }
 
-/* =========================
-   BULK DELETE USERS
-========================= */
-if (!empty($_POST['user_ids'])) {
+include("../../config/db.php");
 
-    $ids = array_map('intval', $_POST['user_ids']);
-    $idList = implode(',', $ids);
+$user_id = (int)($_POST['user_id'] ?? 0);
 
-    // OPTIONAL SAFETY: delete related devices first (avoid foreign key error)
-    $conn->query("DELETE FROM devices WHERE user_id IN ($idList)");
-
-    // delete users
-    $conn->query("DELETE FROM users WHERE id IN ($idList)");
-
-    header("Location: ../admin/admin_dashboard.php?deleted=1");
+if ($user_id <= 0) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Invalid user'
+    ]);
     exit();
 }
 
-/* =========================
-   SINGLE DELETE USER
-========================= */
-if (isset($_GET['id'])) {
-
-    $id = intval($_GET['id']);
-
-    // OPTIONAL SAFETY: delete devices first
-    $conn->query("DELETE FROM devices WHERE user_id = $id");
-
-    // delete user
-    $conn->query("DELETE FROM users WHERE id = $id");
-
-    header("Location: ../admin/admin_dashboard.php?deleted=1");
+/* Prevent deleting yourself */
+if ($user_id == $_SESSION['user']['id']) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Cannot deactivate yourself'
+    ]);
     exit();
 }
 
-/* =========================
-   FALLBACK
-========================= */
-header("Location: ../admin/admin_dashboard.php");
-exit();
+$stmt = $conn->prepare("
+    UPDATE users
+    SET is_active = 0
+    WHERE id = ?
+");
+
+$stmt->bind_param("i", $user_id);
+
+if ($stmt->execute()) {
+    echo json_encode([
+        'success' => true
+    ]);
+} else {
+    echo json_encode([
+        'success' => false
+    ]);
+}

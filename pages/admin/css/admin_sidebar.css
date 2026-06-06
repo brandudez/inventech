@@ -5,17 +5,14 @@
   left: 0;
   width: 215px;
   height: 100vh;
-  overflow-y: auto;
   background: #0d6ea8;
   padding: 20px 15px;
   display: flex;
   flex-direction: column;
   align-items: center;
-
   /* SCROLLABLE */
   overflow-y: auto;
   overflow-x: hidden;
-  z-index: 1000;
   transition:
     width 0.3s ease,
     padding 0.3s ease;

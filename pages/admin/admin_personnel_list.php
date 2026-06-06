@@ -156,9 +156,9 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="assets/admin_users_list_personnel_list.css"> 
-    <link rel="stylesheet" href="assets/admin_navbar.css"> 
-    <link rel="stylesheet" href="assets/admin_sidebar.css">
+    <link rel="stylesheet" href="../admin/css/admin.css">
+    <link rel="stylesheet" href="css/admin_navbar.css">
+    <link rel="stylesheet" href="./css/admin_sidebar.css">
     <title>Personnel List</title>
     <style>
         #toastContainer {
@@ -196,7 +196,7 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
     <div id="toastContainer" aria-live="polite" aria-atomic="true">
         <?php foreach (
             [
-                ['toastInactiveSuccess', 'success', 'check-circle',  'Personnel marked as inactive.'],
+                ['toastInactiveSuccess', 'success', 'check-circle',  'Personnel Deleted'],
                 ['toastInactiveError',   'danger',  'x-circle',       'Failed to deactivate personnel. Please try again.'],
                 ['toastEditSuccess',     'success', 'check-circle',  'Personnel updated successfully.'],
                 ['toastEditError',       'danger',  'x-circle',       'Failed to update personnel. Please try again.'],
@@ -220,7 +220,7 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
 
         <!-- SEARCH (preserves all active filters) -->
         <div class="search-container">
-            <form class="search-form" method="GET" action="personnel_list.php">
+            <form class="search-form" method="GET" action="admin_personnel_list.php">
                 <?php foreach ($rankFilters     as $v): ?><input type="hidden" name="ranks[]" value="<?= $v ?>"><?php endforeach; ?>
                 <?php foreach ($divisionFilters as $v): ?><input type="hidden" name="divisions[]" value="<?= $v ?>"><?php endforeach; ?>
                 <?php if ($activeFilter !== ''): ?><input type="hidden" name="is_active" value="<?= $activeFilter ?>"><?php endif; ?>
@@ -235,7 +235,7 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
 
             <!-- display:contents makes the form invisible to flexbox
              so all dropdowns become direct flex children of .right-side -->
-            <form method="GET" action="personnel_list.php" id="filterForm" style="display:contents;">
+            <form method="GET" action="admin_personnel_list.php" id="filterForm" style="display:contents;">
                 <input type="hidden" name="search" value="<?= htmlspecialchars($search) ?>">
 
                 <!-- DIVISION -->
@@ -564,7 +564,7 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
             const rowDelBtn = document.getElementById('del-' + _deactivateId);
             if (rowDelBtn) rowDelBtn.disabled = true;
 
-            fetch('deactivate_personnel.php', {
+            fetch('deactivate_personnels.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
@@ -639,7 +639,7 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
         /* ── ADD PERSONNEL (AJAX) ── */
         document.getElementById('addPersonnelForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            fetch('../superadmin/add_personnel.php', {
+            fetch('../admin/add_personnel.php', {
                     method: 'POST',
                     body: new FormData(this)
                 })

@@ -42,7 +42,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $check->execute();
 
     if ($check->get_result()->num_rows > 0) {
-        $_SESSION['toast'] = ['type' => 'danger', 'message' => 'Email already exists!'];
+    $_SESSION['toast'] = ['type' => 'danger', 'message' => 'Email already exists!'];
+    $_SESSION['form_data'] = $_POST;
+    $_SESSION['email_exists'] = true;
     } else {
         $stmt = $conn->prepare("
             INSERT INTO users
@@ -66,9 +68,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
 }
-
+/* RESTORE FORM DATA */
+$formData = $_SESSION['form_data'] ?? [];
+$emailExists = $_SESSION['email_exists'] ?? false;
+unset($_SESSION['form_data'], $_SESSION['email_exists']);
 /* FETCH ROLES, DIVISIONS, RANKS */
-$roles = $conn->query("SELECT * FROM roles")->fetch_all(MYSQLI_ASSOC);
+$roles = $conn->query("SELECT * FROM roles WHERE id = 3")->fetch_all(MYSQLI_ASSOC);
 $divisions = $conn->query("SELECT * FROM divisions")->fetch_all(MYSQLI_ASSOC);
 $ranks = $conn->query("SELECT * FROM ranks")->fetch_all(MYSQLI_ASSOC);
 ?>
@@ -78,9 +83,10 @@ $ranks = $conn->query("SELECT * FROM ranks")->fetch_all(MYSQLI_ASSOC);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/admin_user_create.css">
-    <link rel="stylesheet" href="assets/admin_navbar.css">
-    <link rel="stylesheet" href="assets/admin_sidebar.css">
+    <link rel="stylesheet" href="./css/admin.css">
+    <link rel="stylesheet" href="./css/admin_navbar.css">
+    <link rel="stylesheet" href="./css/admin_sidebar.css">
+    <link rel="stylesheet" href="css/user_create.css">
     <title>Add User</title>
 </head>
 <body>
@@ -113,18 +119,22 @@ $ranks = $conn->query("SELECT * FROM ranks")->fetch_all(MYSQLI_ASSOC);
                         <select name="role_id" required>
                             <option value="">Select Role</option>
                             <?php foreach ($roles as $role): ?>
-                                <option value="<?= $role['id'] ?>"><?= ucfirst($role['role_name']) ?></option>
+                                <option value="<?= $role['id'] ?>" <?= ($formData['role_id'] ?? '') == $role['id'] ? 'selected' : '' ?>>
+                                    <?= ucfirst($role['role_name']) ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Division</label>
                         <select name="division_id" required>
-                            <option value="">Select Division</option>
-                            <?php foreach ($divisions as $division): ?>
-                                <option value="<?= $division['id'] ?>"><?= htmlspecialchars($division['division']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                        <option value="">Select Division</option>
+                        <?php foreach ($divisions as $division): ?>
+                            <option value="<?= $division['id'] ?>" <?= ($formData['division_id'] ?? '') == $division['id'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($division['division']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
                     </div>
                 </div>
 
@@ -132,24 +142,29 @@ $ranks = $conn->query("SELECT * FROM ranks")->fetch_all(MYSQLI_ASSOC);
                 <div class="form-row four-columns">
                     <div class="form-group">
                         <label>Rank</label>
-                        <select name="rank_id" required>
-                            <option value="">Select Rank</option>
-                            <?php foreach ($ranks as $rank): ?>
-                                <option value="<?= $rank['id'] ?>"><?= htmlspecialchars($rank['rank']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                       <select name="rank_id" required>
+                        <option value="">Select Rank</option>
+                        <?php foreach ($ranks as $rank): ?>
+                            <option value="<?= $rank['id'] ?>" <?= ($formData['rank_id'] ?? '') == $rank['id'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($rank['rank']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
                     </div>
                     <div class="form-group">
                         <label>First Name</label>
-                        <input type="text" placeholder="Enter First Name" name="first_name" required>
+                      <input type="text" placeholder="Enter First Name" name="first_name" required
+                          value="<?= htmlspecialchars($formData['first_name'] ?? '') ?>">
                     </div>
                     <div class="form-group">
                         <label>Middle Name</label>
-                        <input type="text" placeholder="Enter Middle Name" name="middle_name">
+                        <input type="text" placeholder="Enter Middle Name" name="middle_name"
+                              value="<?= htmlspecialchars($formData['middle_name'] ?? '') ?>">
                     </div>
                     <div class="form-group">
                         <label>Last Name</label>
-                        <input type="text" placeholder="Enter Last Name" name="last_name" required>
+                        <input type="text" placeholder="Enter Last Name" name="last_name" required
+                            value="<?= htmlspecialchars($formData['last_name'] ?? '') ?>">
                     </div>
                 </div>
 
@@ -157,7 +172,8 @@ $ranks = $conn->query("SELECT * FROM ranks")->fetch_all(MYSQLI_ASSOC);
                 <div class="form-row">
                     <div class="form-group">
                         <label>Email</label>
-                        <input type="email" placeholder="Enter email" name="email" required>
+                        <input type="email" placeholder="Enter email" name="email" required
+                        value="<?= $emailExists ? '' : htmlspecialchars($formData['email'] ?? '') ?>">
                     </div>
                     <div class="form-group">
                         <label>Password</label>
