@@ -51,7 +51,7 @@ $dq = mysqli_query($conn, "SELECT id, division FROM divisions ORDER BY id ASC");
 while ($r = mysqli_fetch_assoc($dq)) $allDivisions[] = $r;
 
 $allPersonnel = [];
-$pq = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id ORDER BY p.rank_id DESC");
+$pq = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY p.rank_id DESC");
 while ($r = mysqli_fetch_assoc($pq)) $allPersonnel[] = $r;
 
 /* =========================
@@ -241,7 +241,7 @@ $exportParams = http_build_query([
             <!-- ACQUISITION DATE FILTER -->
             <div class="dropdown">
                 <?php
-                $acqLabel = 'Acquisition Date';
+                $acqLabel = 'ACQ Date';
                 if ($acq_filter === 'lt5') $acqLabel = 'Age < 5 Years';
                 elseif ($acq_filter === 'gt5') $acqLabel = 'Age > 5 Years';
                 $acqBase = '?search=' . urlencode($search) . '&' . http_build_query([
@@ -260,7 +260,7 @@ $exportParams = http_build_query([
             <!-- IS ACTIVE FILTER -->
             <div class="dropdown">
                 <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
-                    <?= $active_filter === '' ? 'Is Active?' : ($active_filter == 1 ? 'YES' : 'NO') ?>
+                    <?= $active_filter === '' ? 'Active?' : ($active_filter == 1 ? 'YES' : 'NO') ?>
                 </button>
                 <ul class="dropdown-menu p-3">
                     <?php $base = '?search=' . urlencode($search) . '&' . http_build_query([

@@ -34,9 +34,9 @@ $created_by = $_SESSION['user']['id'] ?? 0;
 $rank_id     = intval($_POST['rank'] ?? 0);
 $division_id = intval($_POST['division'] ?? 0);
 
-$first_name  = trim($_POST['firstName'] ?? '');
-$middle_name = trim($_POST['middleName'] ?? '');
-$last_name   = trim($_POST['lastName'] ?? '');
+$first_name  = mb_strtoupper(trim($_POST['firstName']  ?? ''), 'UTF-8');
+$middle_name = mb_strtoupper(trim($_POST['middleName'] ?? ''), 'UTF-8');
+$last_name   = mb_strtoupper(trim($_POST['lastName']   ?? ''), 'UTF-8');
 
 /* =========================
    VALIDATION

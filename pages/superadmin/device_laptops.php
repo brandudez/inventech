@@ -67,7 +67,7 @@ $office_filter_raw   = $_GET['filter_office'] ?? [];
 
 $division_filter = is_array($division_filter_raw) ? array_filter(array_map('trim', $division_filter_raw)) : [];
 $os_filter       = is_array($os_filter_raw)       ? array_filter(array_map('trim', $os_filter_raw))       : [];
-$office_filter   = is_array($office_filter_raw)   ? array_filter(array_map('trim', $office_filter_raw))   : [];
+$office_filter   = is_array($office_filter_raw)   ? array_filter($office_filter_raw)   : [];
 $active_filter   = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
 
 // Acquisition date filter (lt5 = less than 5 years old, gt5 = more than 5 years old)
@@ -97,20 +97,30 @@ if (!empty($division_filter)) {
     }
 }
 if (!empty($os_filter)) {
-    $ph = implode(',', array_fill(0, count($os_filter), '?'));
-    $where[] = "l.os IN ($ph)";
+    $conditions = [];
     foreach ($os_filter as $v) {
-        $params[] = $v;
-        $types .= 's';
+        if (trim($v) === '-') {
+            $conditions[] = "(l.os IS NULL OR l.os = '' OR l.os = '-' OR l.os = ' - ')";
+        } else {
+            $conditions[] = "l.os = ?";
+            $params[] = $v;
+            $types .= 's';
+        }
     }
+    $where[] = '(' . implode(' OR ', $conditions) . ')';
 }
 if (!empty($office_filter)) {
-    $ph = implode(',', array_fill(0, count($office_filter), '?'));
-    $where[] = "l.office_application IN ($ph)";
+    $conditions = [];
     foreach ($office_filter as $v) {
-        $params[] = $v;
-        $types .= 's';
+        if (trim($v) === '-') {
+            $conditions[] = "(l.office_application IS NULL OR l.office_application = '' OR l.office_application = '-' OR l.office_application = ' - ')";
+        } else {
+            $conditions[] = "l.office_application = ?";
+            $params[] = $v;
+            $types .= 's';
+        }
     }
+    $where[] = '(' . implode(' OR ', $conditions) . ')';
 }
 if ($active_filter !== '') {
     $where[] = "l.is_active = ?";
@@ -178,7 +188,7 @@ $result = $stmt->get_result();
    SHARED LISTS (add modal)
 ========================= */
 $osList = [
-    " - ",
+    "-",
     "Windows 10 Home",
     "Windows 10 Home Single Language",
     "Windows 10 Pro",
@@ -202,7 +212,7 @@ $osList = [
 ];
 
 $officeAppsList = [
-    " - ",
+    "-",
     "Microsoft 365 Personal",
     "Microsoft 365 Family",
     "Microsoft 365 Business Basic",
@@ -234,7 +244,7 @@ $officeAppsList = [
 
 /* Pre-fetch add-modal dropdowns outside the row loop */
 $addPersonnelRows = [];
-$pq = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id ORDER BY p.rank_id DESC");
+$pq = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY p.rank_id DESC");
 while ($r = mysqli_fetch_assoc($pq)) $addPersonnelRows[] = $r;
 
 $addDivisionRows = [];
@@ -374,7 +384,7 @@ $exportParams = http_build_query([
 
                     <!-- OFFICE -->
                     <div class="dropdown">
-                        <?php $officeLabel = empty($office_filter) ? 'Office Application' : (count($office_filter) === 1 ? $office_filter[0] : count($office_filter) . ' Apps selected'); ?>
+                        <?php $officeLabel = empty($office_filter) ? 'Office App' : (count($office_filter) === 1 ? $office_filter[0] : count($office_filter) . ' Apps selected'); ?>
                         <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"><?= htmlspecialchars($officeLabel) ?></button>
                         <ul class="dropdown-menu p-3 dropdown-scroll wide-dropdown">
                             <li class="mb-2"><button type="submit" class="btn btn-primary w-100">Apply</button></li>
@@ -400,7 +410,7 @@ $exportParams = http_build_query([
             <!-- ACQUISITION DATE FILTER -->
             <div class="dropdown">
                 <?php
-                $acqLabel = 'Acquisition Date';
+                $acqLabel = 'ACQ Date';
                 if ($acq_filter === 'lt5') $acqLabel = 'Age < 5 Years';
                 elseif ($acq_filter === 'gt5') $acqLabel = 'Age > 5 Years';
                 $acqBase = '?search=' . urlencode($search) . '&' . http_build_query([
@@ -421,7 +431,7 @@ $exportParams = http_build_query([
             <!-- IS ACTIVE FILTER -->
             <div class="dropdown">
                 <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
-                    <?= $active_filter === '' ? 'Is Active?' : ($active_filter == 1 ? 'YES' : 'NO') ?>
+                    <?= $active_filter === '' ? 'Active?' : ($active_filter == 1 ? 'YES' : 'NO') ?>
                 </button>
                 <ul class="dropdown-menu p-3">
                     <?php $base = '?search=' . urlencode($search) . '&' . http_build_query([
@@ -805,7 +815,7 @@ $exportParams = http_build_query([
                                                     <div class="col-md-4">
                                                         <label class="form-label">Personnel</label>
                                                         <select name="personnel_id" class="form-select" required>
-                                                            <?php $pq2 = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id ORDER BY p.rank_id DESC");
+                                                            <?php $pq2 = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY p.rank_id DESC");
                                                             while ($p2 = mysqli_fetch_assoc($pq2)): $fn = trim(($p2['rank'] ?? '') . ' ' . ($p2['last_name'] ?? '') . ' ' . ($p2['first_name'] ?? '') . ' ' . ($p2['middle_name'] ?? '')); ?>
                                                                 <option value="<?= $p2['id'] ?>" <?= ($row['personnel_id'] ?? '') == $p2['id'] ? 'selected' : '' ?>><?= htmlspecialchars($fn) ?></option>
                                                             <?php endwhile; ?>
@@ -894,7 +904,7 @@ $exportParams = http_build_query([
                                                             <div class="dropdown-menu w-100 p-2" style="max-height:250px;overflow-y:auto;">
                                                                 <?php $selH = json_decode($row['previous_owners_id'] ?? '[]', true);
                                                                 if (!is_array($selH)) $selH = [];
-                                                                $hQ = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id ORDER BY p.rank_id DESC");
+                                                                $hQ = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY p.rank_id DESC");
                                                                 while ($h = mysqli_fetch_assoc($hQ)): $fn = trim(($h['rank'] ?? '') . ' ' . ($h['last_name'] ?? '') . ' ' . ($h['first_name'] ?? '') . ' ' . ($h['middle_name'] ?? '')); ?>
                                                                     <div class="form-check">
                                                                         <input class="form-check-input" type="checkbox" name="previous_owners_id[]" value="<?= $h['id'] ?>" id="ph<?= $row['id'] . '_' . $h['id'] ?>" <?= in_array($h['id'], $selH) ? 'checked' : '' ?>>
