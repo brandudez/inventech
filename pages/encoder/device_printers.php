@@ -4,7 +4,7 @@ if (!isset($_SESSION['user'])) {
     header("Location: ../../index.php");
     exit();
 }
-if ($_SESSION['user']['role_id'] != 1) {
+if ($_SESSION['user']['role_id'] != 3) {
     header("Location: ../../index.php");
     exit();
 }
@@ -154,9 +154,9 @@ $exportParams = http_build_query([
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Printer Devices</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../superadmin/css/devices.css">
-    <link rel="stylesheet" href="css/superadmin_navbar.css">
-    <link rel="stylesheet" href="./css/superadmin_sidebar.css">
+    <link rel="stylesheet" href="../encoder/css/devices.css">
+    <link rel="stylesheet" href="css/encoder_navbar.css">
+    <link rel="stylesheet" href="./css/encoder_sidebar.css">
     <style>
         .clickable-row:hover {
             background-color: #f0f4ff !important;
@@ -184,8 +184,8 @@ $exportParams = http_build_query([
 </head>
 
 <body>
-    <?php include 'superadmin_sidebar.php'; ?>
-    <?php include 'superadmin_navbar.php'; ?>
+    <?php include 'encoder_sidebar.php'; ?>
+    <?php include 'encoder_navbar.php'; ?>
 
     <div class="top-bar">
         <div class="search-container">

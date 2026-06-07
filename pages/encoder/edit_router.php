@@ -2,7 +2,7 @@
 session_start();
 include "../../config/db.php";
 
-if (!isset($_SESSION['user']) || $_SESSION['user']['role_id'] != 1) {
+if (!isset($_SESSION['user']) || $_SESSION['user']['role_id'] != 3) {
     header("Location: ../../index.php");
     exit();
 }

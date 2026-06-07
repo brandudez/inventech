@@ -7,7 +7,7 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
-if ($_SESSION['user']['role_id'] !=1) {
+if ($_SESSION['user']['role_id'] !=3) {
     header("Location: ../../index.php");
     exit();
 }
