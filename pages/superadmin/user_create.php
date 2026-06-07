@@ -43,6 +43,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($check->get_result()->num_rows > 0) {
         $_SESSION['toast'] = ['type' => 'danger', 'message' => 'Email already exists!'];
+
+        /* SAVE ALL FIELDS EXCEPT EMAIL AND PASSWORD */
+        $_SESSION['form_data'] = [
+            'role_id'     => $role_id,
+            'division_id' => $division_id,
+            'rank_id'     => $rank_id,
+            'first_name'  => $_POST['first_name'],
+            'middle_name' => $_POST['middle_name'],
+            'last_name'   => $_POST['last_name'],
+        ];
     } else {
         $stmt = $conn->prepare("
             INSERT INTO users
@@ -68,9 +78,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 /* FETCH ROLES, DIVISIONS, RANKS */
-$roles = $conn->query("SELECT * FROM roles")->fetch_all(MYSQLI_ASSOC);
+$roles     = $conn->query("SELECT * FROM roles")->fetch_all(MYSQLI_ASSOC);
 $divisions = $conn->query("SELECT * FROM divisions")->fetch_all(MYSQLI_ASSOC);
-$ranks = $conn->query("SELECT * FROM ranks")->fetch_all(MYSQLI_ASSOC);
+$ranks     = $conn->query("SELECT * FROM ranks")->fetch_all(MYSQLI_ASSOC);
+
+/* RETRIEVE SAVED FORM DATA THEN CLEAR IT */
+$form_data = $_SESSION['form_data'] ?? [];
+unset($_SESSION['form_data']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -114,7 +128,10 @@ $ranks = $conn->query("SELECT * FROM ranks")->fetch_all(MYSQLI_ASSOC);
                         <select name="role_id" required>
                             <option value="">Select Role</option>
                             <?php foreach ($roles as $role): ?>
-                                <option value="<?= $role['id'] ?>"><?= ucfirst($role['role_name']) ?></option>
+                                <option value="<?= $role['id'] ?>"
+                                    <?= ($form_data['role_id'] ?? '') == $role['id'] ? 'selected' : '' ?>>
+                                    <?= ucfirst($role['role_name']) ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -123,7 +140,10 @@ $ranks = $conn->query("SELECT * FROM ranks")->fetch_all(MYSQLI_ASSOC);
                         <select name="division_id" required>
                             <option value="">Select Division</option>
                             <?php foreach ($divisions as $division): ?>
-                                <option value="<?= $division['id'] ?>"><?= htmlspecialchars($division['division']) ?></option>
+                                <option value="<?= $division['id'] ?>"
+                                    <?= ($form_data['division_id'] ?? '') == $division['id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($division['division']) ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -136,25 +156,31 @@ $ranks = $conn->query("SELECT * FROM ranks")->fetch_all(MYSQLI_ASSOC);
                         <select name="rank_id" required>
                             <option value="">Select Rank</option>
                             <?php foreach ($ranks as $rank): ?>
-                                <option value="<?= $rank['id'] ?>"><?= htmlspecialchars($rank['rank']) ?></option>
+                                <option value="<?= $rank['id'] ?>"
+                                    <?= ($form_data['rank_id'] ?? '') == $rank['id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($rank['rank']) ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>First Name</label>
-                        <input type="text" placeholder="Enter First Name" name="first_name" required>
+                        <input type="text" placeholder="Enter First Name" name="first_name" required
+                            value="<?= htmlspecialchars($form_data['first_name'] ?? '') ?>">
                     </div>
                     <div class="form-group">
                         <label>Middle Name</label>
-                        <input type="text" placeholder="Enter Middle Name" name="middle_name">
+                        <input type="text" placeholder="Enter Middle Name" name="middle_name"
+                            value="<?= htmlspecialchars($form_data['middle_name'] ?? '') ?>">
                     </div>
                     <div class="form-group">
                         <label>Last Name</label>
-                        <input type="text" placeholder="Enter Last Name" name="last_name" required>
+                        <input type="text" placeholder="Enter Last Name" name="last_name" required
+                            value="<?= htmlspecialchars($form_data['last_name'] ?? '') ?>">
                     </div>
                 </div>
 
-                <!-- EMAIL + PASSWORD -->
+                <!-- EMAIL + PASSWORD — intentionally no value (always cleared) -->
                 <div class="form-row">
                     <div class="form-group">
                         <label>Email</label>

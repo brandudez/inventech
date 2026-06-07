@@ -71,7 +71,7 @@ $_SESSION['user'] = [
 switch ((int)$user['role_id']) {
     case 1: $response['success'] = true; $response['redirect'] = 'pages/superadmin/superadmin_dashboard.php'; break;
     case 2: $response['success'] = true; $response['redirect'] = 'pages/admin/admin_dashboard.php'; break;
-    case 3: $response['success'] = true; $response['redirect'] = 'pages/encoder/encoder_dashboard.php'; break;
+    case 3: $response['success'] = true; $response['redirect'] = 'pages/encoder/personnel_list.php'; break;
     default: $response['message'] = 'Invalid role'; break;
 }
 

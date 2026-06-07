@@ -1,0 +1,996 @@
+/* ===== BODY ===== */
+body {
+  background: #f4f7fb;
+  overflow-x: hidden;
+}
+
+/* ===== MAIN ===== */
+.main {
+  margin-left: 220px;
+  padding-top: 80px;
+  min-height: 100vh;
+  transition: all 0.3s ease;
+}
+
+/* ===== MOVE CONTENT WHEN SIDEBAR COLLAPSED ===== */
+.sidebar.collapsed ~ .main {
+  margin-left: 90px;
+}
+/* ===== SIDEBAR LINKS ===== */
+.sidebar a,
+.dropdown-btn {
+  position: relative;
+  overflow: visible;
+}
+*/
+
+/* ===== HOVER LABEL / TOOLTIP ===== */
+.sidebar a::after,
+.dropdown-btn::after {
+  content: attr(data-title);
+  position: absolute;
+  left: 75px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(15, 23, 42, 0.95);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s ease;
+  pointer-events: none;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.25);
+  z-index: 9999;
+}
+
+/* ===== SHOW TOOLTIP ON HOVER ===== */
+.sidebar.collapsed a:hover::after,
+.sidebar.collapsed .dropdown-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+  left: 85px;
+}
+
+/* ===== OPTIONAL HOVER EFFECT ===== */
+.sidebar a:hover,
+.dropdown-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transition: 0.2s ease;
+}
+
+/* ===== CONTENT ===== */
+.content {
+  padding: 25px;
+}
+
+/* ===== PAGE TITLE ===== */
+.page-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #0d6ea8;
+  margin-bottom: 30px;
+}
+
+/* ===== GRID ===== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 22px;
+}
+
+/* ===== CARD ===== */
+.card {
+  background: #0d6ea8;
+  border-radius: 18px;
+  padding: 28px 20px;
+  color: white;
+  cursor: pointer;
+  transition: 0.25s ease;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 170px;
+}
+
+/* ===== HOVER ===== */
+.card:hover {
+  transform: translateY(-5px);
+  background: #095782;
+}
+
+/* ===== CARD TITLE ===== */
+.card-title {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ===== CARD COUNT ===== */
+.card-count {
+  margin-top: 10px;
+  font-size: 42px;
+  font-weight: bold;
+}
+
+/* =========================================================
+   FILTER and SEARCH
+========================================================= */
+
+/* FILTER FORM */
+.filter-form {
+  display: flex;
+  align-items: center;
+}
+
+/* TOP BAR */
+.top-bar {
+  margin-top: 80px;
+  margin-left: 247px;
+  margin-right: 35px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 20px;
+  flex-wrap: wrap;
+
+  transition: all 0.3s ease;
+}
+
+/* LEFT SIDE SEARCH */
+.search-container {
+  display: flex;
+  align-items: center;
+}
+
+/* SEARCH FORM */
+.search-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* RIGHT SIDE */
+.right-side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* FILTERS */
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ===== DEFAULT (INACTIVE) BUTTON ===== */
+
+.filter-btn {
+  border: none;
+  padding: 12px 20px;
+  border-radius: 14px;
+  background: #0d6ea8;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+/* ===== HOVER ===== */
+
+.filter-btn:hover {
+  background: #2190d1;
+  color: black;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(13, 110, 168, 0.15);
+}
+
+/* ===== ACTIVE BUTTON ===== */
+
+.filter-btn.active {
+  background: #0d6ea8;
+  color: #ffffff;
+
+  box-shadow: 0 6px 18px rgba(13, 110, 168, 0.35);
+}
+
+/* ===== ACTIVE HOVER ===== */
+
+.filter-btn.active:hover {
+  background: #095a8a;
+}
+
+/* ===== WHEN SIDEBAR COLLAPSED ===== */
+
+.sidebar.collapsed ~ .top-bar {
+  margin-left: 115px;
+}
+
+/* ===== DROPDOWN BOX ===== */
+
+.dropdown-menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 8px 12px;
+}
+
+.dropdown-menu.dropdown-scroll {
+  max-height: 280px;
+  overflow-y: auto;
+
+  border-radius: 12px;
+}
+
+/* ===== SCROLLBAR ===== */
+
+.dropdown-menu.dropdown-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-menu.dropdown-scroll::-webkit-scrollbar-thumb {
+  background: #0d6ea8;
+  border-radius: 10px;
+}
+
+/* ===== CHECKBOX ITEMS ===== */
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  cursor: pointer;
+}
+
+/* ===== SCROLL FOR LONG LISTS ===== */
+
+.dropdown-scroll {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.btn-primary {
+  background: #0fa90fd3;
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 10px 10px;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+.btn-primary:hover {
+  background: #00a700;
+  color: black;
+  transform: translateY(-1px);
+}
+/* RIGHT SIDE */
+.right-side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* =========================================================
+   FIXED SEARCH INPUT AND BUTTON
+========================================================= */
+
+.search-container {
+  display: flex;
+  align-items: center;
+}
+
+/* ===== SEARCH FORM ===== */
+
+.search-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ===== SEARCH INPUT ===== */
+
+.search-input {
+  width: 320px;
+
+  padding: 12px 18px;
+
+  border: 1px solid #dce3ec;
+  border-radius: 14px;
+
+  outline: none;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  background: #ffffff;
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+
+  transition: all 0.3s ease;
+}
+
+/* ===== INPUT FOCUS ===== */
+
+.search-input:focus {
+  border-color: #0d6ea8;
+
+  box-shadow: 0 0 0 4px rgba(13, 110, 168, 0.15);
+}
+
+/* ===== SEARCH BUTTON ===== */
+
+.search-btn {
+  border: none;
+
+  padding: 12px 22px;
+
+  border-radius: 24px;
+
+  background: linear-gradient(135deg, #0d6ea8, #2c5aa0);
+
+  color: white;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.3s ease;
+
+  box-shadow: 0 4px 14px rgba(13, 110, 168, 0.25);
+}
+
+/* ===== BUTTON HOVER ===== */
+
+.search-btn:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 6px 18px rgba(13, 110, 168, 0.35);
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media screen and (max-width: 768px) {
+  .top-bar {
+    margin-left: 100px;
+
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  .sidebar.collapsed ~ .top-bar {
+    margin-left: 95px;
+  }
+
+  .filter-dropdowns,
+  .filters {
+    width: 100%;
+  }
+
+  .dropdown-btn,
+  .filter-select {
+    width: 100%;
+  }
+
+  .search-container {
+    position: fixed;
+
+    top: 75px;
+
+    right: 15px;
+  }
+
+  .search-form {
+    width: auto;
+  }
+
+  .search-input {
+    width: 220px;
+  }
+}
+
+/* =======================================================
+   TABLE SECTION
+======================================================= */
+
+/* ===== TABLE CONTENT ===== */
+.contenttable {
+  margin-left: 220px;
+  margin-top: 10px;
+  padding: 25px;
+  transition: all 0.3s ease;
+}
+
+/* ===== ADJUST WHEN COLLAPSED ===== */
+.sidebar.collapsed ~ .contenttable {
+  margin-left: 90px;
+}
+
+/* ===== TABLE CONTAINER ===== */
+.table-container {
+  width: 100%;
+  background: #fff;
+  border-radius: 18px;
+  overflow-x: auto;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+}
+
+/* ===== TABLE ===== */
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1200px;
+}
+
+/* ===== TABLE HEADER ===== */
+.users-table thead {
+  background: #0d6ea8;
+}
+
+.users-table thead th {
+  color: white;
+  padding: 18px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+/* ===== TABLE BODY ===== */
+.users-table tbody td {
+  padding: 16px 12px;
+  font-size: 13px;
+  text-align: center;
+  border-bottom: 1px solid #e5e7eb;
+  color: #333;
+  white-space: nowrap;
+}
+
+/* ===== ROW HOVER ===== */
+.users-table tbody tr:hover {
+  background: #f5f9fc;
+  transition: 0.2s ease;
+}
+
+/* ===== STATUS ===== */
+.status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status.active {
+  background: #d1fae5;
+  color: #047857;
+}
+
+/* ===== RESPONSIVE ===== */
+@media screen and (max-width: 992px) {
+  .main,
+  .contenttable {
+    margin-left: 90px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+/* ACTION BUTTONS */
+
+/* EDIT BUTTON */
+
+.action-buttons {
+  display: flex;
+  justify-content: center; /* centers horizontally */
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-edit {
+  padding: 8px 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  transition: 0.3s ease;
+  margin-left: 15px;
+  display: inline-block;
+  background: #0d6ea8;
+  box-shadow: 0 4px 10px rgba(13, 110, 168, 0.3);
+}
+
+/* EDIT BUTTON */
+.btn-edit {
+  background: #0d6ea8;
+  box-shadow: 0 4px 10px rgba(79, 195, 247, 0.3);
+  border: none;
+  cursor: pointer;
+}
+.btn-edit:hover {
+  background: #29b6f6;
+  transform: translateY(-2px);
+}
+.btn-edit {
+  padding: 8px 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  transition: 0.3s ease;
+  margin-left: 15px;
+  display: inline-block;
+  background: #0d6ea8;
+  box-shadow: 0 4px 10px rgba(13, 110, 168, 0.3);
+}
+
+/* CHANGE BUTTON */
+.btn-change {
+  background: #0d6ea8;
+  box-shadow: 0 4px 10px rgba(79, 195, 247, 0.3);
+  border: none;
+  cursor: pointer;
+}
+.btn-change:hover {
+  background: #d2e809;
+  transform: translateY(-2px);
+}
+.btn-change {
+  padding: 8px 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  transition: 0.3s ease;
+  margin-left: 5px;
+  display: inline-block;
+  background: #f4b400;
+  box-shadow: 0 4px 10px rgba(13, 110, 168, 0.3);
+}
+/*DELETE BUTTON */
+.btn-delete {
+  background: #0d6ea8;
+  box-shadow: 0 4px 10px rgba(79, 195, 247, 0.3);
+  border: none;
+  cursor: pointer;
+}
+.btn-delete:hover {
+  background: #ff0000;
+  transform: translateY(-2px);
+}
+.btn-delete {
+  padding: 8px 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  transition: 0.3s ease;
+  margin-left: 5px;
+  display: inline-block;
+  background: #d51919;
+  box-shadow: 0 4px 10px rgba(13, 110, 168, 0.3);
+}
+
+/* FOOTER LAYOUT */
+.table-footer {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+/* STATS SECTION */
+.user-stats {
+  display: flex;
+  gap: 12px;
+}
+
+/* STAT CARDS */
+.stat-box {
+  min-width: 120px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid #e6eef5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  text-align: center;
+}
+
+/* LABEL */
+.stat-box .label {
+  font-size: 12px;
+  color: #777;
+  display: block;
+}
+
+/* VALUE */
+.stat-box .value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #0d6ea8;
+}
+
+/* COLORS */
+.stat-box.active .value {
+  color: green;
+}
+.stat-box.inactive .value {
+  color: red;
+}
+
+/* PAGINATION*/
+.pagination {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* BUTTON STYLE */
+.pagination a,
+.pagination span {
+  min-width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 12px;
+
+  border-radius: 12px;
+
+  text-decoration: none;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  background: #ffffff;
+  color: #2c3e50;
+
+  border: 1px solid #e6eef5;
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+
+  transition: 0.25s ease;
+}
+
+/* HOVER EFFECT */
+.pagination a:hover {
+  background: #0d6ea8;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(13, 110, 168, 0.25);
+}
+
+/* ACTIVE PAGE */
+.pagination .active {
+  background: linear-gradient(135deg, #0d6ea8, #2c5aa0);
+  color: white;
+  border: none;
+  box-shadow: 0 6px 14px rgba(13, 110, 168, 0.3);
+}
+
+/* DOTS */
+.pagination .dots {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: #888;
+}
+
+/* ===== MOBILE ===== */
+@media screen and (max-width: 768px) {
+  .main,
+  .contenttable {
+    margin-left: 0;
+    padding-top: 70px;
+  }
+
+  .content,
+  .contenttable {
+    padding: 15px;
+  }
+
+  .page-title {
+    font-size: 24px;
+  }
+
+  .card {
+    min-height: 150px;
+  }
+  .action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn-edit {
+    padding: 8px 16px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    transition: 0.3s ease;
+    display: inline-block;
+  }
+
+  /* EDIT BUTTON */
+  .btn-edit {
+    background: #0d6ea8;
+    box-shadow: 0 4px 10px rgba(79, 195, 247, 0.3);
+  }
+
+  .btn-edit:hover {
+    background: #29b6f6;
+    transform: translateY(-2px);
+  }
+}
+.modal {
+  display: none;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background: white;
+  width: 500px;
+  max-width: 90%;
+  margin: 5% auto;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.closeModal {
+  float: right;
+  font-size: 25px;
+  cursor: pointer;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px;
+}
+
+.save-btn {
+  background: #0d6ea8;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+/* =========================================
+   MODAL OVERLAY
+========================================= */
+.edit-modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  justify-content: center;
+  align-items: center;
+  background: rgba(13, 110, 168, 0.18); /* transparent blue */
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.25s ease;
+}
+
+/* =========================================
+   MODAL BOX
+========================================= */
+.edit-modal-content {
+  width: 480px;
+  max-width: 100%;
+  padding: 28px;
+  border-radius: 24px;
+
+  min-height: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+
+  background: rgba(255, 255, 255, 0.78);
+
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 10px 35px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(13, 110, 168, 0.12);
+  animation: modalPop 0.28s ease;
+}
+
+/* =========================================
+   TITLE
+========================================= */
+.edit-modal-content h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0d6ea8;
+  margin-bottom: 22px;
+}
+
+/* =========================================
+   CLOSE BUTTON
+========================================= */
+.close-modal {
+  float: right;
+
+  font-size: 28px;
+  font-weight: bold;
+
+  cursor: pointer;
+
+  color: #666;
+
+  transition: 0.25s ease;
+}
+
+.close-modal:hover {
+  color: #0d6ea8;
+  transform: rotate(90deg);
+}
+
+/* =========================================
+   FORM GROUP
+========================================= */
+.form-group {
+  margin-bottom: 18px;
+}
+
+/* LABEL */
+.form-group label {
+  display: block;
+
+  margin-bottom: 8px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  color: #2c3e50;
+}
+
+/* INPUTS + SELECT */
+.form-group input,
+.form-group select {
+  width: 100%;
+
+  padding: 12px 14px;
+
+  border-radius: 14px;
+
+  border: 1px solid #dbe4ee;
+
+  background: rgba(255, 255, 255, 0.75);
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition: 0.25s ease;
+}
+
+/* FOCUS EFFECT */
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #0d6ea8;
+
+  box-shadow: 0 0 0 4px rgba(13, 110, 168, 0.12);
+}
+
+/* =========================================
+   SAVE BUTTON
+========================================= */
+.save-btn {
+  width: 100%;
+
+  padding: 14px;
+
+  border: none;
+
+  border-radius: 16px;
+
+  background: linear-gradient(135deg, #0d6ea8, #2c5aa0);
+
+  color: white;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: 0.3s ease;
+
+  box-shadow: 0 6px 18px rgba(13, 110, 168, 0.22);
+}
+
+.save-btn:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 8px 24px rgba(13, 110, 168, 0.32);
+
+  background: linear-gradient(135deg, #1282c2, #3568b5);
+}
+
+/* =========================================
+   ANIMATIONS
+========================================= */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* GRAY READONLY INPUT */
+.readonly-input {
+  background: #e5e7eb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+/* PREVENT PAGE SCROLL WHEN MODAL IS ACTIVE */
+body.modal-open {
+  overflow: hidden;
+}
+.users-table tbody tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+.users-table tbody tr:nth-child(even) {
+  background-color: #dedcdc;
+}
+
+/* Optional hover effect */
+.users-table tbody tr:hover {
+  background-color: #dfe6e9;
+}
