@@ -6,7 +6,7 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
-if ($_SESSION['user']['role_id'] != 1) {
+if ($_SESSION['user']['role_id'] != 3) {
     header("Location: ../../index.php");
     exit();
 }
@@ -19,7 +19,7 @@ include "../../config/db.php";
    pages/superadmin/folder/desktops/
 ========================= */
 
-$exportDir = $_SERVER['DOCUMENT_ROOT'] . "/inventech/pages/superadmin/exports/";
+$exportDir = $_SERVER['DOCUMENT_ROOT'] . "/inventech/pages/encoder/exports/";
 
 if (!is_dir($exportDir)) {
     mkdir($exportDir, 0777, true);

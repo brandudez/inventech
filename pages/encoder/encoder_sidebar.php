@@ -18,7 +18,7 @@
     <h2 class="sidebar-title">ITMS InvenTech</h2>
 
     <!-- MENU -->
-    <a href="../superadmin/personnel_list.php"
+    <a href="../encoder/personnel_list.php"
         class="<?= basename($_SERVER['PHP_SELF']) == 'personnel_list.php' ? 'active' : '' ?>">
         <span class="icon"><i class="bi bi-person-badge"></i></span>
         <span class="text">Personnel List</span>
@@ -43,7 +43,7 @@
         <div class="dropdown-content" id="deviceDropdown">
 
 
-            <a href="../superadmin/device_desktops.php"
+            <a href="../encoder/device_desktops.php"
                 class="<?= basename($_SERVER['PHP_SELF']) == 'device_desktops.php' ? 'active' : '' ?>">
                     <div class="menu-item">
                         <span class="icon"><i class="bi bi-pc-display"></i></span>
@@ -51,7 +51,7 @@
                     </div>
             </a>
 
-            <a href="../superadmin/device_laptops.php"
+            <a href="../encoder/device_laptops.php"
                 class="<?= basename($_SERVER['PHP_SELF']) == 'device_laptops.php' ? 'active' : '' ?>">
                 <div class="menu-item">
                     <span class="icon"><i class="bi bi-laptop"></i></span>
@@ -59,7 +59,7 @@
                 </div>
             </a>
 
-            <a href="../superadmin/device_printers.php"
+            <a href="../encoder/device_printers.php"
                 class="<?= basename($_SERVER['PHP_SELF']) == 'device_printers.php' ? 'active' : '' ?>">
                 <div class="menu-item">
                     <span class="icon"><i class="bi bi-printer"></i></span>
@@ -67,7 +67,7 @@
                 </div>
             </a>
 
-            <a href="../superadmin/device_cameras.php"
+            <a href="../encoder/device_cameras.php"
                 class="<?= basename($_SERVER['PHP_SELF']) == 'device_cameras.php' ? 'active' : '' ?>">
                 <div class="menu-item">
                     <span class="icon"><i class="bi bi-camera"></i></span>
@@ -75,7 +75,7 @@
                 </div>
             </a>
 
-            <a href="../superadmin/device_headsets.php"
+            <a href="../encoder/device_headsets.php"
                 class="<?= basename($_SERVER['PHP_SELF']) == 'device_headsets.php' ? 'active' : '' ?>">
                 <div class="menu-item">
                     <span class="icon"><i class="bi bi-headset"></i></span>
@@ -83,7 +83,7 @@
                 </div>
             </a>
 
-            <a href="../superadmin/device_switches.php"
+            <a href="../encoder/device_switches.php"
                 class="<?= basename($_SERVER['PHP_SELF']) == 'device_switches.php' ? 'active' : '' ?>">
                 <div class="menu-item">
                     <span class="icon"><i class="bi bi-diagram-3"></i></span>
@@ -91,7 +91,7 @@
                 </div>
             </a>
 
-            <a href="../superadmin/device_routers.php"
+            <a href="../encoder/device_routers.php"
                 class="<?= basename($_SERVER['PHP_SELF']) == 'device_routers.php' ? 'active' : '' ?>">
                 <div class="menu-item">
                     <span class="icon"><i class="bi bi-router"></i></span>
@@ -99,7 +99,7 @@
                 </div>
             </a>
 
-            <a href="../superadmin/device_firewalls.php"
+            <a href="../encoder/device_firewalls.php"
                 class="<?= basename($_SERVER['PHP_SELF']) == 'device_firewalls.php' ? 'active' : '' ?>">
                 <div class="menu-item">
                     <span class="icon"><i class="bi bi-shield-lock"></i></span>
