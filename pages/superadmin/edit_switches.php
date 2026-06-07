@@ -7,8 +7,9 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
-if (!isset($_POST['id'])) {
-    exit("Invalid request");
+if ($_SESSION['user']['role_id'] !=1) {
+    header("Location: ../../index.php");
+    exit();
 }
 
 /* =========================

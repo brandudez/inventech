@@ -2,13 +2,13 @@
 session_start();
 include "../../config/db.php";
 
-if (!isset($_SESSION['user']) || $_SESSION['user']['role_id'] != 1) {
+if (!isset($_SESSION['user']) || $_SESSION['user']['role_id'] != 2) {
     header("Location: ../../index.php");
     exit();
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header("Location: routers.php");
+    header("Location: admin_device_routers.php");
     exit();
 }
 
@@ -138,7 +138,8 @@ $stmt->bind_param(
 ========================= */
 
 if ($stmt->execute()) {
-    header("Location: device_routers.php?success=1");
+    $_SESSION['toast_success'] = "Router updated successfully!";
+header("Location: admin_device_routers.php");
     exit();
 } else {
     die("Update failed: " . $stmt->error);

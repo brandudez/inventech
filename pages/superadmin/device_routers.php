@@ -88,12 +88,11 @@ if (!empty($search)) {
         r.firmware_version LIKE ? OR
         r.remote_connection_details LIKE ? OR
         r.remarks LIKE ? OR
-        r.acquisition_details LIKE ? OR
         CONCAT(per.first_name, ' ', per.last_name) LIKE ? OR
         d.division LIKE ?
     )";
     $sp = "%$search%";
-    for ($i = 0; $i < 10; $i++) { $params[] = $sp; $types .= 's'; }
+    for ($i = 0; $i < 9; $i++) { $params[] = $sp; $types .= 's'; }
 }
 if (!empty($division_filter)) {
     $ph      = implode(',', array_fill(0, count($division_filter), '?'));

@@ -7,7 +7,7 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
-if ($_SESSION['user']['role_id'] != 2) {
+if ($_SESSION['user']['role_id'] !=2) {
     header("Location: ../../index.php");
     exit();
 }
@@ -46,7 +46,9 @@ $remarks = mysqli_real_escape_string($conn, $_POST['remarks']);
 $pnp_focal_person = mysqli_real_escape_string($conn, $_POST['pnp_focal']);
 $contact_details = mysqli_real_escape_string($conn, $_POST['contact']);
 
-$acquisition_date = $_POST['acq_date'];
+$acquisition_date = !empty($_POST['acq_date'])
+    ? $_POST['acq_date']
+    : null;
 $acquisition_type = mysqli_real_escape_string($conn, $_POST['acq_type']);
 $acquisition_details = mysqli_real_escape_string($conn, $_POST['acq_details']);
 
@@ -120,7 +122,8 @@ $stmt->bind_param(
 );
 
 if ($stmt->execute()) {
-    header("Location: admin_device_switches.php?success=1");
+    $_SESSION['toast_success'] = "Switch added successfully!";
+header("Location: admin_device_switches.php");
     exit();
 } else {
     echo "Error: " . $stmt->error;

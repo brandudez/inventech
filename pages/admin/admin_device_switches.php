@@ -5,7 +5,6 @@ if (!isset($_SESSION['user'])) {
     header("Location: ../../index.php");
     exit();
 }
-
 if ($_SESSION['user']['role_id'] != 2) {
     header("Location: ../../index.php");
     exit();
@@ -18,9 +17,9 @@ include("../../config/db.php");
 ========================= */
 function getPreviousOwnersNames($conn, $json)
 {
-    if (empty($json)) return 'N/A';
+    if (empty($json)) return '-';
     $ids = json_decode($json, true);
-    if (!is_array($ids) || empty($ids)) return 'N/A';
+    if (!is_array($ids) || empty($ids)) return '-';
     $ids = implode(',', array_map('intval', $ids));
     $result = mysqli_query($conn, "
         SELECT r.rank, p.first_name, p.middle_name, p.last_name
@@ -28,12 +27,12 @@ function getPreviousOwnersNames($conn, $json)
         LEFT JOIN ranks r ON p.rank_id = r.id
         WHERE p.id IN ($ids)
     ");
-    if (!$result) return 'N/A';
+    if (!$result) return '-';
     $names = [];
     while ($row = mysqli_fetch_assoc($result)) {
         $names[] = trim(($row['rank'] ?? '') . ' ' . $row['first_name'] . ' ' . $row['middle_name'] . ' ' . $row['last_name']);
     }
-    return !empty($names) ? implode("<br>", $names) : 'N/A';
+    return !empty($names) ? implode(",<br>", $names) : '-';
 }
 
 /* =========================
@@ -54,21 +53,22 @@ $division_filter     = is_array($division_filter_raw)
 
 $active_filter = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
 
+// Acquisition date filter (lt5 = less than 5 years old, gt5 = more than 5 years old)
+$acq_filter = trim($_GET['filter_acq'] ?? '');
+
 /* =========================
-   PRE-FETCH DIVISIONS
+   PRE-FETCH DIVISIONS + PERSONNEL
 ========================= */
 $allDivisions = [];
 $dq = mysqli_query($conn, "SELECT id, division FROM divisions ORDER BY id ASC");
 while ($r = mysqli_fetch_assoc($dq)) $allDivisions[] = $r;
 
-/* =========================
-   PRE-FETCH PERSONNEL (for modals)
-========================= */
 $allPersonnel = [];
 $pq = mysqli_query($conn, "
     SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name
     FROM personnels p
     LEFT JOIN ranks r ON p.rank_id = r.id
+    WHERE p.is_active = 1
     ORDER BY p.rank_id DESC
 ");
 while ($r = mysqli_fetch_assoc($pq)) $allPersonnel[] = $r;
@@ -96,17 +96,21 @@ if (!empty($search)) {
     $sp = "%$search%";
     for ($i = 0; $i < 10; $i++) { $params[] = $sp; $types .= 's'; }
 }
-
 if (!empty($division_filter)) {
     $ph      = implode(',', array_fill(0, count($division_filter), '?'));
     $where[] = "d.division IN ($ph)";
     foreach ($division_filter as $v) { $params[] = $v; $types .= 's'; }
 }
-
 if ($active_filter !== '') {
     $where[]  = "s.is_active = ?";
     $params[] = $active_filter;
     $types   .= 'i';
+}
+// Acquisition date filter — no bound params (computed server-side)
+if ($acq_filter === 'lt5') {
+    $where[] = "s.acquisition_date IS NOT NULL AND s.acquisition_date != '0000-00-00' AND s.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+} elseif ($acq_filter === 'gt5') {
+    $where[] = "s.acquisition_date IS NOT NULL AND s.acquisition_date != '0000-00-00' AND s.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 }
 
 $whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
@@ -119,22 +123,29 @@ $baseJoin = "
 ";
 
 /* =========================
-   COUNTS
+   COUNTS — full filtered set, no pagination
 ========================= */
 $stmtTotal = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $whereSQL");
 if (!empty($params)) $stmtTotal->bind_param($types, ...$params);
 $stmtTotal->execute();
 $totalSwitches = $stmtTotal->get_result()->fetch_assoc()['total'] ?? 0;
-$totalPages    = ceil($totalSwitches / $limit);
+$totalPages    = (int)ceil($totalSwitches / $limit);
 
-$aw = $where; $aw[] = "s.is_active = 1"; $aSQL = "WHERE " . implode(" AND ", $aw);
-$sa = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $aSQL");
+// Stat-box counts: layer active/inactive on top of ALL current filters.
+$activeWhere   = $where;
+$activeWhere[] = "s.is_active = 1";
+$activeSQL     = "WHERE " . implode(" AND ", $activeWhere);
+
+$inactiveWhere   = $where;
+$inactiveWhere[] = "s.is_active = 0";
+$inactiveSQL     = "WHERE " . implode(" AND ", $inactiveWhere);
+
+$sa = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $activeSQL");
 if (!empty($params)) $sa->bind_param($types, ...$params);
 $sa->execute();
 $activeDevices = $sa->get_result()->fetch_assoc()['total'] ?? 0;
 
-$iw = $where; $iw[] = "s.is_active = 0"; $iSQL = "WHERE " . implode(" AND ", $iw);
-$si = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $iSQL");
+$si = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $inactiveSQL");
 if (!empty($params)) $si->bind_param($types, ...$params);
 $si->execute();
 $inactiveDevices = $si->get_result()->fetch_assoc()['total'] ?? 0;
@@ -156,16 +167,25 @@ $fp[] = $offset; $fp[] = $limit;
 $stmt->bind_param($ft, ...$fp);
 $stmt->execute();
 $result = $stmt->get_result();
+
+// Build export query string (mirrors all active filters)
+$exportParams = http_build_query([
+    'search'     => $search,
+    'division'   => $division_filter,
+    'is_active'  => $active_filter,
+    'filter_acq' => $acq_filter,
+]);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Switch Devices</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/admin_devices.css">
-    <link rel="stylesheet" href="assets/admin_navbar.css">
-    <link rel="stylesheet" href="assets/admin_sidebar.css">
+    <link rel="stylesheet" href="../admin/css/devices.css">
+    <link rel="stylesheet" href="css/admin_navbar.css">
+    <link rel="stylesheet" href="./css/admin_sidebar.css">
     <style>
         .clickable-row:hover { background-color: #f0f4ff !important; cursor: pointer; }
         .view-label { font-size: 0.75rem; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
@@ -178,80 +198,111 @@ $result = $stmt->get_result();
     <?php include 'admin_navbar.php'; ?>
 
     <!-- TOP BAR -->
-    <div class="top-bar">
+    <!-- TOP BAR -->
+<div class="top-bar">
 
-        <!-- SEARCH -->
-        <div class="search-container">
-            <form method="GET" action="device_switches.php" class="search-form">
-                <?php foreach ($division_filter as $v): ?>
-                    <input type="hidden" name="division[]" value="<?= htmlspecialchars($v) ?>">
-                <?php endforeach; ?>
-                <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
-                <input type="text" name="search" class="search-input"
-                    placeholder="Search switches..." value="<?= htmlspecialchars($search) ?>">
-                <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
+    <!-- SEARCH (left side) -->
+    <div class="search-container">
+        <form method="GET" action="admin_device_switches.php" class="search-form">
+            <?php foreach ($division_filter as $v): ?>
+                <input type="hidden" name="division[]" value="<?= htmlspecialchars($v) ?>">
+            <?php endforeach; ?>
+            <input type="hidden" name="is_active"  value="<?= htmlspecialchars($active_filter) ?>">
+            <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
+            <input type="text" name="search" class="search-input"
+                placeholder="Search switches..." value="<?= htmlspecialchars($search) ?>">
+            <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
+             <a href="admin_export_switches.php?<?= htmlspecialchars($exportParams) ?>"
+           class="btn add-laptop-btn"
+           onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
+            <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
+        </a>
+        </form>
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="right-side">
+
+        
+        <div class="filters">
+            <form method="GET" action="admin_device_switches.php" id="filterForm">
+                <input type="hidden" name="search"     value="<?= htmlspecialchars($search) ?>">
+                <input type="hidden" name="is_active"  value="<?= htmlspecialchars($active_filter) ?>">
+                <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
+
+                <!-- DIVISION DROPDOWN -->
+                <div class="dropdown">
+                    <?php $divLabel = empty($division_filter) ? 'Division' : (count($division_filter) === 1 ? $division_filter[0] : count($division_filter) . ' Divisions selected'); ?>
+                    <button class="btn filter-btn dropdown-toggle" type="button"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                        <?= htmlspecialchars($divLabel) ?>
+                    </button>
+                    <ul class="dropdown-menu p-3 dropdown-scroll wide-dropdown">
+                        <li class="mb-2"><button type="submit" class="btn btn-primary w-100">Apply</button></li>
+                        <li class="mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input division-all-checkbox" type="checkbox" value="" id="allDivision" <?= empty($division_filter) ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="allDivision">All</label>
+                            </div>
+                        </li>
+                        <?php foreach ($allDivisions as $div): ?>
+                            <li class="mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input division-checkbox" type="checkbox"
+                                        name="division[]" value="<?= htmlspecialchars($div['division']) ?>"
+                                        id="division_<?= $div['id'] ?>"
+                                        <?= in_array($div['division'], $division_filter) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="division_<?= $div['id'] ?>"><?= htmlspecialchars($div['division']) ?></label>
+                                </div>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
             </form>
         </div>
 
-        <!-- RIGHT SIDE -->
-        <div class="right-side">
-
-            <div class="filters">
-                <form method="GET" action="device_switches.php" id="filterForm">
-                    <input type="hidden" name="search"    value="<?= htmlspecialchars($search) ?>">
-                    <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
-
-                    <!-- DIVISION DROPDOWN -->
-                    <div class="dropdown">
-                        <?php $divLabel = empty($division_filter) ? 'Division' : (count($division_filter) === 1 ? $division_filter[0] : count($division_filter) . ' Divisions selected'); ?>
-                        <button class="btn filter-btn dropdown-toggle" type="button"
-                            data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                            <?= htmlspecialchars($divLabel) ?>
-                        </button>
-                        <ul class="dropdown-menu p-3 dropdown-scroll">
-                            <li class="mb-2"><button type="submit" class="btn btn-primary w-100">Apply</button></li>
-                            <li class="mb-2">
-                                <div class="form-check">
-                                    <input class="form-check-input division-all-checkbox" type="checkbox" value="" id="allDivision" <?= empty($division_filter) ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="allDivision">All</label>
-                                </div>
-                            </li>
-                            <?php foreach ($allDivisions as $div): ?>
-                                <li class="mb-2">
-                                    <div class="form-check">
-                                        <input class="form-check-input division-checkbox" type="checkbox"
-                                            name="division[]" value="<?= htmlspecialchars($div['division']) ?>"
-                                            id="division_<?= $div['id'] ?>"
-                                            <?= in_array($div['division'], $division_filter) ? 'checked' : '' ?>>
-                                        <label class="form-check-label" for="division_<?= $div['id'] ?>"><?= htmlspecialchars($div['division']) ?></label>
-                                    </div>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </div>
-                </form>
-            </div>
-
-            <!-- IS ACTIVE FILTER -->
-            <div class="dropdown">
-                <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
-                    <?= $active_filter === '' ? 'Is Active?' : ($active_filter == 1 ? 'YES' : 'NO') ?>
-                </button>
-                <ul class="dropdown-menu p-3">
-                    <?php $base = '?search=' . urlencode($search) . '&' . http_build_query(['division' => $division_filter]); ?>
-                    <li><a class="dropdown-item" href="<?= $base ?>">All</a></li>
-                    <li><a class="dropdown-item" href="<?= $base ?>&is_active=1">YES</a></li>
-                    <li><a class="dropdown-item" href="<?= $base ?>&is_active=0">NO</a></li>
-                </ul>
-            </div>
-
-            <!-- ADD BUTTON -->
-            <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addSwitchModal">
-                Add Switch
-            </button>
-
+        <!-- ACQUISITION DATE FILTER -->
+        <div class="dropdown">
+            <?php
+            $acqLabel = 'ACQ Date';
+            if ($acq_filter === 'lt5') $acqLabel = 'Age < 5 Years';
+            elseif ($acq_filter === 'gt5') $acqLabel = 'Age > 5 Years';
+            $acqBase = '?search=' . urlencode($search) . '&' . http_build_query([
+                'division'  => $division_filter,
+                'is_active' => $active_filter,
+            ]);
+            ?>
+            <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown"><?= htmlspecialchars($acqLabel) ?></button>
+            <ul class="dropdown-menu p-3">
+                <li><a class="dropdown-item" href="<?= $acqBase ?>">All</a></li>
+                <li><a class="dropdown-item" href="<?= $acqBase ?>&filter_acq=lt5">Less than 5 years</a></li>
+                <li><a class="dropdown-item" href="<?= $acqBase ?>&filter_acq=gt5">More than 5 years</a></li>
+            </ul>
         </div>
+
+        <!-- IS ACTIVE FILTER -->
+        <div class="dropdown">
+            <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown">
+                <?= $active_filter === '' ? 'Active?' : ($active_filter == 1 ? 'YES' : 'NO') ?>
+            </button>
+            <ul class="dropdown-menu p-3">
+                <?php $base = '?search=' . urlencode($search) . '&' . http_build_query([
+                    'division'   => $division_filter,
+                    'filter_acq' => $acq_filter,
+                ]); ?>
+                <li><a class="dropdown-item" href="<?= $base ?>">All</a></li>
+                <li><a class="dropdown-item" href="<?= $base ?>&is_active=1">YES</a></li>
+                <li><a class="dropdown-item" href="<?= $base ?>&is_active=0">NO</a></li>
+            </ul>
+        </div>
+
+        <!-- ADD BUTTON -->
+        <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addSwitchModal">
+            Add Switch
+        </button>
+
     </div>
+</div>
 
     <!-- ADD SWITCH MODAL -->
     <div class="modal fade" id="addSwitchModal" tabindex="-1" aria-labelledby="addSwitchModalLabel" aria-hidden="true">
@@ -262,7 +313,7 @@ $result = $stmt->get_result();
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form action="add_switches.php" method="POST">
+                    <form action="admin_add_switches.php" method="POST">
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label">Personnel</label>
@@ -282,25 +333,25 @@ $result = $stmt->get_result();
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-6"><label class="form-label">Manufacturer</label><input type="text" class="form-control" name="manufacturer" required></div>
-                            <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" required></div>
-                            <div class="col-md-6"><label class="form-label">PAR Serial No</label><input type="text" class="form-control" name="par_serial_no" required></div>
-                            <div class="col-md-6"><label class="form-label">Ports</label><input type="number" class="form-control" name="no_of_ports" min="0" required></div>
-                            <div class="col-md-6"><label class="form-label">Active Ports</label><input type="number" class="form-control" name="active_ports" min="0" required></div>
-                            <div class="col-md-6"><label class="form-label"># Managed Ports</label><input type="number" class="form-control" name="no_of_managed" min="0" required></div>
-                            <div class="col-md-6"><label class="form-label"># Unmanaged Ports</label><input type="number" class="form-control" name="no_of_unmanaged" min="0" required></div>
-                            <div class="col-md-6"><label class="form-label">Firmware</label><input type="text" class="form-control" name="firmware" required></div>
+                            <div class="col-md-6"><label class="form-label">Manufacturer</label><input type="text" class="form-control" name="manufacturer" ></div>
+                            <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" ></div>
+                            <div class="col-md-6"><label class="form-label">PAR Serial No</label><input type="text" class="form-control" name="par_serial_no" ></div>
+                            <div class="col-md-6"><label class="form-label">Ports</label><input type="number" class="form-control" name="no_of_ports" min="0" ></div>
+                            <div class="col-md-6"><label class="form-label">Active Ports</label><input type="number" class="form-control" name="active_ports" min="0" ></div>
+                            <div class="col-md-6"><label class="form-label"># Managed Ports</label><input type="number" class="form-control" name="no_of_managed" min="0" ></div>
+                            <div class="col-md-6"><label class="form-label"># Unmanaged Ports</label><input type="number" class="form-control" name="no_of_unmanaged" min="0" ></div>
+                            <div class="col-md-6"><label class="form-label">Firmware</label><input type="text" class="form-control" name="firmware" ></div>
                             <div class="col-md-6">
                                 <label class="form-label">VLAN Supported</label>
-                                <select class="form-select" name="vlan_supported" required>
+                                <select class="form-select" name="vlan_supported" >
                                     <option value="" disabled selected hidden>Select</option>
                                     <option value="1">Yes</option><option value="0">No</option>
                                 </select>
                             </div>
-                            <div class="col-md-6"><label class="form-label">Location</label><input type="text" class="form-control" name="location" required></div>
+                            <div class="col-md-6"><label class="form-label">Location</label><input type="text" class="form-control" name="location" ></div>
                             <div class="col-md-6">
                                 <label class="form-label">Remote Accessible?</label>
-                                <select class="form-select" name="remote_access" required>
+                                <select class="form-select" name="remote_access" >
                                     <option value="" disabled selected hidden>Select</option>
                                     <option value="1">Yes</option><option value="0">No</option>
                                 </select>
@@ -329,7 +380,7 @@ $result = $stmt->get_result();
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Is Active?</label>
-                                <select class="form-select" name="is_active" required>
+                                <select class="form-select" name="is_active" >
                                     <option value="" disabled selected hidden>Select</option>
                                     <option value="1">Yes</option><option value="0">No</option>
                                 </select>
@@ -344,7 +395,6 @@ $result = $stmt->get_result();
             </div>
         </div>
     </div>
-    <!-- END ADD MODAL -->
 
     <!-- TABLE -->
     <div class="contenttable">
@@ -386,26 +436,26 @@ $result = $stmt->get_result();
                                 data-bs-toggle="modal" data-bs-target="#viewSwitchModal<?= $row['id'] ?>">
                                 <td><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></td>
-                                <td><?= htmlspecialchars($row['manufacturer'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['model'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['serial_no'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['no_of_ports'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['no_of_active_ports'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['no_of_managed'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['no_of_unmanaged'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['firmware_version'] ?? '') ?></td>
-                                <td><?= $row['is_vlan_supported'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></td>
-                                <td><?= htmlspecialchars($row['location'] ?? '') ?></td>
-                                <td><?= $row['is_remote_access'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></td>
-                                <td><?= htmlspecialchars($row['remote_connection_details'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['remarks'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['pnp_focal_person'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['contact_details'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['acquisition_date'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['acquisition_type'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['acquisition_details'] ?? '') ?></td>
-                                <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?></td>
-                                <td><?= $row['is_active'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></td>
+                                <td><?= htmlspecialchars($row['manufacturer'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['model'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['serial_no'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['no_of_ports'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['no_of_active_ports'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['no_of_managed'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['no_of_unmanaged'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['firmware_version'] ?? '') ?: '-' ?></td>
+                                <td><?= $row['is_vlan_supported'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
+                                <td><?= htmlspecialchars($row['location'] ?? '') ?: '-' ?></td>
+                                <td><?= $row['is_remote_access'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
+                               <td><?= htmlspecialchars($row['remote_connection_details'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['remarks'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['pnp_focal_person'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['contact_details'] ?? '') ?: '-' ?></td>
+                                <td><?= (!empty($row['acquisition_date']) && $row['acquisition_date'] !== '0000-00-00') ? htmlspecialchars($row['acquisition_date']) : '-' ?></td>
+                                <td><?= htmlspecialchars($row['acquisition_type'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['acquisition_details'] ?? '') ?: '-' ?></td>
+                                <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?: '-' ?></td>
+                                <td><?= $row['is_active'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
                                 <td onclick="event.stopPropagation();">
                                     <button class="btn btn-primary btn-sm"
                                         data-bs-toggle="modal"
@@ -458,7 +508,6 @@ $result = $stmt->get_result();
                                     </div>
                                 </div>
                             </div>
-                            <!-- END VIEW MODAL -->
 
                             <!-- EDIT MODAL -->
                             <div class="modal fade" id="editSwitchModal<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
@@ -469,7 +518,7 @@ $result = $stmt->get_result();
                                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                         </div>
                                         <div class="modal-body">
-                                            <form action="edit_switches.php" method="POST">
+                                            <form action="admin_edit_switches.php" method="POST">
                                                 <input type="hidden" name="id" value="<?= $row['id'] ?>">
                                                 <div class="row g-3">
                                                     <div class="col-md-4">
@@ -490,8 +539,8 @@ $result = $stmt->get_result();
                                                             <?php endforeach; ?>
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-6"><label class="form-label">Manufacturer</label><input type="text" class="form-control" name="manufacturer" value="<?= htmlspecialchars($row['manufacturer'] ?? '') ?>" required></div>
-                                                    <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" value="<?= htmlspecialchars($row['model'] ?? '') ?>" required></div>
+                                                    <div class="col-md-6"><label class="form-label">Manufacturer</label><input type="text" class="form-control" name="manufacturer" value="<?= htmlspecialchars($row['manufacturer'] ?? '') ?>" ></div>
+                                                    <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" value="<?= htmlspecialchars($row['model'] ?? '') ?>" ></div>
                                                     <div class="col-md-6"><label class="form-label">PAR Serial No</label><input type="text" class="form-control" name="par_serial_no" value="<?= htmlspecialchars($row['serial_no'] ?? '') ?>"></div>
                                                     <div class="col-md-6"><label class="form-label">Ports</label><input type="number" class="form-control" name="no_of_ports" min="0" value="<?= htmlspecialchars($row['no_of_ports'] ?? '') ?>"></div>
                                                     <div class="col-md-6"><label class="form-label">Active Ports</label><input type="number" class="form-control" name="no_of_active_ports" min="0" value="<?= htmlspecialchars($row['no_of_active_ports'] ?? '') ?>"></div>
@@ -559,7 +608,6 @@ $result = $stmt->get_result();
                                     </div>
                                 </div>
                             </div>
-                            <!-- END EDIT MODAL -->
 
                         <?php endwhile; ?>
 
@@ -574,13 +622,18 @@ $result = $stmt->get_result();
         <!-- FOOTER -->
         <div class="table-footer">
             <div class="user-stats">
-                <div class="stat-box total"><span class="label">Total Devices</span><span class="value" id="statTotal"><?= $totalSwitches ?></span></div>
-                <div class="stat-box active"><span class="label">Active</span><span class="value" id="statActive"><?= $activeDevices ?></span></div>
-                <div class="stat-box inactive"><span class="label">Inactive</span><span class="value" id="statInactive"><?= $inactiveDevices ?></span></div>
+                <div class="stat-box total"><span class="label">Total Devices</span><span class="value"><?= $totalSwitches ?></span></div>
+                <div class="stat-box active"><span class="label">Active</span><span class="value"><?= $activeDevices ?></span></div>
+                <div class="stat-box inactive"><span class="label">Inactive</span><span class="value"><?= $inactiveDevices ?></span></div>
             </div>
 
             <?php if ($totalPages > 1):
-                $paginationBase = http_build_query(['search' => $search, 'division' => $division_filter, 'is_active' => $active_filter]); ?>
+                $paginationBase = http_build_query([
+                    'search'     => $search,
+                    'division'   => $division_filter,
+                    'is_active'  => $active_filter,
+                    'filter_acq' => $acq_filter,
+                ]); ?>
                 <div class="pagination">
                     <?php if ($page > 1): ?><a href="?page=<?= $page - 1 ?>&<?= $paginationBase ?>">Prev</a><?php endif; ?>
                     <?php for ($i = 1; $i <= $totalPages; $i++): ?><a href="?page=<?= $i ?>&<?= $paginationBase ?>" class="<?= $i == $page ? 'active-page' : '' ?>"><?= $i ?></a><?php endfor; ?>
@@ -591,31 +644,7 @@ $result = $stmt->get_result();
 
     </div>
 
-    <?php if (!empty($_SESSION['toast_error'])): ?>
-        <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                let toast = document.createElement("div");
-                toast.className = "toast align-items-center text-bg-danger show position-fixed bottom-0 end-0 m-3";
-                toast.style.zIndex = 9999;
-                toast.innerHTML = `<div class="d-flex"><div class="toast-body"><?= $_SESSION['toast_error'] ?></div><button type="button" class="btn-close me-2 m-auto"></button></div>`;
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 4000);
-            });
-        </script>
-        <?php unset($_SESSION['toast_error']); ?>
-    <?php endif; ?>
-
     <script>
-        function updateStats() {
-            const rows = document.querySelectorAll('.users-table tbody tr[data-active]');
-            let active = 0, inactive = 0;
-            rows.forEach(r => r.dataset.active === '1' ? active++ : inactive++);
-            document.getElementById('statTotal').textContent    = rows.length;
-            document.getElementById('statActive').textContent   = active;
-            document.getElementById('statInactive').textContent = inactive;
-        }
-        document.addEventListener('DOMContentLoaded', updateStats);
-
         function setupFilterGroup(allSelector, itemSelector) {
             const allCb   = document.querySelector(allSelector);
             const itemCbs = document.querySelectorAll(itemSelector);
@@ -646,9 +675,55 @@ $result = $stmt->get_result();
                 bsView.hide();
             }
         });
+
     </script>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+   <script>
+    function showToast(message, type = "success") {
+        const colors = { success: "#198754", danger: "#dc3545" };
+        const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
+        const toast  = document.createElement("div");
+        toast.style.cssText = `
+            position:fixed;bottom:24px;right:24px;z-index:9999;
+            background:${colors[type]};color:#fff;
+            padding:14px 20px;border-radius:10px;
+            display:flex;align-items:center;gap:10px;
+            box-shadow:0 4px 16px rgba(0,0,0,.2);
+            font-size:.95rem;max-width:340px;
+            animation:slideIn .3s ease;
+        `;
+        toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
+        document.body.appendChild(toast);
+        if (!document.getElementById("toastKeyframe")) {
+            const s = document.createElement("style");
+            s.id = "toastKeyframe";
+            s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
+            document.head.appendChild(s);
+        }
+        setTimeout(() => {
+            toast.style.transition = "opacity .4s";
+            toast.style.opacity = "0";
+            setTimeout(() => toast.remove(), 400);
+        }, 3500);
+    }
+    </script>
 
+    <?php if (!empty($_SESSION['toast_success'])): ?>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
+    });
+    </script>
+    <?php unset($_SESSION['toast_success']); endif; ?>
+
+    <?php if (!empty($_SESSION['toast_error'])): ?>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
+    });
+    </script>
+    <?php unset($_SESSION['toast_error']); endif; ?>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -47,7 +47,10 @@ if (!is_array($previous_owners_id)) {
     $previous_owners_id = [$previous_owners_id];
 }
 
-$previous_owners_json = json_encode(array_values($previous_owners_id));
+$previous_owners_json = !empty($previous_owners_id)
+    ? json_encode(array_values($previous_owners_id))
+    : null;
+
 
 /* =========================
    OTHER FIELDS
@@ -174,9 +177,9 @@ $stmt->bind_param(
    EXECUTE
 ========================= */
 if ($stmt->execute()) {
-    header("Location: admin_device_laptops.php?success=1");
+   $_SESSION['toast_success'] = "Laptop added successfully!";
+header("Location: admin_device_laptops.php");
     exit();
 } else {
     die("SQL ERROR: " . $stmt->error);
 }
-?>

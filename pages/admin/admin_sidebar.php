@@ -47,7 +47,7 @@ $devicesActive = in_array($currentPage, $devicePages);
     <a href="admin_user_create.php"
        class="<?= $currentPage == 'admin_user_create.php' ? 'active' : '' ?>">
         <span class="icon"><i class="bi bi-people"></i></span>
-        <span class="text">Add User</span>
+        <span class="text">Add Encoder</span>
     </a>
 
     <a href="admin_users_list.php"

@@ -7,10 +7,10 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
-if (!isset($_POST['id'])) {
-    exit("Invalid request");
+if ($_SESSION['user']['role_id'] !=2) {
+    header("Location: ../../index.php");
+    exit();
 }
-
 /* =========================
    ID
 ========================= */
@@ -150,7 +150,8 @@ $stmt->bind_param(
 );
 
 if ($stmt->execute()) {
-    header("Location: device_switches.php?updated=1");
+    $_SESSION['toast_success'] = "Switch updated successfully!";
+header("Location: admin_device_switches.php");
     exit();
 } else {
     echo "Error: " . $stmt->error;

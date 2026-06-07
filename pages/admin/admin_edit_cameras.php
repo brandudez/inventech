@@ -7,7 +7,7 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
-if ($_SESSION['user']['role_id'] != 1) {
+if ($_SESSION['user']['role_id'] != 2) {
     header("Location: ../../index.php");
     exit();
 }
@@ -74,7 +74,8 @@ $stmt->bind_param(
 );
 
 if ($stmt->execute()) {
-    header("Location: device_cameras.php?updated=1");
+    $_SESSION['toast_success'] = "Camera updated successfully!";
+header("Location: admin_device_cameras.php");
     exit();
 } else {
     echo "Error: " . $stmt->error;

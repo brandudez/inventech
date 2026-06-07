@@ -1,5 +1,6 @@
 <?php
 session_start();
+include("../../config/db.php");
 
 if (!isset($_SESSION['user'])) {
     header("Location: ../../index.php");
@@ -11,82 +12,129 @@ if ($_SESSION['user']['role_id'] != 2) {
     exit();
 }
 
-include("../../config/db.php");
+/* =========================
+   GET FORM DATA
+========================= */
+
+$personnel_id = (int) $_POST['personnel_id'];
+$division_id  = (int) $_POST['division_id'];
+
+/* device_id mirrors division_id */
+$device_id = $division_id;
+
+$manufacturer = mysqli_real_escape_string($conn, $_POST['manufacturer']);
+$model        = mysqli_real_escape_string($conn, $_POST['model']);
+
+$serial_no = mysqli_real_escape_string($conn, $_POST['serial_no']);
+
+$no_of_ports        = (int) $_POST['no_of_ports'];
+$no_of_active_ports = (int) $_POST['no_of_active_ports'];
+
+$firmware_version = mysqli_real_escape_string(
+    $conn,
+    $_POST['firmware_version']
+);
+
+$management_interface_type = mysqli_real_escape_string(
+    $conn,
+    $_POST['management_interface_type']
+);
 
 /* =========================
-   COLLECT POST DATA
+   YES / NO VALUES
 ========================= */
-$personnel_id            = (int)($_POST['personnel_id']            ?? 0);
-$division_id             = (int)($_POST['division_id']             ?? 0);
-$manufacturer            = trim($_POST['manufacturer']             ?? '');
-$model                   = trim($_POST['model']                    ?? '');
-$serial_no               = trim($_POST['serial_no']                ?? '');
-$no_of_ports             = (int)($_POST['no_of_ports']             ?? 0);
-$no_of_active_ports      = (int)($_POST['no_of_active_ports']      ?? 0);
-$firmware_version        = trim($_POST['firmware_version']         ?? '');
-$management_interface    = trim($_POST['management_interface_type'] ?? '');
-$location                = trim($_POST['location']                 ?? '');
-$is_active               = (int)($_POST['is_active']               ?? 0);
-$is_remotely_accessible  = (int)($_POST['is_remotely_accessible']  ?? 0);
-$remote_connection_details = trim($_POST['remote_connection_details'] ?? '');
-$pnp_focal_person        = trim($_POST['pnp_focal_person']         ?? '');
-$contact_details         = trim($_POST['contact_details']          ?? '');
-$acquisition_date        = trim($_POST['acquisition_date']         ?? '');
-$acquisition_type        = trim($_POST['acquisition_type']         ?? '');
-$acquisition_details     = trim($_POST['acquisition_details']      ?? '');
-$remarks                 = trim($_POST['remarks']                  ?? '');
-$created_date            = date('Y-m-d');
 
-// Previous handlers — stored as JSON array of IDs
-$previous_owners_raw = $_POST['previous_owners_id'] ?? [];
-$previous_owners_ids = array_map('intval', (array)$previous_owners_raw);
-$previous_owners_json = !empty($previous_owners_ids)
-    ? json_encode(array_values($previous_owners_ids))
+$is_remotely_accessible = (int) $_POST['is_remotely_accessible'];
+$is_active              = (int) $_POST['is_active'];
+
+$location = mysqli_real_escape_string($conn, $_POST['location']);
+
+$remote_connection_details = mysqli_real_escape_string(
+    $conn,
+    $_POST['remote_connection_details']
+);
+
+$remarks = mysqli_real_escape_string(
+    $conn,
+    $_POST['remarks']
+);
+
+$pnp_focal_person = mysqli_real_escape_string(
+    $conn,
+    $_POST['pnp_focal_person']
+);
+
+$contact_details = mysqli_real_escape_string(
+    $conn,
+    $_POST['contact_details']
+);
+
+$acquisition_date = !empty($_POST['acquisition_date'])
+    ? $_POST['acquisition_date']
     : null;
 
+$acquisition_type = mysqli_real_escape_string(
+    $conn,
+    $_POST['acquisition_type']
+);
+
+$acquisition_details = mysqli_real_escape_string(
+    $conn,
+    $_POST['acquisition_details']
+);
+
 /* =========================
-   BASIC VALIDATION
+   PREVIOUS HANDLERS
 ========================= */
-if (!$personnel_id || !$division_id || empty($manufacturer) || empty($model) || empty($serial_no)) {
-    $_SESSION['toast_error'] = "Please fill in all required fields.";
-    header("Location: device_firewalls.php");
-    exit();
+
+$previous_owners_id = $_POST['previous_owners_id'] ?? [];
+
+if (!is_array($previous_owners_id)) {
+    $previous_owners_id = [$previous_owners_id];
 }
 
-/* =========================
-   INSERT
-========================= */
-$stmt = $conn->prepare("
-    INSERT INTO firewalls (
-        personnel_id,
-        division_id,
-        device_id,
-        manufacturer,
-        model,
-        serial_no,
-        no_of_ports,
-        no_of_active_ports,
-        firmware_version,
-        management_interface_type,
-        location,
-        is_active,
-        is_remotely_accessible,
-        remote_connection_details,
-        remarks,
-        pnp_focal_person,
-        contact_details,
-        acquisition_date,
-        acquisition_type,
-        acquisition_details,
-        previous_owners_id,
-        created_date
-    ) VALUES (
-        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-    )
-");
+$previous_owners_json = json_encode(
+    array_map('intval', $previous_owners_id)
+);
 
-// device_id mirrors division_id (based on original schema usage)
-$device_id = $division_id;
+/* =========================
+   CREATED DATE
+========================= */
+
+$created_date = date('Y-m-d');
+
+/* =========================
+   INSERT QUERY
+========================= */
+
+$stmt = $conn->prepare("
+INSERT INTO firewalls (
+    personnel_id,
+    division_id,
+    device_id,
+    manufacturer,
+    model,
+    serial_no,
+    no_of_ports,
+    no_of_active_ports,
+    firmware_version,
+    management_interface_type,
+    location,
+    is_active,
+    is_remotely_accessible,
+    remote_connection_details,
+    remarks,
+    pnp_focal_person,
+    contact_details,
+    acquisition_date,
+    acquisition_type,
+    acquisition_details,
+    previous_owners_id,
+    created_date
+) VALUES (
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+)
+");
 
 $stmt->bind_param(
     "iiisssiisssiisssssssss",
@@ -99,7 +147,7 @@ $stmt->bind_param(
     $no_of_ports,
     $no_of_active_ports,
     $firmware_version,
-    $management_interface,
+    $management_interface_type,
     $location,
     $is_active,
     $is_remotely_accessible,
@@ -115,9 +163,9 @@ $stmt->bind_param(
 );
 
 if ($stmt->execute()) {
-    header("Location: admin_device_firewalls.php?success=added");
+    $_SESSION['toast_success'] = "Firewall added successfully!";
+header("Location: admin_device_firewalls.php");
+    exit();
 } else {
-    $_SESSION['toast_error'] = "Failed to save firewall: " . $conn->error;
-    header("Location: admin_device_firewalls.php");
+    echo "Error: " . $stmt->error;
 }
-exit();
