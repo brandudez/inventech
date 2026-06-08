@@ -535,7 +535,61 @@ $exportParams = http_build_query([
                             <div class="col-md-4"><label class="form-label">Monitor Brand</label><input type="text" class="form-control" name="monitor_brand"></div>
                             <div class="col-md-4"><label class="form-label">Monitor Size</label><input type="text" class="form-control" name="monitor_size_inches"></div>
                             <div class="col-md-4"><label class="form-label"># of User Accounts</label><input type="number" class="form-control" name="no_of_user_accounts"></div>
-                            <div class="col-md-6"><label class="form-label">User Account Type</label><input type="text" class="form-control" name="user_account_type"></div>
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">User Account Type</label>
+
+                                <div id="accountTypeContainer">
+
+                                    <div class="account-row">
+
+                                        <input type="text"
+                                            class="form-control user-name"
+                                            placeholder="Enter Name">
+
+                                        <div class="dropdown">
+
+                                            <button class="btn btn-outline-secondary dropdown-toggle account-type-btn"
+                                                    type="button"
+                                                    data-bs-toggle="dropdown">
+                                                Select Type
+                                            </button>
+
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item"
+                                                    href="#"
+                                                    onclick="setType(event,this,'Admin')">
+                                                        Admin
+                                                    </a>
+                                                </li>
+
+                                                <li>
+                                                    <a class="dropdown-item"
+                                                    href="#"
+                                                    onclick="setType(event,this,'Encoder')">
+                                                        Encoder
+                                                    </a>
+                                                </li>
+                                            </ul>
+
+                                            <input type="hidden"
+                                                class="account-type"
+                                                value="">
+                                        </div>
+
+                                        <button type="button"
+                                                class="btn btn-success btn-icon"
+                                                onclick="addAccountType()">
+                                            <i class="bi bi-plus-lg"></i>
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
                             <div class="col-md-6"><label class="form-label">Authorized Software</label><textarea class="form-control" name="authorized_software"></textarea></div>
                             <div class="col-md-6"><label class="form-label">Unauthorized Software</label><textarea class="form-control" name="unauthorized_software"></textarea></div>
                             <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" class="form-control" name="acquisition_date"></div>
@@ -1057,5 +1111,119 @@ $exportParams = http_build_query([
     <?php unset($_SESSION['toast_error']); endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+function setType(event, el, type) {
+
+    event.preventDefault();
+
+    const row = el.closest('.account-row');
+
+    row.querySelector('.account-type-btn').textContent = type;
+    row.querySelector('.account-type').value = type;
+}
+
+function addAccountType() {
+
+    const container = document.getElementById('accountTypeContainer');
+
+    const row = document.createElement('div');
+
+    row.className = 'account-row';
+
+    row.innerHTML = `
+        <input type="text"
+               class="form-control user-name"
+               placeholder="Enter Name">
+
+        <div class="dropdown">
+
+            <button class="btn btn-outline-secondary dropdown-toggle account-type-btn"
+                    type="button"
+                    data-bs-toggle="dropdown">
+                Select Type
+            </button>
+
+            <ul class="dropdown-menu">
+                <li>
+                    <a class="dropdown-item"
+                       href="#"
+                       onclick="setType(event,this,'Admin')">
+                        Admin
+                    </a>
+                </li>
+
+                <li>
+                    <a class="dropdown-item"
+                       href="#"
+                       onclick="setType(event,this,'Encoder')">
+                        Encoder
+                    </a>
+                </li>
+            </ul>
+
+            <input type="hidden"
+                   class="account-type"
+                   value="">
+        </div>
+
+        <button type="button"
+                class="btn btn-danger btn-icon"
+                onclick="removeRow(this)">
+            <i class="bi bi-dash-lg"></i>
+        </button>
+    `;
+
+    container.appendChild(row);
+}
+
+function removeRow(btn) {
+
+    const rows = document.querySelectorAll('.account-row');
+
+    if (rows.length <= 1) {
+        alert('At least one row must remain.');
+        return;
+    }
+
+    btn.closest('.account-row').remove();
+}
+
+/* Ilabas ang dropdown sa body */
+
+document.addEventListener('shown.bs.dropdown', function (e) {
+
+    const dropdown = e.target;
+    const menu = dropdown.querySelector('.dropdown-menu');
+
+    if (!menu) return;
+
+    dropdown._menu = menu;
+
+    document.body.appendChild(menu);
+
+    const button = dropdown.querySelector('.dropdown-toggle');
+    const rect = button.getBoundingClientRect();
+
+    menu.style.position = 'absolute';
+    menu.style.top = (rect.bottom + window.scrollY) + 'px';
+    menu.style.left = (rect.left + window.scrollX) + 'px';
+    menu.style.display = 'block';
+});
+
+document.addEventListener('hidden.bs.dropdown', function (e) {
+
+    const dropdown = e.target;
+    const menu = dropdown._menu;
+
+    if (!menu) return;
+
+    dropdown.appendChild(menu);
+
+    menu.style.position = '';
+    menu.style.top = '';
+    menu.style.left = '';
+    menu.style.display = '';
+});
+</script>
 </body>
 </html>
