@@ -10,6 +10,18 @@ if ($_SESSION['user']['role_id'] != 3) {
 }
 include("../../config/db.php");
 
+/* =========================
+   ENCODER'S DIVISION
+========================= */
+$encoderDivisionId   = (int)($_SESSION['user']['division_id'] ?? 0);
+$encoderDivisionName = '';
+$edStmt = $conn->prepare("SELECT division FROM divisions WHERE id = ?");
+$edStmt->bind_param("i", $encoderDivisionId);
+$edStmt->execute();
+$edStmt->bind_result($encoderDivisionName);
+$edStmt->fetch();
+$edStmt->close();
+
 function getPreviousOwnersNames($conn, $json)
 {
     if (empty($json)) return '-';
@@ -34,47 +46,35 @@ $offset = ($page - 1) * $limit;
 /* =========================
    SEARCH & FILTERS
 ========================= */
-$search = trim($_GET['search'] ?? '');
-
-$division_filter_raw = $_GET['division'] ?? [];
-$division_filter     = is_array($division_filter_raw) ? array_filter(array_map('trim', $division_filter_raw)) : [];
-$active_filter       = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
-
-// Acquisition date filter (lt5 = less than 5 years old, gt5 = more than 5 years old)
-$acq_filter = trim($_GET['filter_acq'] ?? '');
+$search        = trim($_GET['search'] ?? '');
+$active_filter = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
+$acq_filter    = trim($_GET['filter_acq'] ?? '');
 
 /* =========================
    PRE-FETCH DROPDOWN DATA
+   Personnel filtered to encoder's division only
 ========================= */
-$allDivisions = [];
-$dq = mysqli_query($conn, "SELECT id, division FROM divisions ORDER BY id ASC");
-while ($r = mysqli_fetch_assoc($dq)) $allDivisions[] = $r;
-
 $allPersonnel = [];
-$pq = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY p.rank_id DESC");
-while ($r = mysqli_fetch_assoc($pq)) $allPersonnel[] = $r;
+$pq = $conn->prepare("SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 AND p.division_id = ? ORDER BY p.rank_id DESC");
+$pq->bind_param("i", $encoderDivisionId);
+$pq->execute();
+$pqResult = $pq->get_result();
+while ($r = $pqResult->fetch_assoc()) $allPersonnel[] = $r;
 
 /* =========================
    WHERE BUILDER
+   Division always locked to encoder's division
 ========================= */
-$where  = [];
-$params = [];
-$types  = '';
+$where  = ["c.division_id = ?"];
+$params = [$encoderDivisionId];
+$types  = 'i';
 
 if (!empty($search)) {
     $where[] = "(c.brand LIKE ? OR c.model LIKE ? OR c.serial_no LIKE ? OR c.acquisition_details LIKE ? OR CONCAT(per.first_name,' ',per.middle_name,' ',per.last_name) LIKE ?)";
     $sp = "%$search%";
     for ($i = 0; $i < 5; $i++) {
         $params[] = $sp;
-        $types .= 's';
-    }
-}
-if (!empty($division_filter)) {
-    $ph = implode(',', array_fill(0, count($division_filter), '?'));
-    $where[] = "d.division IN ($ph)";
-    foreach ($division_filter as $v) {
-        $params[] = $v;
-        $types .= 's';
+        $types   .= 's';
     }
 }
 if ($active_filter !== '') {
@@ -82,29 +82,27 @@ if ($active_filter !== '') {
     $params[] = $active_filter;
     $types   .= 'i';
 }
-// Acquisition date filter — no bound params (computed server-side)
 if ($acq_filter === 'lt5') {
     $where[] = "c.acquisition_date IS NOT NULL AND c.acquisition_date != '0000-00-00' AND c.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 } elseif ($acq_filter === 'gt5') {
     $where[] = "c.acquisition_date IS NOT NULL AND c.acquisition_date != '0000-00-00' AND c.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 }
 
-$whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+$whereSQL = "WHERE " . implode(" AND ", $where);
 $baseJoin = "FROM cameras c
              LEFT JOIN personnels per ON c.personnel_id = per.id
              LEFT JOIN ranks r        ON per.rank_id = r.id
              LEFT JOIN divisions d    ON c.division_id = d.id";
 
 /* =========================
-   COUNTS — full filtered set, no pagination
+   COUNTS
 ========================= */
 $st = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $whereSQL");
-if (!empty($params)) $st->bind_param($types, ...$params);
+$st->bind_param($types, ...$params);
 $st->execute();
 $totalDevices = $st->get_result()->fetch_assoc()['total'] ?? 0;
 $totalPages   = (int)ceil($totalDevices / $limit);
 
-// Stat-box counts: layer active/inactive on top of ALL current filters.
 $activeWhere   = $where;
 $activeWhere[] = "c.is_active = 1";
 $activeSQL     = "WHERE " . implode(" AND ", $activeWhere);
@@ -114,12 +112,12 @@ $inactiveWhere[] = "c.is_active = 0";
 $inactiveSQL     = "WHERE " . implode(" AND ", $inactiveWhere);
 
 $sa = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $activeSQL");
-if (!empty($params)) $sa->bind_param($types, ...$params);
+$sa->bind_param($types, ...$params);
 $sa->execute();
 $activeDevices = $sa->get_result()->fetch_assoc()['total'] ?? 0;
 
 $si = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $inactiveSQL");
-if (!empty($params)) $si->bind_param($types, ...$params);
+$si->bind_param($types, ...$params);
 $si->execute();
 $inactiveDevices = $si->get_result()->fetch_assoc()['total'] ?? 0;
 
@@ -131,18 +129,16 @@ $stmt = $conn->prepare("
            d.division AS division_name
     $baseJoin $whereSQL ORDER BY c.id DESC LIMIT ?,?
 ");
-$fp = $params;
-$ft = $types . 'ii';
+$fp   = $params;
+$ft   = $types . 'ii';
 $fp[] = $offset;
 $fp[] = $limit;
 $stmt->bind_param($ft, ...$fp);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Build export query string (mirrors all active filters)
 $exportParams = http_build_query([
     'search'     => $search,
-    'division'   => $division_filter,
     'is_active'  => $active_filter,
     'filter_acq' => $acq_filter,
 ]);
@@ -181,6 +177,18 @@ $exportParams = http_build_query([
             min-height: 38px;
             font-size: 0.95rem;
         }
+
+        .division-badge {
+            display: flex;
+            align-items: center;
+            padding: 8px 14px;
+            background: #f0f4ff;
+            border: 1px solid #c7d5f5;
+            border-radius: 6px;
+            font-size: .875rem;
+            color: #3b5bdb;
+            white-space: nowrap;
+        }
     </style>
 </head>
 
@@ -191,53 +199,19 @@ $exportParams = http_build_query([
     <div class="top-bar">
         <div class="search-container">
             <form class="search-form" method="GET" action="device_cameras.php">
-                <?php foreach ($division_filter as $v): ?><input type="hidden" name="division[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
                 <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
                 <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
                 <input type="text" name="search" class="search-input" placeholder="Search cameras..." value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
-                <!-- EXPORT BUTTON -->
                 <a href="export_cameras.php?<?= htmlspecialchars($exportParams) ?>"
-   class="btn add-laptop-btn"
-   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
-    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
-</a>
+                    class="btn add-laptop-btn"
+                    onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
+                </a>
             </form>
         </div>
 
         <div class="right-side">
-            <div class="filters">
-                <form method="GET" action="device_cameras.php" id="filterForm">
-                    <input type="hidden" name="search" value="<?= htmlspecialchars($search) ?>">
-                    <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
-                    <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
-
-                    <!-- DIVISION -->
-                    <div class="dropdown">
-                        <?php $divLabel = empty($division_filter) ? 'Division' : (count($division_filter) === 1 ? $division_filter[0] : count($division_filter) . ' Divisions selected'); ?>
-                        <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"><?= htmlspecialchars($divLabel) ?></button>
-                        <ul class="dropdown-menu p-3 dropdown-scroll wide-dropdown">
-                            <li class="mb-2"><button type="submit" class="btn btn-primary w-100">Apply</button></li>
-                            <li class="mb-2">
-                                <div class="form-check">
-                                    <input class="form-check-input division-all-checkbox" type="checkbox" value="" id="allDivision" <?= empty($division_filter) ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="allDivision">All</label>
-                                </div>
-                            </li>
-                            <?php foreach ($allDivisions as $div): ?>
-                                <li class="mb-2">
-                                    <div class="form-check">
-                                        <input class="form-check-input division-checkbox" type="checkbox" name="division[]"
-                                            value="<?= htmlspecialchars($div['division']) ?>" id="div_<?= $div['id'] ?>"
-                                            <?= in_array($div['division'], $division_filter) ? 'checked' : '' ?>>
-                                        <label class="form-check-label" for="div_<?= $div['id'] ?>"><?= htmlspecialchars($div['division']) ?></label>
-                                    </div>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </div>
-                </form><!-- /filterForm -->
-            </div><!-- /filters -->
 
             <!-- ACQUISITION DATE FILTER -->
             <div class="dropdown">
@@ -245,10 +219,7 @@ $exportParams = http_build_query([
                 $acqLabel = 'ACQ Date';
                 if ($acq_filter === 'lt5') $acqLabel = 'Age < 5 Years';
                 elseif ($acq_filter === 'gt5') $acqLabel = 'Age > 5 Years';
-                $acqBase = '?search=' . urlencode($search) . '&' . http_build_query([
-                    'division'  => $division_filter,
-                    'is_active' => $active_filter,
-                ]);
+                $acqBase = '?search=' . urlencode($search) . '&is_active=' . urlencode($active_filter);
                 ?>
                 <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown"><?= htmlspecialchars($acqLabel) ?></button>
                 <ul class="dropdown-menu p-3">
@@ -264,10 +235,7 @@ $exportParams = http_build_query([
                     <?= $active_filter === '' ? 'Active?' : ($active_filter == 1 ? 'YES' : 'NO') ?>
                 </button>
                 <ul class="dropdown-menu p-3">
-                    <?php $base = '?search=' . urlencode($search) . '&' . http_build_query([
-                        'division'   => $division_filter,
-                        'filter_acq' => $acq_filter,
-                    ]); ?>
+                    <?php $base = '?search=' . urlencode($search) . '&filter_acq=' . urlencode($acq_filter); ?>
                     <li><a class="dropdown-item" href="<?= $base ?>">All</a></li>
                     <li><a class="dropdown-item" href="<?= $base ?>&is_active=1">YES</a></li>
                     <li><a class="dropdown-item" href="<?= $base ?>&is_active=0">NO</a></li>
@@ -294,28 +262,26 @@ $exportParams = http_build_query([
                                 <label class="form-label">Personnel</label>
                                 <select name="personnel_id" class="form-select" required>
                                     <option value="" disabled selected hidden>Select Personnel</option>
-                                    <?php foreach ($allPersonnel as $p): $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
+                                    <?php foreach ($allPersonnel as $p):
+                                        $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
                                         <option value="<?= $p['id'] ?>"><?= htmlspecialchars($fn) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
+                            <!-- DIVISION: locked to encoder's division -->
                             <div class="col-md-6">
                                 <label class="form-label">Division</label>
-                                <select name="division_id" class="form-select" required>
-                                    <option value="" disabled selected hidden>Select Division</option>
-                                    <?php foreach ($allDivisions as $d): ?>
-                                        <option value="<?= $d['id'] ?>"><?= htmlspecialchars($d['division']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                                <input type="text" class="form-control" value="<?= htmlspecialchars($encoderDivisionName) ?>" disabled>
+                                <input type="hidden" name="division_id" value="<?= $encoderDivisionId ?>">
                             </div>
-                            <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" ></div>
-                            <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" ></div>
-                            <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no" ></div>
+                            <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand"></div>
+                            <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model"></div>
+                            <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no"></div>
                             <div class="col-md-6"><label class="form-label">Acquisition Details</label><input type="text" class="form-control" name="acquisition_details"></div>
                             <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" name="acquisition_date" class="form-control"></div>
                             <div class="col-md-6">
                                 <label class="form-label">Is Active?</label>
-                                <select name="is_active" class="form-select" >
+                                <select name="is_active" class="form-select">
                                     <option value="" disabled selected hidden>Select</option>
                                     <option value="1">Yes</option>
                                     <option value="0">No</option>
@@ -326,7 +292,8 @@ $exportParams = http_build_query([
                                 <div class="dropdown w-100">
                                     <button class="form-select text-start" type="button" data-bs-toggle="dropdown">Select Previous Handler/s</button>
                                     <div class="dropdown-menu w-100 p-2" style="max-height:250px;overflow-y:auto;">
-                                        <?php foreach ($allPersonnel as $p): $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
+                                        <?php foreach ($allPersonnel as $p):
+                                            $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" name="previous_handlers_id[]" value="<?= $p['id'] ?>" id="addCamPh<?= $p['id'] ?>">
                                                 <label class="form-check-label" for="addCamPh<?= $p['id'] ?>"><?= htmlspecialchars($fn) ?></label>
@@ -373,14 +340,14 @@ $exportParams = http_build_query([
                                 data-bs-toggle="modal" data-bs-target="#viewCamModal<?= $row['id'] ?>">
                                 <td><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></td>
-                                <td><?= htmlspecialchars($row['brand'] ?? '')?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['model'] ?? '')?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['serial_no'] ?? '')?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['acquisition_details'] ?? '')?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['brand'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['model'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['serial_no'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['acquisition_details'] ?? '') ?: '-' ?></td>
                                 <td><?= (!empty($row['acquisition_date']) && $row['acquisition_date'] !== '0000-00-00') ? htmlspecialchars($row['acquisition_date']) : '-' ?></td>
-                                <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id'])?: '-' ?></td>
+                                <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?: '-' ?></td>
                                 <td><?= $row['is_active'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
-                               <td><?= (!empty($row['created_date']) && substr($row['created_date'], 0, 10) !== '0000-00-00') ? htmlspecialchars(substr($row['created_date'], 0, 10)) : '-' ?></td>
+                                <td><?= (!empty($row['created_date']) && substr($row['created_date'], 0, 10) !== '0000-00-00') ? htmlspecialchars(substr($row['created_date'], 0, 10)) : '-' ?></td>
                                 <td onclick="event.stopPropagation();">
                                     <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editCamModal<?= $row['id'] ?>">
                                         <i class="bi bi-gear-fill"></i>
@@ -428,9 +395,7 @@ $exportParams = http_build_query([
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Is Active?</div>
-                                                    <div class="view-value">
-                                                        <?= $row['is_active'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?>
-                                                    </div>
+                                                    <div class="view-value"><?= $row['is_active'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Created Date</div>
@@ -444,9 +409,7 @@ $exportParams = http_build_query([
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                            <button type="button" class="btn btn-primary"
-                                                data-bs-dismiss="modal"
-                                                data-edit-target="#editCamModal<?= $row['id'] ?>">
+                                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-edit-target="#editCamModal<?= $row['id'] ?>">
                                                 <i class="bi bi-gear-fill me-1"></i>Edit
                                             </button>
                                         </div>
@@ -465,26 +428,26 @@ $exportParams = http_build_query([
                                         <div class="modal-body">
                                             <form action="edit_cameras.php" method="POST">
                                                 <input type="hidden" name="id" value="<?= $row['id'] ?>">
+                                                <!-- Division always locked to encoder's division -->
+                                                <input type="hidden" name="division_id" value="<?= $encoderDivisionId ?>">
                                                 <div class="row g-3">
                                                     <div class="col-md-6">
                                                         <label class="form-label">Personnel</label>
                                                         <select name="personnel_id" class="form-select" required>
-                                                            <?php foreach ($allPersonnel as $p): $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
+                                                            <?php foreach ($allPersonnel as $p):
+                                                                $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
                                                                 <option value="<?= $p['id'] ?>" <?= ($row['personnel_id'] ?? '') == $p['id'] ? 'selected' : '' ?>><?= htmlspecialchars($fn) ?></option>
                                                             <?php endforeach; ?>
                                                         </select>
                                                     </div>
+                                                    <!-- DIVISION: locked, read-only display -->
                                                     <div class="col-md-6">
                                                         <label class="form-label">Division</label>
-                                                        <select name="division_id" class="form-select" required>
-                                                            <?php foreach ($allDivisions as $d): ?>
-                                                                <option value="<?= $d['id'] ?>" <?= ($row['division_id'] ?? '') == $d['id'] ? 'selected' : '' ?>><?= htmlspecialchars($d['division']) ?></option>
-                                                            <?php endforeach; ?>
-                                                        </select>
+                                                        <input type="text" class="form-control" value="<?= htmlspecialchars($encoderDivisionName) ?>" disabled>
                                                     </div>
-                                                    <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" value="<?= htmlspecialchars($row['brand'] ?? '') ?>" ></div>
-                                                    <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" value="<?= htmlspecialchars($row['model'] ?? '') ?>" ></div>
-                                                    <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no" value="<?= htmlspecialchars($row['serial_no'] ?? '') ?>" ></div>
+                                                    <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" value="<?= htmlspecialchars($row['brand'] ?? '') ?>"></div>
+                                                    <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" value="<?= htmlspecialchars($row['model'] ?? '') ?>"></div>
+                                                    <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no" value="<?= htmlspecialchars($row['serial_no'] ?? '') ?>"></div>
                                                     <div class="col-md-6"><label class="form-label">Acquisition Details</label><input type="text" class="form-control" name="acquisition_details" value="<?= htmlspecialchars($row['acquisition_details'] ?? '') ?>"></div>
                                                     <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" class="form-control" name="acquisition_date" value="<?= htmlspecialchars($row['acquisition_date'] ?? '') ?>"></div>
                                                     <div class="col-md-6">
@@ -501,7 +464,8 @@ $exportParams = http_build_query([
                                                             <div class="dropdown-menu w-100 p-2" style="max-height:250px;overflow-y:auto;">
                                                                 <?php $selH = json_decode($row['previous_owners_id'] ?? '[]', true);
                                                                 if (!is_array($selH)) $selH = [];
-                                                                foreach ($allPersonnel as $p): $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
+                                                                foreach ($allPersonnel as $p):
+                                                                    $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
                                                                     <div class="form-check">
                                                                         <input class="form-check-input" type="checkbox" name="previous_handlers_id[]"
                                                                             value="<?= $p['id'] ?>" id="editCamPh<?= $row['id'] ?>_<?= $p['id'] ?>"
@@ -541,12 +505,7 @@ $exportParams = http_build_query([
                 <div class="stat-box inactive"><span class="label">Inactive</span><span class="value"><?= $inactiveDevices ?></span></div>
             </div>
             <?php if ($totalPages > 1):
-                $pb = http_build_query([
-                    'search'     => $search,
-                    'division'   => $division_filter,
-                    'is_active'  => $active_filter,
-                    'filter_acq' => $acq_filter,
-                ]); ?>
+                $pb = http_build_query(['search' => $search, 'is_active' => $active_filter, 'filter_acq' => $acq_filter]); ?>
                 <div class="pagination">
                     <?php if ($page > 1): ?><a href="?page=<?= $page - 1 ?>&<?= $pb ?>">Prev</a><?php endif; ?>
                     <?php for ($i = 1; $i <= $totalPages; $i++): ?><a href="?page=<?= $i ?>&<?= $pb ?>" class="<?= $i == $page ? 'active-page' : '' ?>"><?= $i ?></a><?php endfor; ?>
@@ -557,20 +516,6 @@ $exportParams = http_build_query([
     </div>
 
     <script>
-        function setupFilterGroup(allSel, itemSel) {
-            const allCb = document.querySelector(allSel);
-            const items = document.querySelectorAll(itemSel);
-            if (!allCb) return;
-            allCb.addEventListener('change', () => {
-                if (allCb.checked) items.forEach(c => c.checked = false);
-            });
-            items.forEach(cb => cb.addEventListener('change', () => {
-                allCb.checked = !Array.from(items).some(c => c.checked);
-            }));
-        }
-        setupFilterGroup('#allDivision', '.division-checkbox');
-
-        // View → Edit transition
         document.addEventListener('click', function(e) {
             const btn = e.target.closest('[data-edit-target]');
             if (!btn) return;
@@ -586,55 +531,52 @@ $exportParams = http_build_query([
             }
         });
 
-       
-   </script>
-
-    <script>
-    function showToast(message, type = "success") {
-        const colors = { success: "#198754", danger: "#dc3545" };
-        const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
-        const toast  = document.createElement("div");
-        toast.style.cssText = `
-            position:fixed;bottom:24px;right:24px;z-index:9999;
-            background:${colors[type]};color:#fff;
-            padding:14px 20px;border-radius:10px;
-            display:flex;align-items:center;gap:10px;
-            box-shadow:0 4px 16px rgba(0,0,0,.2);
-            font-size:.95rem;max-width:340px;
-            animation:slideIn .3s ease;
-        `;
-        toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
-        document.body.appendChild(toast);
-        if (!document.getElementById("toastKeyframe")) {
-            const s = document.createElement("style");
-            s.id = "toastKeyframe";
-            s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
-            document.head.appendChild(s);
+        function showToast(message, type = "success") {
+            const colors = {
+                success: "#198754",
+                danger: "#dc3545"
+            };
+            const icons = {
+                success: "bi-check-circle-fill",
+                danger: "bi-x-circle-fill"
+            };
+            const toast = document.createElement("div");
+            toast.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;background:${colors[type]};color:#fff;padding:14px 20px;border-radius:10px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.2);font-size:.95rem;max-width:340px;animation:slideIn .3s ease;`;
+            toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
+            document.body.appendChild(toast);
+            if (!document.getElementById("toastKeyframe")) {
+                const s = document.createElement("style");
+                s.id = "toastKeyframe";
+                s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
+                document.head.appendChild(s);
+            }
+            setTimeout(() => {
+                toast.style.transition = "opacity .4s";
+                toast.style.opacity = "0";
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
         }
-        setTimeout(() => {
-            toast.style.transition = "opacity .4s";
-            toast.style.opacity = "0";
-            setTimeout(() => toast.remove(), 400);
-        }, 3500);
-    }
     </script>
 
     <?php if (!empty($_SESSION['toast_success'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
-    });
-    </script>
-    <?php unset($_SESSION['toast_success']); endif; ?>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
+            });
+        </script>
+    <?php unset($_SESSION['toast_success']);
+    endif; ?>
 
     <?php if (!empty($_SESSION['toast_error'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
-    });
-    </script>
-    <?php unset($_SESSION['toast_error']); endif; ?>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
+            });
+        </script>
+    <?php unset($_SESSION['toast_error']);
+    endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

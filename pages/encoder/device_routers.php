@@ -13,6 +13,15 @@ if ($_SESSION['user']['role_id'] != 3) {
 include "../../config/db.php";
 
 /* =========================
+   ENCODER DIVISION
+========================= */
+$encoderDivisionId = (int)$_SESSION['user']['division_id'];
+
+// Fetch encoder's division name once
+$divNameRow = mysqli_fetch_assoc(mysqli_query($conn, "SELECT division FROM divisions WHERE id = $encoderDivisionId"));
+$encoderDivisionName = $divNameRow['division'] ?? 'Unknown Division';
+
+/* =========================
    HELPER: PREVIOUS HANDLERS
 ========================= */
 function getPreviousOwnersNames($conn, $json)
@@ -47,37 +56,33 @@ $offset = ($page - 1) * $limit;
 ========================= */
 $search = trim($_GET['search'] ?? '');
 
-$division_filter_raw = $_GET['division'] ?? [];
-$division_filter     = is_array($division_filter_raw)
-    ? array_filter(array_map('trim', $division_filter_raw)) : [];
-
 $active_filter = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
 
 $acq_filter = trim($_GET['filter_acq'] ?? '');
 
 /* =========================
-   PRE-FETCH DIVISIONS + PERSONNEL
+   PRE-FETCH PERSONNEL
+   (scoped to encoder's division)
 ========================= */
-$allDivisions = [];
-$dq = mysqli_query($conn, "SELECT id, division FROM divisions ORDER BY id ASC");
-while ($r = mysqli_fetch_assoc($dq)) $allDivisions[] = $r;
-
 $allPersonnel = [];
-$pq = mysqli_query($conn, "
+$pq = $conn->prepare("
     SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name
     FROM personnels p
     LEFT JOIN ranks r ON p.rank_id = r.id
-    WHERE p.is_active = 1
+    WHERE p.is_active = 1 AND p.division_id = ?
     ORDER BY p.rank_id DESC
 ");
-while ($r = mysqli_fetch_assoc($pq)) $allPersonnel[] = $r;
+$pq->bind_param('i', $encoderDivisionId);
+$pq->execute();
+$pqResult = $pq->get_result();
+while ($r = mysqli_fetch_assoc($pqResult)) $allPersonnel[] = $r;
 
 /* =========================
    WHERE BUILDER
 ========================= */
-$where  = [];
-$params = [];
-$types  = '';
+$where  = ["r.division_id = ?"];
+$params = [$encoderDivisionId];
+$types  = 'i';
 
 if (!empty($search)) {
     $where[] = "(
@@ -92,12 +97,10 @@ if (!empty($search)) {
         d.division LIKE ?
     )";
     $sp = "%$search%";
-    for ($i = 0; $i < 9; $i++) { $params[] = $sp; $types .= 's'; }
-}
-if (!empty($division_filter)) {
-    $ph      = implode(',', array_fill(0, count($division_filter), '?'));
-    $where[] = "d.division IN ($ph)";
-    foreach ($division_filter as $v) { $params[] = $v; $types .= 's'; }
+    for ($i = 0; $i < 9; $i++) {
+        $params[] = $sp;
+        $types .= 's';
+    }
 }
 if ($active_filter !== '') {
     $where[]  = "r.is_active = ?";
@@ -110,7 +113,7 @@ if ($acq_filter === 'lt5') {
     $where[] = "r.acquisition_date IS NOT NULL AND r.acquisition_date != '0000-00-00' AND r.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 }
 
-$whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+$whereSQL = "WHERE " . implode(" AND ", $where);
 
 $baseJoin = "
     FROM routers r
@@ -123,7 +126,7 @@ $baseJoin = "
    COUNTS — full filtered set, no pagination
 ========================= */
 $stmtTotal = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $whereSQL");
-if (!empty($params)) $stmtTotal->bind_param($types, ...$params);
+$stmtTotal->bind_param($types, ...$params);
 $stmtTotal->execute();
 $totalRouters = $stmtTotal->get_result()->fetch_assoc()['total'] ?? 0;
 $totalPages   = (int)ceil($totalRouters / $limit);
@@ -138,12 +141,12 @@ $inactiveWhere[] = "r.is_active = 0";
 $inactiveSQL     = "WHERE " . implode(" AND ", $inactiveWhere);
 
 $sa = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $activeSQL");
-if (!empty($params)) $sa->bind_param($types, ...$params);
+$sa->bind_param($types, ...$params);
 $sa->execute();
 $activeRouters = $sa->get_result()->fetch_assoc()['total'] ?? 0;
 
 $si = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $inactiveSQL");
-if (!empty($params)) $si->bind_param($types, ...$params);
+$si->bind_param($types, ...$params);
 $si->execute();
 $inactiveRouters = $si->get_result()->fetch_assoc()['total'] ?? 0;
 
@@ -159,22 +162,24 @@ $stmt = $conn->prepare("
     ORDER BY r.id DESC
     LIMIT ?, ?
 ");
-$fp = $params; $ft = $types . 'ii';
-$fp[] = $offset; $fp[] = $limit;
+$fp = $params;
+$ft = $types . 'ii';
+$fp[] = $offset;
+$fp[] = $limit;
 $stmt->bind_param($ft, ...$fp);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Build export query string (mirrors all active filters)
+// Build export query string (division is implicit — never a URL param)
 $exportParams = http_build_query([
     'search'     => $search,
-    'division'   => $division_filter,
     'is_active'  => $active_filter,
     'filter_acq' => $acq_filter,
 ]);
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -184,11 +189,50 @@ $exportParams = http_build_query([
     <link rel="stylesheet" href="css/encoder_navbar.css">
     <link rel="stylesheet" href="./css/encoder_sidebar.css">
     <style>
-        .clickable-row:hover { background-color: #f0f4ff !important; cursor: pointer; }
-        .view-label { font-size: 0.75rem; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
-        .view-value { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 8px 12px; min-height: 38px; font-size: 0.95rem; }
+        .clickable-row:hover {
+            background-color: #f0f4ff !important;
+            cursor: pointer;
+        }
+
+        .view-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            margin-bottom: 4px;
+        }
+
+        .view-value {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 8px 12px;
+            min-height: 38px;
+            font-size: 0.95rem;
+        }
+
+        .division-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background-color: #0d6ea8;
+            color: #fff;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 5px 14px;
+            border-radius: 50px;
+            letter-spacing: .03em;
+            white-space: nowrap;
+        }
+
+        .division-badge i {
+            font-size: 0.9rem;
+            opacity: .85;
+        }
     </style>
 </head>
+
 <body>
 
     <?php include 'encoder_sidebar.php'; ?>
@@ -200,62 +244,22 @@ $exportParams = http_build_query([
         <!-- SEARCH -->
         <div class="search-container">
             <form method="GET" action="device_routers.php" class="search-form">
-                <?php foreach ($division_filter as $v): ?>
-                    <input type="hidden" name="division[]" value="<?= htmlspecialchars($v) ?>">
-                <?php endforeach; ?>
-                <input type="hidden" name="is_active"  value="<?= htmlspecialchars($active_filter) ?>">
+                <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
                 <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
                 <input type="text" name="search" class="search-input"
                     placeholder="Search routers..." value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
                 <!-- EXPORT BUTTON -->
                 <a href="export_routers.php?<?= htmlspecialchars($exportParams) ?>"
-   class="btn add-laptop-btn"
-   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
-    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
-</a>
+                    class="btn add-laptop-btn"
+                    onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
+                </a>
             </form>
         </div>
 
         <!-- RIGHT SIDE -->
         <div class="right-side">
-
-            <div class="filters">
-                <form method="GET" action="device_routers.php" id="filterForm">
-                    <input type="hidden" name="search"     value="<?= htmlspecialchars($search) ?>">
-                    <input type="hidden" name="is_active"  value="<?= htmlspecialchars($active_filter) ?>">
-                    <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
-
-                    <!-- DIVISION DROPDOWN -->
-                    <div class="dropdown">
-                        <?php $divLabel = empty($division_filter) ? 'Division' : (count($division_filter) === 1 ? $division_filter[0] : count($division_filter) . ' Divisions selected'); ?>
-                        <button class="btn filter-btn dropdown-toggle" type="button"
-                            data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                            <?= htmlspecialchars($divLabel) ?>
-                        </button>
-                        <ul class="dropdown-menu p-3 dropdown-scroll wide-dropdown">
-                            <li class="mb-2"><button type="submit" class="btn btn-primary w-100">Apply</button></li>
-                            <li class="mb-2">
-                                <div class="form-check">
-                                    <input class="form-check-input division-all-checkbox" type="checkbox" value="" id="allDivision" <?= empty($division_filter) ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="allDivision">All</label>
-                                </div>
-                            </li>
-                            <?php foreach ($allDivisions as $div): ?>
-                                <li class="mb-2">
-                                    <div class="form-check">
-                                        <input class="form-check-input division-checkbox" type="checkbox"
-                                            name="division[]" value="<?= htmlspecialchars($div['division']) ?>"
-                                            id="division_<?= $div['id'] ?>"
-                                            <?= in_array($div['division'], $division_filter) ? 'checked' : '' ?>>
-                                        <label class="form-check-label" for="division_<?= $div['id'] ?>"><?= htmlspecialchars($div['division']) ?></label>
-                                    </div>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </div>
-                </form>
-            </div>
 
             <!-- ACQUISITION DATE FILTER -->
             <div class="dropdown">
@@ -263,10 +267,7 @@ $exportParams = http_build_query([
                 $acqLabel = 'ACQ Date';
                 if ($acq_filter === 'lt5') $acqLabel = 'Age < 5 Years';
                 elseif ($acq_filter === 'gt5') $acqLabel = 'Age > 5 Years';
-                $acqBase = '?search=' . urlencode($search) . '&' . http_build_query([
-                    'division'  => $division_filter,
-                    'is_active' => $active_filter,
-                ]);
+                $acqBase = '?search=' . urlencode($search) . '&is_active=' . urlencode($active_filter);
                 ?>
                 <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown"><?= htmlspecialchars($acqLabel) ?></button>
                 <ul class="dropdown-menu p-3">
@@ -282,10 +283,7 @@ $exportParams = http_build_query([
                     <?= $active_filter === '' ? 'Active?' : ($active_filter == 1 ? 'YES' : 'NO') ?>
                 </button>
                 <ul class="dropdown-menu p-3">
-                    <?php $base = '?search=' . urlencode($search) . '&' . http_build_query([
-                        'division'   => $division_filter,
-                        'filter_acq' => $acq_filter,
-                    ]); ?>
+                    <?php $base = '?search=' . urlencode($search) . '&filter_acq=' . urlencode($acq_filter); ?>
                     <li><a class="dropdown-item" href="<?= $base ?>">All</a></li>
                     <li><a class="dropdown-item" href="<?= $base ?>&is_active=1">YES</a></li>
                     <li><a class="dropdown-item" href="<?= $base ?>&is_active=0">NO</a></li>
@@ -322,12 +320,8 @@ $exportParams = http_build_query([
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Division</label>
-                                <select name="division_id" class="form-select" required>
-                                    <option value="" disabled selected hidden>Select Division</option>
-                                    <?php foreach ($allDivisions as $d): ?>
-                                        <option value="<?= $d['id'] ?>"><?= htmlspecialchars($d['division']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                                <input type="text" class="form-control" value="<?= htmlspecialchars($encoderDivisionName) ?>" disabled>
+                                <input type="hidden" name="division_id" value="<?= $encoderDivisionId ?>">
                             </div>
                             <div class="col-md-6"><label class="form-label">Manufacturer</label><input type="text" class="form-control" name="manufacturer"></div>
                             <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model"></div>
@@ -340,7 +334,8 @@ $exportParams = http_build_query([
                                 <label class="form-label">Remote Accessible?</label>
                                 <select class="form-select" name="remote_access">
                                     <option value="" disabled selected hidden>Select</option>
-                                    <option value="1">Yes</option><option value="0">No</option>
+                                    <option value="1">Yes</option>
+                                    <option value="0">No</option>
                                 </select>
                             </div>
                             <div class="col-md-6"><label class="form-label">Remote Details</label><input type="text" class="form-control" name="remote_details"></div>
@@ -370,7 +365,8 @@ $exportParams = http_build_query([
                                 <label class="form-label">Is Active?</label>
                                 <select class="form-select" name="is_active">
                                     <option value="" disabled selected hidden>Select</option>
-                                    <option value="1">Yes</option><option value="0">No</option>
+                                    <option value="1">Yes</option>
+                                    <option value="0">No</option>
                                 </select>
                             </div>
                         </div>
@@ -431,7 +427,7 @@ $exportParams = http_build_query([
                                 <td><?= htmlspecialchars($row['firmware_version'] ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['location'] ?? '') ?: '-' ?></td>
                                 <td><?= $row['is_remotely_accessible'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
-                               <td><?= htmlspecialchars($row['remote_connection_details'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['remote_connection_details'] ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['remarks'] ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['pnp_focal_person'] ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['contact_details'] ?? '') ?: '-' ?></td>
@@ -459,26 +455,86 @@ $exportParams = http_build_query([
                                         </div>
                                         <div class="modal-body">
                                             <div class="row g-3">
-                                                <div class="col-md-4"><div class="view-label">Personnel</div><div class="view-value"><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Division</div><div class="view-value"><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Manufacturer</div><div class="view-value"><?= htmlspecialchars($row['manufacturer'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Model</div><div class="view-value"><?= htmlspecialchars($row['model'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Serial No</div><div class="view-value"><?= htmlspecialchars($row['serial_no'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Ports</div><div class="view-value"><?= htmlspecialchars($row['no_of_ports'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Active Ports</div><div class="view-value"><?= htmlspecialchars($row['no_of_active_ports'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">IP Range</div><div class="view-value"><?= htmlspecialchars($row['active_port_ip_address_range'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Firmware</div><div class="view-value"><?= htmlspecialchars($row['firmware_version'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Location</div><div class="view-value"><?= htmlspecialchars($row['location'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Is Remote Accessible?</div><div class="view-value"><?= $row['is_remotely_accessible'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Remote Details</div><div class="view-value"><?= htmlspecialchars($row['remote_connection_details'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Remarks</div><div class="view-value"><?= htmlspecialchars($row['remarks'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">PNP Focal</div><div class="view-value"><?= htmlspecialchars($row['pnp_focal_person'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Contact</div><div class="view-value"><?= htmlspecialchars($row['contact_details'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Acquisition Date</div><div class="view-value"><?= htmlspecialchars($row['acquisition_date'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Acquisition Type</div><div class="view-value"><?= htmlspecialchars($row['acquisition_type'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Acquisition Details</div><div class="view-value"><?= htmlspecialchars($row['acquisition_details'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Is Active?</div><div class="view-value"><?= $row['is_active'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></div></div>
-                                                <div class="col-md-12"><div class="view-label">Previous Handlers</div><div class="view-value"><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?></div></div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Personnel</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Division</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Manufacturer</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['manufacturer'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Model</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['model'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Serial No</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['serial_no'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Ports</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_ports'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Active Ports</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_active_ports'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">IP Range</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['active_port_ip_address_range'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Firmware</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['firmware_version'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Location</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['location'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Is Remote Accessible?</div>
+                                                    <div class="view-value"><?= $row['is_remotely_accessible'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Remote Details</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['remote_connection_details'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Remarks</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['remarks'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">PNP Focal</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['pnp_focal_person'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Contact</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['contact_details'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Acquisition Date</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_date'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Acquisition Type</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_type'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Acquisition Details</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_details'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Is Active?</div>
+                                                    <div class="view-value"><?= $row['is_active'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></div>
+                                                </div>
+                                                <div class="col-md-12">
+                                                    <div class="view-label">Previous Handlers</div>
+                                                    <div class="view-value"><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?></div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="modal-footer">
@@ -514,12 +570,8 @@ $exportParams = http_build_query([
                                                     </div>
                                                     <div class="col-md-4">
                                                         <label class="form-label">Division</label>
-                                                        <select name="division_id" class="form-select" required>
-                                                            <option value="" disabled hidden>Select Division</option>
-                                                            <?php foreach ($allDivisions as $d): ?>
-                                                                <option value="<?= $d['id'] ?>" <?= ($row['division_id'] ?? '') == $d['id'] ? 'selected' : '' ?>><?= htmlspecialchars($d['division']) ?></option>
-                                                            <?php endforeach; ?>
-                                                        </select>
+                                                        <input type="text" class="form-control" value="<?= htmlspecialchars($encoderDivisionName) ?>" disabled>
+                                                        <input type="hidden" name="division_id" value="<?= $encoderDivisionId ?>">
                                                     </div>
                                                     <div class="col-md-6"><label class="form-label">Manufacturer</label><input type="text" class="form-control" name="manufacturer" value="<?= htmlspecialchars($row['manufacturer'] ?? '') ?>"></div>
                                                     <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" value="<?= htmlspecialchars($row['model'] ?? '') ?>"></div>
@@ -586,7 +638,9 @@ $exportParams = http_build_query([
                         <?php endwhile; ?>
 
                     <?php else: ?>
-                        <tr><td colspan="21" class="text-center">No routers found.</td></tr>
+                        <tr>
+                            <td colspan="21" class="text-center">No routers found.</td>
+                        </tr>
                     <?php endif; ?>
 
                 </tbody>
@@ -604,7 +658,6 @@ $exportParams = http_build_query([
             <?php if ($totalPages > 1):
                 $paginationBase = http_build_query([
                     'search'     => $search,
-                    'division'   => $division_filter,
                     'is_active'  => $active_filter,
                     'filter_acq' => $acq_filter,
                 ]); ?>
@@ -619,28 +672,13 @@ $exportParams = http_build_query([
     </div>
 
     <script>
-        function setupFilterGroup(allSelector, itemSelector) {
-            const allCb   = document.querySelector(allSelector);
-            const itemCbs = document.querySelectorAll(itemSelector);
-            if (!allCb) return;
-            allCb.addEventListener('change', function () {
-                if (this.checked) itemCbs.forEach(cb => cb.checked = false);
-            });
-            itemCbs.forEach(cb => {
-                cb.addEventListener('change', function () {
-                    allCb.checked = !Array.from(itemCbs).some(c => c.checked);
-                });
-            });
-        }
-        setupFilterGroup('#allDivision', '.division-checkbox');
-
         // View → Edit transition
-        document.addEventListener('click', function (e) {
+        document.addEventListener('click', function(e) {
             const btn = e.target.closest('[data-edit-target]');
             if (!btn) return;
             const editTarget = btn.getAttribute('data-edit-target');
-            const viewModal  = btn.closest('.modal');
-            const bsView     = bootstrap.Modal.getInstance(viewModal);
+            const viewModal = btn.closest('.modal');
+            const bsView = bootstrap.Modal.getInstance(viewModal);
             if (bsView) {
                 viewModal.addEventListener('hidden.bs.modal', function handler() {
                     viewModal.removeEventListener('hidden.bs.modal', handler);
@@ -650,12 +688,19 @@ $exportParams = http_build_query([
             }
         });
     </script>
- <script>
-    function showToast(message, type = "success") {
-        const colors = { success: "#198754", danger: "#dc3545" };
-        const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
-        const toast  = document.createElement("div");
-        toast.style.cssText = `
+
+    <script>
+        function showToast(message, type = "success") {
+            const colors = {
+                success: "#198754",
+                danger: "#dc3545"
+            };
+            const icons = {
+                success: "bi-check-circle-fill",
+                danger: "bi-x-circle-fill"
+            };
+            const toast = document.createElement("div");
+            toast.style.cssText = `
             position:fixed;bottom:24px;right:24px;z-index:9999;
             background:${colors[type]};color:#fff;
             padding:14px 20px;border-radius:10px;
@@ -664,38 +709,41 @@ $exportParams = http_build_query([
             font-size:.95rem;max-width:340px;
             animation:slideIn .3s ease;
         `;
-        toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
-        document.body.appendChild(toast);
-        if (!document.getElementById("toastKeyframe")) {
-            const s = document.createElement("style");
-            s.id = "toastKeyframe";
-            s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
-            document.head.appendChild(s);
+            toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
+            document.body.appendChild(toast);
+            if (!document.getElementById("toastKeyframe")) {
+                const s = document.createElement("style");
+                s.id = "toastKeyframe";
+                s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
+                document.head.appendChild(s);
+            }
+            setTimeout(() => {
+                toast.style.transition = "opacity .4s";
+                toast.style.opacity = "0";
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
         }
-        setTimeout(() => {
-            toast.style.transition = "opacity .4s";
-            toast.style.opacity = "0";
-            setTimeout(() => toast.remove(), 400);
-        }, 3500);
-    }
     </script>
 
     <?php if (!empty($_SESSION['toast_success'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
-    });
-    </script>
-    <?php unset($_SESSION['toast_success']); endif; ?>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
+            });
+        </script>
+    <?php unset($_SESSION['toast_success']);
+    endif; ?>
 
     <?php if (!empty($_SESSION['toast_error'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
-    });
-    </script>
-    <?php unset($_SESSION['toast_error']); endif; ?>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
+            });
+        </script>
+    <?php unset($_SESSION['toast_error']);
+    endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

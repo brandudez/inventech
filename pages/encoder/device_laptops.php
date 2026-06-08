@@ -14,6 +14,18 @@ if ($_SESSION['user']['role_id'] != 3) {
 include("../../config/db.php");
 
 /* =========================
+   ENCODER'S DIVISION
+========================= */
+$encoderDivisionId   = (int)($_SESSION['user']['division_id'] ?? 0);
+$encoderDivisionName = '';
+$edStmt = $conn->prepare("SELECT division FROM divisions WHERE id = ?");
+$edStmt->bind_param("i", $encoderDivisionId);
+$edStmt->execute();
+$edStmt->bind_result($encoderDivisionName);
+$edStmt->fetch();
+$edStmt->close();
+
+/* =========================
    HELPERS
 ========================= */
 function getEndpointNames($conn, $json)
@@ -61,24 +73,21 @@ $offset = ($page - 1) * $limit;
 ========================= */
 $search = trim($_GET['search'] ?? '');
 
-$division_filter_raw = $_GET['division']      ?? [];
-$os_filter_raw       = $_GET['filter_os']     ?? [];
-$office_filter_raw   = $_GET['filter_office'] ?? [];
+$os_filter_raw     = $_GET['filter_os']     ?? [];
+$office_filter_raw = $_GET['filter_office'] ?? [];
 
-$division_filter = is_array($division_filter_raw) ? array_filter(array_map('trim', $division_filter_raw)) : [];
-$os_filter       = is_array($os_filter_raw)       ? array_filter(array_map('trim', $os_filter_raw))       : [];
-$office_filter   = is_array($office_filter_raw)   ? array_filter($office_filter_raw)   : [];
-$active_filter   = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
-
-// Acquisition date filter (lt5 = less than 5 years old, gt5 = more than 5 years old)
-$acq_filter = trim($_GET['filter_acq'] ?? '');
+$os_filter     = is_array($os_filter_raw)     ? array_filter(array_map('trim', $os_filter_raw))     : [];
+$office_filter = is_array($office_filter_raw) ? array_filter($office_filter_raw)                    : [];
+$active_filter = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
+$acq_filter    = trim($_GET['filter_acq'] ?? '');
 
 /* =========================
    WHERE BUILDER
+   Division is always locked to the encoder's division.
 ========================= */
-$where  = [];
-$params = [];
-$types  = '';
+$where  = ["l.division_id = ?"];
+$params = [$encoderDivisionId];
+$types  = 'i';
 
 if (!empty($search)) {
     $where[] = "(l.device_name LIKE ? OR CONCAT(p.first_name,' ',p.middle_name,' ',p.last_name) LIKE ? OR l.ip_address LIKE ? OR l.guid LIKE ? OR l.mac_address LIKE ?)";
@@ -86,14 +95,6 @@ if (!empty($search)) {
     for ($i = 0; $i < 5; $i++) {
         $params[] = $sv;
         $types   .= 's';
-    }
-}
-if (!empty($division_filter)) {
-    $ph = implode(',', array_fill(0, count($division_filter), '?'));
-    $where[] = "dv.division IN ($ph)";
-    foreach ($division_filter as $v) {
-        $params[] = $v;
-        $types .= 's';
     }
 }
 if (!empty($os_filter)) {
@@ -104,7 +105,7 @@ if (!empty($os_filter)) {
         } else {
             $conditions[] = "l.os = ?";
             $params[] = $v;
-            $types .= 's';
+            $types   .= 's';
         }
     }
     $where[] = '(' . implode(' OR ', $conditions) . ')';
@@ -117,7 +118,7 @@ if (!empty($office_filter)) {
         } else {
             $conditions[] = "l.office_application = ?";
             $params[] = $v;
-            $types .= 's';
+            $types   .= 's';
         }
     }
     $where[] = '(' . implode(' OR ', $conditions) . ')';
@@ -127,30 +128,27 @@ if ($active_filter !== '') {
     $params[] = $active_filter;
     $types   .= 'i';
 }
-// Acquisition date filter — no bound params (computed server-side)
 if ($acq_filter === 'lt5') {
     $where[] = "l.acquisition_date IS NOT NULL AND l.acquisition_date != '0000-00-00' AND l.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 } elseif ($acq_filter === 'gt5') {
     $where[] = "l.acquisition_date IS NOT NULL AND l.acquisition_date != '0000-00-00' AND l.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 }
 
-$whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+$whereSQL = "WHERE " . implode(" AND ", $where);
 $baseJoin = "FROM laptops l
              LEFT JOIN personnels p  ON l.personnel_id = p.id
              LEFT JOIN ranks r       ON p.rank_id = r.id
              LEFT JOIN divisions dv  ON l.division_id = dv.id";
 
 /* =========================
-   COUNTS — full filtered set, no pagination
+   COUNTS
 ========================= */
 $st = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $whereSQL");
-if (!empty($params)) $st->bind_param($types, ...$params);
+$st->bind_param($types, ...$params);
 $st->execute();
 $totalDevices = $st->get_result()->fetch_assoc()['total'] ?? 0;
 $totalPages   = (int)ceil($totalDevices / $limit);
 
-// Stat-box counts: layer active/inactive on top of ALL current filters.
-// When is_active filter is set to YES, Inactive shows 0 (and vice versa).
 $activeWhere   = $where;
 $activeWhere[] = "l.is_active = 1";
 $activeSQL     = "WHERE " . implode(" AND ", $activeWhere);
@@ -160,12 +158,12 @@ $inactiveWhere[] = "l.is_active = 0";
 $inactiveSQL     = "WHERE " . implode(" AND ", $inactiveWhere);
 
 $sa = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $activeSQL");
-if (!empty($params)) $sa->bind_param($types, ...$params);
+$sa->bind_param($types, ...$params);
 $sa->execute();
 $activeDevices = $sa->get_result()->fetch_assoc()['total'] ?? 0;
 
 $si = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $inactiveSQL");
-if (!empty($params)) $si->bind_param($types, ...$params);
+$si->bind_param($types, ...$params);
 $si->execute();
 $inactiveDevices = $si->get_result()->fetch_assoc()['total'] ?? 0;
 
@@ -176,8 +174,8 @@ $stmt = $conn->prepare("
     SELECT l.*, CONCAT(r.rank,'  ',p.last_name,', ',p.first_name,' ',p.middle_name) AS personnel_name, dv.division AS division_name
     $baseJoin $whereSQL ORDER BY l.device_name ASC LIMIT ?,?
 ");
-$fp  = $params;
-$ft  = $types . 'ii';
+$fp   = $params;
+$ft   = $types . 'ii';
 $fp[] = $offset;
 $fp[] = $limit;
 $stmt->bind_param($ft, ...$fp);
@@ -185,7 +183,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 /* =========================
-   SHARED LISTS (add modal)
+   SHARED LISTS
 ========================= */
 $osList = [
     "-",
@@ -242,14 +240,13 @@ $officeAppsList = [
     "Other"
 ];
 
-/* Pre-fetch add-modal dropdowns outside the row loop */
+/* Pre-fetch add-modal dropdowns — personnel filtered to encoder's division */
 $addPersonnelRows = [];
-$pq = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY p.rank_id DESC");
-while ($r = mysqli_fetch_assoc($pq)) $addPersonnelRows[] = $r;
-
-$addDivisionRows = [];
-$dq = mysqli_query($conn, "SELECT id, division FROM divisions ORDER BY id ASC");
-while ($r = mysqli_fetch_assoc($dq)) $addDivisionRows[] = $r;
+$pq = $conn->prepare("SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 AND p.division_id = ? ORDER BY p.rank_id DESC");
+$pq->bind_param("i", $encoderDivisionId);
+$pq->execute();
+$pqResult = $pq->get_result();
+while ($r = $pqResult->fetch_assoc()) $addPersonnelRows[] = $r;
 
 $addEpRows = [];
 $eq = mysqli_query($conn, "SELECT id, antivirus FROM endpoint_security ORDER BY id ASC");
@@ -257,10 +254,9 @@ while ($r = mysqli_fetch_assoc($eq)) $addEpRows[] = $r;
 
 $addHandlerRows = $addPersonnelRows;
 
-// Build export query string (mirrors all active filters)
+// Export query string (no division param — it's fixed server-side)
 $exportParams = http_build_query([
     'search'        => $search,
-    'division'      => $division_filter,
     'filter_os'     => $os_filter,
     'filter_office' => $office_filter,
     'is_active'     => $active_filter,
@@ -301,6 +297,18 @@ $exportParams = http_build_query([
             min-height: 38px;
             font-size: 0.95rem;
         }
+
+        .division-badge {
+            display: flex;
+            align-items: center;
+            padding: 8px 14px;
+            background: #f0f4ff;
+            border: 1px solid #c7d5f5;
+            border-radius: 6px;
+            font-size: .875rem;
+            color: #3b5bdb;
+            white-space: nowrap;
+        }
     </style>
 </head>
 
@@ -312,54 +320,29 @@ $exportParams = http_build_query([
     <div class="top-bar">
         <div class="search-container">
             <form class="search-form" method="GET" action="device_laptops.php">
-                <?php foreach ($division_filter as $v): ?><input type="hidden" name="division[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
-                <?php foreach ($os_filter      as $v): ?><input type="hidden" name="filter_os[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
-                <?php foreach ($office_filter  as $v): ?><input type="hidden" name="filter_office[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
+                <?php foreach ($os_filter     as $v): ?><input type="hidden" name="filter_os[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
+                <?php foreach ($office_filter as $v): ?><input type="hidden" name="filter_office[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
                 <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
                 <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
                 <input type="text" name="search" class="search-input" placeholder="Search laptops..." value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
-                <!-- EXPORT BUTTON -->
                 <a href="export_laptops.php?<?= htmlspecialchars($exportParams) ?>"
-   class="btn add-laptop-btn"
-   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
-    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
-</a>
+                    class="btn add-laptop-btn"
+                    onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
+                </a>
             </form>
         </div>
 
         <div class="right-side">
+
             <div class="filters">
                 <form method="GET" action="device_laptops.php" id="filterForm">
                     <input type="hidden" name="search" value="<?= htmlspecialchars($search) ?>">
                     <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
                     <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
 
-                    <!-- DIVISION -->
-                    <div class="dropdown">
-                        <?php $divLabel = empty($division_filter) ? 'Division' : (count($division_filter) === 1 ? $division_filter[0] : count($division_filter) . ' Divisions selected'); ?>
-                        <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"><?= htmlspecialchars($divLabel) ?></button>
-                        <ul class="dropdown-menu p-3 dropdown-scroll wide-dropdown">
-                            <li class="mb-2"><button type="submit" class="btn btn-primary w-100">Apply</button></li>
-                            <li class="mb-2">
-                                <div class="form-check">
-                                    <input class="form-check-input division-all-checkbox" type="checkbox" value="" id="allDivision" <?= empty($division_filter) ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="allDivision">All</label>
-                                </div>
-                            </li>
-                            <?php $divisionsQuery = mysqli_query($conn, "SELECT division FROM divisions ORDER BY id ASC");
-                            while ($divRow = mysqli_fetch_assoc($divisionsQuery)): $div = $divRow['division']; ?>
-                                <li class="mb-2">
-                                    <div class="form-check">
-                                        <input class="form-check-input division-checkbox" type="checkbox" name="division[]" value="<?= htmlspecialchars($div) ?>" id="division_<?= md5($div) ?>" <?= in_array($div, $division_filter) ? 'checked' : '' ?>>
-                                        <label class="form-check-label" for="division_<?= md5($div) ?>"><?= htmlspecialchars($div) ?></label>
-                                    </div>
-                                </li>
-                            <?php endwhile; ?>
-                        </ul>
-                    </div>
-
-                    <!-- OS -->
+                    <!-- OS FILTER -->
                     <div class="dropdown">
                         <?php $osLabel = empty($os_filter) ? 'Operating System' : (count($os_filter) === 1 ? $os_filter[0] : count($os_filter) . ' OS selected'); ?>
                         <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"><?= htmlspecialchars($osLabel) ?></button>
@@ -382,7 +365,7 @@ $exportParams = http_build_query([
                         </ul>
                     </div>
 
-                    <!-- OFFICE -->
+                    <!-- OFFICE FILTER -->
                     <div class="dropdown">
                         <?php $officeLabel = empty($office_filter) ? 'Office App' : (count($office_filter) === 1 ? $office_filter[0] : count($office_filter) . ' Apps selected'); ?>
                         <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"><?= htmlspecialchars($officeLabel) ?></button>
@@ -404,8 +387,8 @@ $exportParams = http_build_query([
                             <?php endforeach; ?>
                         </ul>
                     </div>
-                </form><!-- /filterForm -->
-            </div><!-- /filters -->
+                </form>
+            </div>
 
             <!-- ACQUISITION DATE FILTER -->
             <div class="dropdown">
@@ -414,7 +397,6 @@ $exportParams = http_build_query([
                 if ($acq_filter === 'lt5') $acqLabel = 'Age < 5 Years';
                 elseif ($acq_filter === 'gt5') $acqLabel = 'Age > 5 Years';
                 $acqBase = '?search=' . urlencode($search) . '&' . http_build_query([
-                    'division'      => $division_filter,
                     'filter_os'     => $os_filter,
                     'filter_office' => $office_filter,
                     'is_active'     => $active_filter,
@@ -435,7 +417,6 @@ $exportParams = http_build_query([
                 </button>
                 <ul class="dropdown-menu p-3">
                     <?php $base = '?search=' . urlencode($search) . '&' . http_build_query([
-                        'division'      => $division_filter,
                         'filter_os'     => $os_filter,
                         'filter_office' => $office_filter,
                         'filter_acq'    => $acq_filter,
@@ -445,6 +426,7 @@ $exportParams = http_build_query([
                     <li><a class="dropdown-item" href="<?= $base ?>&is_active=0">NO</a></li>
                 </ul>
             </div>
+
             <button type="button" class="btn add-laptop-btn" data-bs-toggle="modal" data-bs-target="#addLaptopModal">Add Laptop</button>
         </div>
     </div>
@@ -460,31 +442,39 @@ $exportParams = http_build_query([
                 <div class="modal-body">
                     <form action="add_laptop.php" method="POST" id="addLaptopForm">
                         <div class="row g-3">
-                            <div class="col-md-4"><label class="form-label">Device Name</label><input type="text" class="form-control" name="device_name" required></div>
+                            <div class="col-md-4">
+                                <label class="form-label">Device Name</label>
+                                <input type="text" class="form-control" name="device_name" required>
+                            </div>
                             <div class="col-md-4">
                                 <label class="form-label">Personnel</label>
                                 <select name="personnel_id" class="form-select" required>
                                     <option value="" disabled selected hidden>Select Personnel</option>
-                                    <?php foreach ($addPersonnelRows as $p): $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
+                                    <?php foreach ($addPersonnelRows as $p):
+                                        $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
                                         <option value="<?= $p['id'] ?>"><?= htmlspecialchars($fn) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
+                            <!-- DIVISION: locked to encoder's division -->
                             <div class="col-md-4">
                                 <label class="form-label">Division</label>
-                                <select name="division_id" class="form-select" required>
-                                    <option value="" disabled selected hidden>Select Division</option>
-                                    <?php foreach ($addDivisionRows as $d): ?>
-                                        <option value="<?= $d['id'] ?>"><?= htmlspecialchars($d['division']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                                <input type="text" class="form-control"
+                                    value="<?= htmlspecialchars($encoderDivisionName) ?>"
+                                    disabled>
+                                <input type="hidden" name="division_id" value="<?= $encoderDivisionId ?>">
                             </div>
-                            <div class="col-md-4"><label class="form-label">IP Address</label><input type="text" class="form-control" name="ip_address"></div>
+                            <div class="col-md-4">
+                                <label class="form-label">IP Address</label>
+                                <input type="text" class="form-control" name="ip_address">
+                            </div>
                             <div class="col-md-4">
                                 <label class="form-label">Operating System</label>
                                 <select name="os" class="form-select">
                                     <option value="" disabled selected hidden>Select Operating System</option>
-                                    <?php foreach ($osList as $os): ?><option value="<?= htmlspecialchars($os) ?>"><?= htmlspecialchars($os) ?></option><?php endforeach; ?>
+                                    <?php foreach ($osList as $os): ?>
+                                        <option value="<?= htmlspecialchars($os) ?>"><?= htmlspecialchars($os) ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="col-md-4">
@@ -495,15 +485,23 @@ $exportParams = http_build_query([
                                     <option value="0">No</option>
                                 </select>
                             </div>
-                            <div class="col-md-6"><label class="form-label">OS License Key</label><input type="text" class="form-control" name="os_license_key"></div>
+                            <div class="col-md-6">
+                                <label class="form-label">OS License Key</label>
+                                <input type="text" class="form-control" name="os_license_key">
+                            </div>
                             <div class="col-md-6">
                                 <label class="form-label">Office Application</label>
                                 <select name="office_application" class="form-select">
                                     <option value="" disabled selected hidden>Select Office Application</option>
-                                    <?php foreach ($officeAppsList as $app): ?><option value="<?= htmlspecialchars($app) ?>"><?= htmlspecialchars($app) ?></option><?php endforeach; ?>
+                                    <?php foreach ($officeAppsList as $app): ?>
+                                        <option value="<?= htmlspecialchars($app) ?>"><?= htmlspecialchars($app) ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-6"><label class="form-label">Office License Key</label><input type="text" class="form-control" name="office_license_key"></div>
+                            <div class="col-md-6">
+                                <label class="form-label">Office License Key</label>
+                                <input type="text" class="form-control" name="office_license_key">
+                            </div>
                             <div class="col-md-6">
                                 <label class="form-label">Is Office Licensed?</label>
                                 <select name="is_office_licensed" class="form-select">
@@ -525,27 +523,73 @@ $exportParams = http_build_query([
                                     <?php endforeach; ?>
                                 </div>
                             </div>
-                            <div class="col-md-4"><label class="form-label"># of Installed Antivirus</label><input type="number" class="form-control" name="no_of_installed_anti_virus"></div>
-                            <div class="col-md-4"><label class="form-label">Date Installed</label><input type="date" class="form-control" name="date_installed"></div>
-                            <div class="col-md-6"><label class="form-label">GUID</label><input type="text" class="form-control" name="guid"></div>
-                            <div class="col-md-6"><label class="form-label">MAC Address</label><input type="text" class="form-control" name="mac_address"></div>
-                            <div class="col-md-4"><label class="form-label">CPU Brand</label><input type="text" class="form-control" name="cpu_brand"></div>
-                            <div class="col-md-4"><label class="form-label"># of CPU Cores</label><input type="number" class="form-control" name="cpu_cores"></div>
-                            <div class="col-md-4"><label class="form-label">GBs of RAM</label><input type="number" class="form-control" name="gb_ram"></div>
-                            <div class="col-md-4"><label class="form-label">Monitor Brand</label><input type="text" class="form-control" name="monitor_brand"></div>
-                            <div class="col-md-4"><label class="form-label">Monitor Size</label><input type="text" class="form-control" name="monitor_size_inches"></div>
-                            <div class="col-md-4"><label class="form-label"># of User Accounts</label><input type="number" class="form-control" name="no_of_user_accounts"></div>
-                            <div class="col-md-6"><label class="form-label">User Account Type</label><input type="text" class="form-control" name="user_account_type"></div>
-                            <div class="col-md-6"><label class="form-label">Authorized Software</label><textarea class="form-control" name="authorized_software"></textarea></div>
-                            <div class="col-md-6"><label class="form-label">Unauthorized Software</label><textarea class="form-control" name="unauthorized_software"></textarea></div>
-                            <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" class="form-control" name="acquisition_date"></div>
-                            <div class="col-md-6"><label class="form-label">PAR Serial Number</label><input type="text" name="par_serial_no" class="form-control"></div>
+                            <div class="col-md-4">
+                                <label class="form-label"># of Installed Antivirus</label>
+                                <input type="number" class="form-control" name="no_of_installed_anti_virus">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Date Installed</label>
+                                <input type="date" class="form-control" name="date_installed">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">GUID</label>
+                                <input type="text" class="form-control" name="guid">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">MAC Address</label>
+                                <input type="text" class="form-control" name="mac_address">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">CPU Brand</label>
+                                <input type="text" class="form-control" name="cpu_brand">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label"># of CPU Cores</label>
+                                <input type="number" class="form-control" name="cpu_cores">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">GBs of RAM</label>
+                                <input type="number" class="form-control" name="gb_ram">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Monitor Brand</label>
+                                <input type="text" class="form-control" name="monitor_brand">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Monitor Size</label>
+                                <input type="text" class="form-control" name="monitor_size_inches">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label"># of User Accounts</label>
+                                <input type="number" class="form-control" name="no_of_user_accounts">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">User Account Type</label>
+                                <input type="text" class="form-control" name="user_account_type">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Authorized Software</label>
+                                <textarea class="form-control" name="authorized_software"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Unauthorized Software</label>
+                                <textarea class="form-control" name="unauthorized_software"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Acquisition Date</label>
+                                <input type="date" class="form-control" name="acquisition_date">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">PAR Serial Number</label>
+                                <input type="text" name="par_serial_no" class="form-control">
+                            </div>
                             <div class="col-md-6">
                                 <label class="form-label">Previous Handler/s</label>
                                 <div class="dropdown w-100">
                                     <button class="form-select text-start" type="button" data-bs-toggle="dropdown">Select Previous Handler/s</button>
                                     <div class="dropdown-menu w-100 p-2" style="max-height:250px;overflow-y:auto;">
-                                        <?php foreach ($addHandlerRows as $h): $fn = trim(($h['rank'] ?? '') . ' ' . ($h['last_name'] ?? '') . ' ' . ($h['first_name'] ?? '') . ' ' . ($h['middle_name'] ?? '')); ?>
+                                        <?php foreach ($addHandlerRows as $h):
+                                            $fn = trim(($h['rank'] ?? '') . ' ' . ($h['last_name'] ?? '') . ' ' . ($h['first_name'] ?? '') . ' ' . ($h['middle_name'] ?? '')); ?>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" name="previous_owners_id[]" value="<?= $h['id'] ?>" id="addPhL<?= $h['id'] ?>">
                                                 <label class="form-check-label" for="addPhL<?= $h['id'] ?>"><?= htmlspecialchars($fn) ?></label>
@@ -624,42 +668,42 @@ $exportParams = http_build_query([
                     <?php if ($result->num_rows > 0): ?>
                         <?php while ($row = $result->fetch_assoc()): ?>
                             <tr class="clickable-row" data-active="<?= $row['is_active'] ? '1' : '0' ?>"
-    data-bs-toggle="modal" data-bs-target="#viewLtModal<?= $row['id'] ?>">
-    <td><?= htmlspecialchars($row['device_name']              ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['personnel_name']            ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['division_name']             ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['ip_address']                ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['os']                        ?? '') ?: '-' ?></td>
-    <td><?= ($row['is_os_licensed'] == 1) ? 'Yes' : 'No' ?></td>
-    <td><?= htmlspecialchars($row['os_license_key']            ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['office_application']        ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['office_license_key']        ?? '') ?: '-' ?></td>
-    <td><?= ($row['is_office_licensed'] == 1) ? 'Yes' : 'No' ?></td>
-    <td><?= getEndpointNames($conn, $row['endpoint_security_id']) ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?: '-' ?></td>
-    <td><?= (!empty($row['date_installed']) && $row['date_installed'] !== '0000-00-00') ? htmlspecialchars($row['date_installed']) : '-' ?></td>
-    <td><?= htmlspecialchars($row['guid']                       ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['mac_address']                ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['cpu_brand']                  ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['cpu_cores']                  ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['gb_ram']                     ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['monitor_brand']              ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['monitor_size_inches']        ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['no_of_user_accounts']        ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['user_account_type']          ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['authorized_software']        ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['unauthorized_software']      ?? '') ?: '-' ?></td>
-    <td><?= (!empty($row['acquisition_date']) && $row['acquisition_date'] !== '0000-00-00') ? htmlspecialchars($row['acquisition_date']) : '-' ?></td>
-    <td><?= htmlspecialchars($row['par_serial_no']              ?? '') ?: '-' ?></td>
-    <td><?= getPersonnelNames($conn, $row['previous_owners_id']) ?: '-' ?></td>
-    <td><?= $row['is_remote_acc'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
-    <td><?= $row['is_active']     ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
-    <td onclick="event.stopPropagation();">
-        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal<?= $row['id'] ?>">
-            <i class="bi bi-gear-fill"></i>
-        </button>
-    </td>
-</tr>
+                                data-bs-toggle="modal" data-bs-target="#viewLtModal<?= $row['id'] ?>">
+                                <td><?= htmlspecialchars($row['device_name']               ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['personnel_name']             ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['division_name']              ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['ip_address']                 ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['os']                         ?? '') ?: '-' ?></td>
+                                <td><?= ($row['is_os_licensed'] == 1) ? 'Yes' : 'No' ?></td>
+                                <td><?= htmlspecialchars($row['os_license_key']             ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['office_application']         ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['office_license_key']         ?? '') ?: '-' ?></td>
+                                <td><?= ($row['is_office_licensed'] == 1) ? 'Yes' : 'No' ?></td>
+                                <td><?= getEndpointNames($conn, $row['endpoint_security_id']) ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?: '-' ?></td>
+                                <td><?= (!empty($row['date_installed']) && $row['date_installed'] !== '0000-00-00') ? htmlspecialchars($row['date_installed']) : '-' ?></td>
+                                <td><?= htmlspecialchars($row['guid']                        ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['mac_address']                 ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['cpu_brand']                   ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['cpu_cores']                   ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['gb_ram']                      ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['monitor_brand']               ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['monitor_size_inches']         ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['no_of_user_accounts']         ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['user_account_type']           ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['authorized_software']         ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['unauthorized_software']       ?? '') ?: '-' ?></td>
+                                <td><?= (!empty($row['acquisition_date']) && $row['acquisition_date'] !== '0000-00-00') ? htmlspecialchars($row['acquisition_date']) : '-' ?></td>
+                                <td><?= htmlspecialchars($row['par_serial_no']               ?? '') ?: '-' ?></td>
+                                <td><?= getPersonnelNames($conn, $row['previous_owners_id']) ?: '-' ?></td>
+                                <td><?= $row['is_remote_acc'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
+                                <td><?= $row['is_active']     ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
+                                <td onclick="event.stopPropagation();">
+                                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal<?= $row['id'] ?>">
+                                        <i class="bi bi-gear-fill"></i>
+                                    </button>
+                                </td>
+                            </tr>
 
                             <!-- VIEW MODAL -->
                             <div class="modal fade" id="viewLtModal<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
@@ -810,28 +854,42 @@ $exportParams = http_build_query([
                                         <div class="modal-body">
                                             <form action="edit_laptops.php" method="POST">
                                                 <input type="hidden" name="id" value="<?= $row['id'] ?>">
+                                                <!-- Division always locked to encoder's division -->
+                                                <input type="hidden" name="division_id" value="<?= $encoderDivisionId ?>">
                                                 <div class="row g-3">
-                                                    <div class="col-md-4"><label class="form-label">Device Name</label><input type="text" class="form-control" name="device_name" value="<?= htmlspecialchars($row['device_name'] ?? '') ?>" required></div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">Device Name</label>
+                                                        <input type="text" class="form-control" name="device_name" value="<?= htmlspecialchars($row['device_name'] ?? '') ?>" required>
+                                                    </div>
                                                     <div class="col-md-4">
                                                         <label class="form-label">Personnel</label>
                                                         <select name="personnel_id" class="form-select" required>
-                                                            <?php $pq2 = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY p.rank_id DESC");
-                                                            while ($p2 = mysqli_fetch_assoc($pq2)): $fn = trim(($p2['rank'] ?? '') . ' ' . ($p2['last_name'] ?? '') . ' ' . ($p2['first_name'] ?? '') . ' ' . ($p2['middle_name'] ?? '')); ?>
+                                                            <?php
+                                                            $pq2 = $conn->prepare("SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 AND p.division_id = ? ORDER BY p.rank_id DESC");
+                                                            $pq2->bind_param("i", $encoderDivisionId);
+                                                            $pq2->execute();
+                                                            $pq2Result = $pq2->get_result();
+                                                            while ($p2 = $pq2Result->fetch_assoc()):
+                                                                $fn = trim(($p2['rank'] ?? '') . ' ' . ($p2['last_name'] ?? '') . ' ' . ($p2['first_name'] ?? '') . ' ' . ($p2['middle_name'] ?? '')); ?>
                                                                 <option value="<?= $p2['id'] ?>" <?= ($row['personnel_id'] ?? '') == $p2['id'] ? 'selected' : '' ?>><?= htmlspecialchars($fn) ?></option>
                                                             <?php endwhile; ?>
                                                         </select>
                                                     </div>
+                                                    <!-- DIVISION: locked, read-only display -->
                                                     <div class="col-md-4">
                                                         <label class="form-label">Division</label>
-                                                        <select name="division_id" class="form-select" required>
-                                                            <?php $dq2 = mysqli_query($conn, "SELECT id, division FROM divisions ORDER BY id ASC");
-                                                            while ($d2 = mysqli_fetch_assoc($dq2)): ?>
-                                                                <option value="<?= $d2['id'] ?>" <?= ($row['division_id'] ?? '') == $d2['id'] ? 'selected' : '' ?>><?= htmlspecialchars($d2['division']) ?></option>
-                                                            <?php endwhile; ?>
-                                                        </select>
+                                                        <input type="text" class="form-control"
+                                                            value="<?= htmlspecialchars($encoderDivisionName) ?>"
+                                                            disabled>
                                                     </div>
-                                                    <div class="col-md-4"><label class="form-label">IP Address</label><input type="text" class="form-control" name="ip_address" value="<?= htmlspecialchars($row['ip_address'] ?? '') ?>"></div>
-                                                    <div class="col-md-4"><label class="form-label">MAC Address</label><input type="text" class="form-control" name="mac_address" value="<?= htmlspecialchars($row['mac_address'] ?? '') ?>"></div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">IP Address</label>
+                                                        <input type="text" class="form-control" name="ip_address" value="<?= htmlspecialchars($row['ip_address'] ?? '') ?>">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">MAC Address</label>
+                                                        <input type="text" class="form-control" name="mac_address" value="<?= htmlspecialchars($row['mac_address'] ?? '') ?>">
+                                                    </div>
                                                     <div class="col-md-4">
                                                         <label class="form-label">Is Remotely Accessible?</label>
                                                         <select class="form-select" name="is_remote_acc">
@@ -842,7 +900,9 @@ $exportParams = http_build_query([
                                                     <div class="col-md-4">
                                                         <label class="form-label">Operating System</label>
                                                         <select name="os" class="form-select">
-                                                            <?php foreach ($osList as $os): ?><option value="<?= $os ?>" <?= ($row['os'] ?? '') == $os ? 'selected' : '' ?>><?= $os ?></option><?php endforeach; ?>
+                                                            <?php foreach ($osList as $os): ?>
+                                                                <option value="<?= $os ?>" <?= ($row['os'] ?? '') == $os ? 'selected' : '' ?>><?= $os ?></option>
+                                                            <?php endforeach; ?>
                                                         </select>
                                                     </div>
                                                     <div class="col-md-4">
@@ -852,14 +912,22 @@ $exportParams = http_build_query([
                                                             <option value="0" <?= ($row['is_os_licensed'] ?? 0) == 0 ? 'selected' : '' ?>>No</option>
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-6"><label class="form-label">OS License Key</label><input type="text" class="form-control" name="os_license_key" value="<?= htmlspecialchars($row['os_license_key'] ?? '') ?>"></div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">OS License Key</label>
+                                                        <input type="text" class="form-control" name="os_license_key" value="<?= htmlspecialchars($row['os_license_key'] ?? '') ?>">
+                                                    </div>
                                                     <div class="col-md-6">
                                                         <label class="form-label">Office Application</label>
                                                         <select name="office_application" class="form-select">
-                                                            <?php foreach ($officeAppsList as $app): ?><option value="<?= $app ?>" <?= ($row['office_application'] ?? '') == $app ? 'selected' : '' ?>><?= $app ?></option><?php endforeach; ?>
+                                                            <?php foreach ($officeAppsList as $app): ?>
+                                                                <option value="<?= $app ?>" <?= ($row['office_application'] ?? '') == $app ? 'selected' : '' ?>><?= $app ?></option>
+                                                            <?php endforeach; ?>
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-6"><label class="form-label">Office License Key</label><input type="text" class="form-control" name="office_license_key" value="<?= htmlspecialchars($row['office_license_key'] ?? '') ?>"></div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Office License Key</label>
+                                                        <input type="text" class="form-control" name="office_license_key" value="<?= htmlspecialchars($row['office_license_key'] ?? '') ?>">
+                                                    </div>
                                                     <div class="col-md-4">
                                                         <label class="form-label">Is Office Licensed?</label>
                                                         <select class="form-select" name="is_office_licensed">
@@ -867,18 +935,43 @@ $exportParams = http_build_query([
                                                             <option value="0" <?= ($row['is_office_licensed'] ?? 0) == 0 ? 'selected' : '' ?>>No</option>
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-4"><label class="form-label">CPU Brand</label><input type="text" class="form-control" name="cpu_brand" value="<?= htmlspecialchars($row['cpu_brand'] ?? '') ?>"></div>
-                                                    <div class="col-md-4"><label class="form-label">CPU Cores</label><input type="number" class="form-control" name="cpu_cores" value="<?= htmlspecialchars($row['cpu_cores'] ?? '') ?>"></div>
-                                                    <div class="col-md-4"><label class="form-label">GB RAM</label><input type="number" class="form-control" name="gb_ram" value="<?= htmlspecialchars($row['gb_ram'] ?? '') ?>"></div>
-                                                    <div class="col-md-4"><label class="form-label">Monitor Brand</label><input type="text" class="form-control" name="monitor_brand" value="<?= htmlspecialchars($row['monitor_brand'] ?? '') ?>"></div>
-                                                    <div class="col-md-4"><label class="form-label">Monitor Size</label><input type="number" class="form-control" name="monitor_size_inches" value="<?= htmlspecialchars($row['monitor_size_inches'] ?? '') ?>"></div>
-                                                    <div class="col-md-4"><label class="form-label"># User Accounts</label><input type="number" class="form-control" name="no_of_user_accounts" value="<?= htmlspecialchars($row['no_of_user_accounts'] ?? '') ?>"></div>
-                                                    <div class="col-md-4"><label class="form-label">User Account Type</label><input type="text" class="form-control" name="user_account_type" value="<?= htmlspecialchars($row['user_account_type'] ?? '') ?>"></div>
-                                                    <div class="col-md-4"><label class="form-label">Date Installed</label><input type="date" class="form-control" name="date_installed" value="<?= htmlspecialchars($row['date_installed'] ?? '') ?>"></div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">CPU Brand</label>
+                                                        <input type="text" class="form-control" name="cpu_brand" value="<?= htmlspecialchars($row['cpu_brand'] ?? '') ?>">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">CPU Cores</label>
+                                                        <input type="number" class="form-control" name="cpu_cores" value="<?= htmlspecialchars($row['cpu_cores'] ?? '') ?>">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">GB RAM</label>
+                                                        <input type="number" class="form-control" name="gb_ram" value="<?= htmlspecialchars($row['gb_ram'] ?? '') ?>">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">Monitor Brand</label>
+                                                        <input type="text" class="form-control" name="monitor_brand" value="<?= htmlspecialchars($row['monitor_brand'] ?? '') ?>">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">Monitor Size</label>
+                                                        <input type="number" class="form-control" name="monitor_size_inches" value="<?= htmlspecialchars($row['monitor_size_inches'] ?? '') ?>">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label"># User Accounts</label>
+                                                        <input type="number" class="form-control" name="no_of_user_accounts" value="<?= htmlspecialchars($row['no_of_user_accounts'] ?? '') ?>">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">User Account Type</label>
+                                                        <input type="text" class="form-control" name="user_account_type" value="<?= htmlspecialchars($row['user_account_type'] ?? '') ?>">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">Date Installed</label>
+                                                        <input type="date" class="form-control" name="date_installed" value="<?= htmlspecialchars($row['date_installed'] ?? '') ?>">
+                                                    </div>
                                                     <div class="col-md-12">
                                                         <label class="form-label">Endpoint Security</label>
                                                         <div class="row">
-                                                            <?php $selectedEP = json_decode($row['endpoint_security_id'] ?? '[]', true);
+                                                            <?php
+                                                            $selectedEP = json_decode($row['endpoint_security_id'] ?? '[]', true);
                                                             if (!is_array($selectedEP)) $selectedEP = [];
                                                             $epQ = mysqli_query($conn, "SELECT id, antivirus FROM endpoint_security ORDER BY id ASC");
                                                             while ($ep = mysqli_fetch_assoc($epQ)): ?>
@@ -891,21 +984,44 @@ $exportParams = http_build_query([
                                                             <?php endwhile; ?>
                                                         </div>
                                                     </div>
-                                                    <div class="col-md-4"><label class="form-label"># of Installed Antivirus</label><input type="number" class="form-control" name="no_of_installed_anti_virus" value="<?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?>"></div>
-                                                    <div class="col-md-6"><label class="form-label">GUID</label><input type="text" class="form-control" name="guid" value="<?= htmlspecialchars($row['guid'] ?? '') ?>"></div>
-                                                    <div class="col-md-4"><label class="form-label">Acquisition Date</label><input type="date" class="form-control" name="acquisition_date" value="<?= htmlspecialchars($row['acquisition_date'] ?? '') ?>"></div>
-                                                    <div class="col-md-6"><label class="form-label">PAR Serial Number</label><input type="text" class="form-control" name="par_serial_no" value="<?= htmlspecialchars($row['par_serial_no'] ?? '') ?>"></div>
-                                                    <div class="col-md-4"><label class="form-label">Authorized Software</label><textarea class="form-control" name="authorized_software"><?= htmlspecialchars($row['authorized_software'] ?? '') ?></textarea></div>
-                                                    <div class="col-md-4"><label class="form-label">Unauthorized Software</label><textarea class="form-control" name="unauthorized_software"><?= htmlspecialchars($row['unauthorized_software'] ?? '') ?></textarea></div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label"># of Installed Antivirus</label>
+                                                        <input type="number" class="form-control" name="no_of_installed_anti_virus" value="<?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?>">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">GUID</label>
+                                                        <input type="text" class="form-control" name="guid" value="<?= htmlspecialchars($row['guid'] ?? '') ?>">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">Acquisition Date</label>
+                                                        <input type="date" class="form-control" name="acquisition_date" value="<?= htmlspecialchars($row['acquisition_date'] ?? '') ?>">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">PAR Serial Number</label>
+                                                        <input type="text" class="form-control" name="par_serial_no" value="<?= htmlspecialchars($row['par_serial_no'] ?? '') ?>">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">Authorized Software</label>
+                                                        <textarea class="form-control" name="authorized_software"><?= htmlspecialchars($row['authorized_software'] ?? '') ?></textarea>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">Unauthorized Software</label>
+                                                        <textarea class="form-control" name="unauthorized_software"><?= htmlspecialchars($row['unauthorized_software'] ?? '') ?></textarea>
+                                                    </div>
                                                     <div class="col-md-6">
                                                         <label class="form-label">Previous Handler/s</label>
                                                         <div class="dropdown w-100">
                                                             <button class="form-select text-start" type="button" data-bs-toggle="dropdown">Select Previous Handler/s</button>
                                                             <div class="dropdown-menu w-100 p-2" style="max-height:250px;overflow-y:auto;">
-                                                                <?php $selH = json_decode($row['previous_owners_id'] ?? '[]', true);
+                                                                <?php
+                                                                $selH = json_decode($row['previous_owners_id'] ?? '[]', true);
                                                                 if (!is_array($selH)) $selH = [];
-                                                                $hQ = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY p.rank_id DESC");
-                                                                while ($h = mysqli_fetch_assoc($hQ)): $fn = trim(($h['rank'] ?? '') . ' ' . ($h['last_name'] ?? '') . ' ' . ($h['first_name'] ?? '') . ' ' . ($h['middle_name'] ?? '')); ?>
+                                                                $hQ = $conn->prepare("SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 AND p.division_id = ? ORDER BY p.rank_id DESC");
+                                                                $hQ->bind_param("i", $encoderDivisionId);
+                                                                $hQ->execute();
+                                                                $hQResult = $hQ->get_result();
+                                                                while ($h = $hQResult->fetch_assoc()):
+                                                                    $fn = trim(($h['rank'] ?? '') . ' ' . ($h['last_name'] ?? '') . ' ' . ($h['first_name'] ?? '') . ' ' . ($h['middle_name'] ?? '')); ?>
                                                                     <div class="form-check">
                                                                         <input class="form-check-input" type="checkbox" name="previous_owners_id[]" value="<?= $h['id'] ?>" id="ph<?= $row['id'] . '_' . $h['id'] ?>" <?= in_array($h['id'], $selH) ? 'checked' : '' ?>>
                                                                         <label class="form-check-label" for="ph<?= $row['id'] . '_' . $h['id'] ?>"><?= htmlspecialchars($fn) ?></label>
@@ -936,7 +1052,7 @@ $exportParams = http_build_query([
                         <?php endwhile; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="29" class="text-center">No devices found.</td>
+                            <td colspan="30" class="text-center">No devices found.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -952,7 +1068,6 @@ $exportParams = http_build_query([
             <?php if ($totalPages > 1):
                 $pb = http_build_query([
                     'search'        => $search,
-                    'division'      => $division_filter,
                     'filter_os'     => $os_filter,
                     'filter_office' => $office_filter,
                     'is_active'     => $active_filter,
@@ -979,17 +1094,14 @@ $exportParams = http_build_query([
                 allCb.checked = !Array.from(items).some(c => c.checked);
             }));
         }
-        setupFilterGroup('#allDivision', '.division-checkbox');
         setupFilterGroup('#allOS', '.os-checkbox');
         setupFilterGroup('#allOffice', '.office-checkbox');
 
         document.getElementById("addLaptopForm").addEventListener("submit", function(e) {
             const ep = document.querySelectorAll("#addLaptopModal input[name='endpoint_security[]']:checked");
-
             if (ep.length === 0) {
                 e.preventDefault();
                 alert("Select at least one Endpoint Security");
-                return;
             }
         });
 
@@ -1008,54 +1120,61 @@ $exportParams = http_build_query([
                 bsView.hide();
             }
         });
- </script>
 
-    <script>
-    function showToast(message, type = "success") {
-        const colors = { success: "#198754", danger: "#dc3545" };
-        const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
-        const toast  = document.createElement("div");
-        toast.style.cssText = `
-            position:fixed;bottom:24px;right:24px;z-index:9999;
-            background:${colors[type]};color:#fff;
-            padding:14px 20px;border-radius:10px;
-            display:flex;align-items:center;gap:10px;
-            box-shadow:0 4px 16px rgba(0,0,0,.2);
-            font-size:.95rem;max-width:340px;
-            animation:slideIn .3s ease;
-        `;
-        toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
-        document.body.appendChild(toast);
-        if (!document.getElementById("toastKeyframe")) {
-            const s = document.createElement("style");
-            s.id = "toastKeyframe";
-            s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
-            document.head.appendChild(s);
+        function showToast(message, type = "success") {
+            const colors = {
+                success: "#198754",
+                danger: "#dc3545"
+            };
+            const icons = {
+                success: "bi-check-circle-fill",
+                danger: "bi-x-circle-fill"
+            };
+            const toast = document.createElement("div");
+            toast.style.cssText = `
+                position:fixed;bottom:24px;right:24px;z-index:9999;
+                background:${colors[type]};color:#fff;
+                padding:14px 20px;border-radius:10px;
+                display:flex;align-items:center;gap:10px;
+                box-shadow:0 4px 16px rgba(0,0,0,.2);
+                font-size:.95rem;max-width:340px;
+                animation:slideIn .3s ease;
+            `;
+            toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
+            document.body.appendChild(toast);
+            if (!document.getElementById("toastKeyframe")) {
+                const s = document.createElement("style");
+                s.id = "toastKeyframe";
+                s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
+                document.head.appendChild(s);
+            }
+            setTimeout(() => {
+                toast.style.transition = "opacity .4s";
+                toast.style.opacity = "0";
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
         }
-        setTimeout(() => {
-            toast.style.transition = "opacity .4s";
-            toast.style.opacity = "0";
-            setTimeout(() => toast.remove(), 400);
-        }, 3500);
-    }
     </script>
 
     <?php if (!empty($_SESSION['toast_success'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
-    });
-    </script>
-    <?php unset($_SESSION['toast_success']); endif; ?>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
+            });
+        </script>
+    <?php unset($_SESSION['toast_success']);
+    endif; ?>
 
     <?php if (!empty($_SESSION['toast_error'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
-    });
-    </script>
-    <?php unset($_SESSION['toast_error']); endif; ?>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
+            });
+        </script>
+    <?php unset($_SESSION['toast_error']);
+    endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
