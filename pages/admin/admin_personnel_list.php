@@ -421,7 +421,7 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
                             <label class="form-label">Rank</label>
                             <select class="form-select" name="rank" required>
                                 <option value="" disabled selected>Select rank</option>
-                                <?php $ranksAdd = $conn->query("SELECT id, rank FROM ranks ORDER BY id ASC");
+                                <?php $ranksAdd = $conn->query("SELECT id, rank FROM ranks ORDER BY id DESC");
                                 while ($r = $ranksAdd->fetch_assoc()): ?>
                                     <option value="<?= $r['id'] ?>"><?= htmlspecialchars($r['rank']) ?></option>
                                 <?php endwhile; ?>

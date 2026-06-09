@@ -303,7 +303,7 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
                     <tr>
                         <th>RANK</th>
                         <th>NAME</th>
-                        <th>DIVISION</th>
+                        <!-- <th>DIVISION</th> -->
                         <th>CREATED BY</th>
                         <th>ACTION</th>
                     </tr>
@@ -314,7 +314,7 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
                             <tr id="row-<?= $row['id'] ?>">
                                 <td><?= htmlspecialchars($row['rank_name']          ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['full_name']) ?></td>
-                                <td><?= htmlspecialchars($row['division_name']       ?? 'N/A') ?></td>
+                                <!-- <td><?= htmlspecialchars($row['division_name']       ?? 'N/A') ?></td> -->
                                 <td><?= htmlspecialchars($row['created_by_username'] ?? 'SYSTEM') ?></td>
                                 <td class="action-buttons">
                                     <button type="button" class="btn-edit"
@@ -406,7 +406,7 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
                             <select class="form-select" name="rank" required>
                                 <option value="" disabled selected>Select rank</option>
                                 <?php
-                                $ranksAdd = $conn->query("SELECT id, rank FROM ranks ORDER BY id ASC");
+                                $ranksAdd = $conn->query("SELECT id, rank FROM ranks ORDER BY id DESC");
                                 while ($r = $ranksAdd->fetch_assoc()): ?>
                                     <option value="<?= $r['id'] ?>"><?= htmlspecialchars($r['rank']) ?></option>
                                 <?php endwhile; ?>

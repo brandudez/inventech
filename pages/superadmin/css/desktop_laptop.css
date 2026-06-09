@@ -800,17 +800,27 @@ body {
     flex-direction: column;
   }
 }
+
+/* =========================
+   ACCOUNT TYPE CONTAINER
+========================= */
 #accountTypeContainer {
   max-height: 155px;
   overflow-y: auto;
   overflow-x: visible;
 }
 
-.dropdown {
+/* =========================
+   ACCOUNT ROW — scoped dropdown fix
+   (only affects User Account Type rows
+   inside the Add modal, NOT the navbar
+   or any other dropdowns on the page)
+========================= */
+.account-row .dropdown {
   position: static;
 }
 
-.dropdown-menu {
+.account-row .dropdown-menu {
   position: fixed !important;
   z-index: 9999;
 }

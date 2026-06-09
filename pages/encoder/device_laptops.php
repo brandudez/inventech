@@ -242,7 +242,7 @@ $officeAppsList = [
 
 /* Pre-fetch add-modal dropdowns — personnel filtered to encoder's division */
 $addPersonnelRows = [];
-$pq = $conn->prepare("SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 AND p.division_id = ? ORDER BY p.rank_id DESC");
+$pq = $conn->prepare("SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 AND p.division_id = ? ORDER BY r.id DESC, p.last_name ASC, p.first_name ASC");
 $pq->bind_param("i", $encoderDivisionId);
 $pq->execute();
 $pqResult = $pq->get_result();
@@ -865,7 +865,7 @@ $exportParams = http_build_query([
                                                         <label class="form-label">Personnel</label>
                                                         <select name="personnel_id" class="form-select" required>
                                                             <?php
-                                                            $pq2 = $conn->prepare("SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 AND p.division_id = ? ORDER BY p.rank_id DESC");
+                                                            $pq2 = $conn->prepare("SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 AND p.division_id = ? ORDER BY r.id DESC, p.last_name ASC, p.first_name ASC");
                                                             $pq2->bind_param("i", $encoderDivisionId);
                                                             $pq2->execute();
                                                             $pq2Result = $pq2->get_result();
@@ -1016,7 +1016,7 @@ $exportParams = http_build_query([
                                                                 <?php
                                                                 $selH = json_decode($row['previous_owners_id'] ?? '[]', true);
                                                                 if (!is_array($selH)) $selH = [];
-                                                                $hQ = $conn->prepare("SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 AND p.division_id = ? ORDER BY p.rank_id DESC");
+                                                                $hQ = $conn->prepare("SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 AND p.division_id = ? ORDER BY r.id DESC, p.last_name ASC, p.first_name ASC");
                                                                 $hQ->bind_param("i", $encoderDivisionId);
                                                                 $hQ->execute();
                                                                 $hQResult = $hQ->get_result();
