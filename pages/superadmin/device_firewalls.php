@@ -314,6 +314,7 @@ $exportParams = http_build_query([
                                 <label class="form-label">Personnel</label>
                                 <select name="personnel_id" class="form-select" required>
                                     <option value="" disabled selected hidden>Select Personnel</option>
+                                    <option value="-">-</option>
                                     <?php foreach ($allPersonnel as $p): $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
                                         <option value="<?= $p['id'] ?>"><?= htmlspecialchars($fn) ?></option>
                                     <?php endforeach; ?>
@@ -419,7 +420,7 @@ $exportParams = http_build_query([
 
                             <tr class="clickable-row" data-active="<?= $row['is_active'] ? '1' : '0' ?>"
                                 data-bs-toggle="modal" data-bs-target="#viewFirewallModal<?= $row['id'] ?>">
-                                <td><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></td>
+                                <td><?= htmlspecialchars($row['fullname'] ?? '-')?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['manufacturer'] ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['model'] ?? '') ?: '-' ?></td>
@@ -506,6 +507,7 @@ $exportParams = http_build_query([
                                                         <label class="form-label">Personnel</label>
                                                         <select name="personnel_id" class="form-select" required>
                                                             <option value="" disabled hidden>Select Personnel</option>
+                                                            <option value="-">-</option>
                                                             <?php foreach ($allPersonnel as $p): $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
                                                                 <option value="<?= $p['id'] ?>" <?= ($row['personnel_id'] ?? '') == $p['id'] ? 'selected' : '' ?>><?= htmlspecialchars($fn) ?></option>
                                                             <?php endforeach; ?>

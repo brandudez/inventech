@@ -30,7 +30,7 @@ $sql = "
     SELECT p.id, p.division_id, p.rank_id,
         p.first_name, p.middle_name, p.last_name, p.is_active,
         u.username AS created_by_username,
-        TRIM(CONCAT(p.first_name, ' ', IFNULL(p.middle_name,''), ' ', p.last_name)) AS full_name,
+        TRIM(CONCAT(p.last_name, ', ', IFNULL(p.first_name,''), ' ',p.middle_name )) AS full_name,
         d.division AS division_name,
         r.rank     AS rank_name,
         rl.role_name AS created_by_name

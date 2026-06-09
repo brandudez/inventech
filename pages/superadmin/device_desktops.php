@@ -453,6 +453,7 @@ $exportParams = http_build_query([
                                 <label class="form-label">Personnel</label>
                                 <select name="personnel_id" class="form-select" >
                                     <option value="" disabled selected hidden>Select Personnel</option>
+                                    <option value="-">-</option>
                                     <?php foreach ($addPersonnelRows as $p): $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
                                         <option value="<?= $p['id'] ?>"><?= htmlspecialchars($fn) ?></option>
                                     <?php endforeach; ?>
@@ -860,6 +861,7 @@ $exportParams = http_build_query([
                                                     <div class="col-md-4">
                                                         <label class="form-label">Personnel</label>
                                                         <select name="personnel_id" class="form-select">
+                                                            <option value="-">-</option>
                                                             <?php $pq2 = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY r.id DESC, p.last_name ASC, p.first_name ASC");
                                                             while ($p2 = mysqli_fetch_assoc($pq2)): $fn = trim(($p2['rank'] ?? '') . ' ' . ($p2['last_name'] ?? '') . ' ' . ($p2['first_name'] ?? '') . ' ' . ($p2['middle_name'] ?? '')); ?>
                                                                 <option value="<?= $p2['id'] ?>" <?= ($row['personnel_id'] ?? '') == $p2['id'] ? 'selected' : '' ?>><?= htmlspecialchars($fn) ?></option>
