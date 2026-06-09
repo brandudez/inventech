@@ -51,7 +51,7 @@ $dq = mysqli_query($conn, "SELECT id, division FROM divisions ORDER BY id ASC");
 while ($r = mysqli_fetch_assoc($dq)) $allDivisions[] = $r;
 
 $allPersonnel = [];
-$pq = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY p.rank_id DESC");
+$pq = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY r.id DESC, p.last_name ASC, p.first_name ASC");
 while ($r = mysqli_fetch_assoc($pq)) $allPersonnel[] = $r;
 
 /* =========================

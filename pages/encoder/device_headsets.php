@@ -55,7 +55,7 @@ $acq_filter = trim($_GET['filter_acq'] ?? '');
    (scoped to encoder's division)
 ========================= */
 $allPersonnel = [];
-$pq = $conn->prepare("SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 AND p.division_id = ? ORDER BY p.rank_id DESC");
+$pq = $conn->prepare("SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 AND p.division_id = ? ORDER BY r.id DESC, p.last_name ASC, p.first_name ASC");
 $pq->bind_param('i', $encoderDivisionId);
 $pq->execute();
 $pqResult = $pq->get_result();

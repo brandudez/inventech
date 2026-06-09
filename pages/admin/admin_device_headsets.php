@@ -50,8 +50,13 @@ $allDivisions = [];
 $dq = mysqli_query($conn, "SELECT id, division FROM divisions ORDER BY id ASC");
 while ($r = mysqli_fetch_assoc($dq)) $allDivisions[] = $r;
 
+// Fetch all active personnel ordered by rank (highest first), then last name and first name alphabetically
 $allPersonnel = [];
-$pq = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY p.rank_id DESC");
+$pq = $conn->query("SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name
+                    FROM personnels p
+                    LEFT JOIN ranks r ON p.rank_id = r.id
+                    WHERE p.is_active = 1
+                    ORDER BY r.id DESC, p.last_name ASC, p.first_name ASC");
 while ($r = mysqli_fetch_assoc($pq)) $allPersonnel[] = $r;
 
 /* =========================
@@ -198,10 +203,10 @@ $exportParams = http_build_query([
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
                 <!-- EXPORT BUTTON -->
                 <a href="admin_export_headsets.php?<?= htmlspecialchars($exportParams) ?>"
-   class="btn add-laptop-btn"
-   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
-    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
-</a>
+                   class="btn add-laptop-btn"
+                   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
+                </a>
             </form>
         </div>
 
@@ -308,14 +313,14 @@ $exportParams = http_build_query([
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" ></div>
-                            <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" ></div>
-                            <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_number" ></div>
+                            <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand"></div>
+                            <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model"></div>
+                            <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_number"></div>
                             <div class="col-md-6"><label class="form-label">Acquisition Details</label><input type="text" class="form-control" name="acquisition_details"></div>
                             <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" name="acquisition_date" class="form-control"></div>
                             <div class="col-md-6">
                                 <label class="form-label">Is Active?</label>
-                                <select name="is_active" class="form-select" >
+                                <select name="is_active" class="form-select">
                                     <option value="" disabled selected hidden>Select</option>
                                     <option value="1">Yes</option>
                                     <option value="0">No</option>
@@ -482,9 +487,9 @@ $exportParams = http_build_query([
                                                             <?php endforeach; ?>
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" value="<?= htmlspecialchars($row['brand'] ?? '') ?>" ></div>
-                                                    <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" value="<?= htmlspecialchars($row['model'] ?? '') ?>" ></div>
-                                                    <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no" value="<?= htmlspecialchars($row['serial_no'] ?? '') ?>" ></div>
+                                                    <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" value="<?= htmlspecialchars($row['brand'] ?? '') ?>"></div>
+                                                    <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" value="<?= htmlspecialchars($row['model'] ?? '') ?>"></div>
+                                                    <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no" value="<?= htmlspecialchars($row['serial_no'] ?? '') ?>"></div>
                                                     <div class="col-md-6"><label class="form-label">Acquisition Details</label><input type="text" class="form-control" name="acquisition_details" value="<?= htmlspecialchars($row['acquisition_details'] ?? '') ?>"></div>
                                                     <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" class="form-control" name="acquisition_date" value="<?= htmlspecialchars($row['acquisition_date'] ?? '') ?>"></div>
                                                     <div class="col-md-6">
@@ -585,7 +590,6 @@ $exportParams = http_build_query([
                 bsView.hide();
             }
         });
-   
     </script>
 
     <script>

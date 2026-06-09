@@ -50,8 +50,13 @@ $allDivisions = [];
 $dq = mysqli_query($conn, "SELECT id, division FROM divisions ORDER BY id ASC");
 while ($r = mysqli_fetch_assoc($dq)) $allDivisions[] = $r;
 
+// Fetch all active personnel ordered by rank (highest first), then last name and first name alphabetically
 $allPersonnel = [];
-$pq = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY p.rank_id DESC");
+$pq = $conn->query("SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name
+                    FROM personnels p
+                    LEFT JOIN ranks r ON p.rank_id = r.id
+                    WHERE p.is_active = 1
+                    ORDER BY r.id DESC, p.last_name ASC, p.first_name ASC");
 while ($r = mysqli_fetch_assoc($pq)) $allPersonnel[] = $r;
 
 /* =========================
@@ -198,10 +203,10 @@ $exportParams = http_build_query([
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
                 <!-- EXPORT BUTTON -->
                 <a href="admin_export_cameras.php?<?= htmlspecialchars($exportParams) ?>"
-   class="btn add-laptop-btn"
-   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
-    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
-</a>
+                   class="btn add-laptop-btn"
+                   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
+                </a>
             </form>
         </div>
 
@@ -308,14 +313,14 @@ $exportParams = http_build_query([
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" ></div>
-                            <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" ></div>
-                            <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no" ></div>
+                            <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand"></div>
+                            <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model"></div>
+                            <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no"></div>
                             <div class="col-md-6"><label class="form-label">Acquisition Details</label><input type="text" class="form-control" name="acquisition_details"></div>
                             <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" name="acquisition_date" class="form-control"></div>
                             <div class="col-md-6">
                                 <label class="form-label">Is Active?</label>
-                                <select name="is_active" class="form-select" >
+                                <select name="is_active" class="form-select">
                                     <option value="" disabled selected hidden>Select</option>
                                     <option value="1">Yes</option>
                                     <option value="0">No</option>
@@ -373,14 +378,14 @@ $exportParams = http_build_query([
                                 data-bs-toggle="modal" data-bs-target="#viewCamModal<?= $row['id'] ?>">
                                 <td><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></td>
-                                <td><?= htmlspecialchars($row['brand'] ?? '')?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['model'] ?? '')?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['serial_no'] ?? '')?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['acquisition_details'] ?? '')?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['brand'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['model'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['serial_no'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['acquisition_details'] ?? '') ?: '-' ?></td>
                                 <td><?= (!empty($row['acquisition_date']) && $row['acquisition_date'] !== '0000-00-00') ? htmlspecialchars($row['acquisition_date']) : '-' ?></td>
-                                <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id'])?: '-' ?></td>
+                                <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?: '-' ?></td>
                                 <td><?= $row['is_active'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
-                               <td><?= (!empty($row['created_date']) && substr($row['created_date'], 0, 10) !== '0000-00-00') ? htmlspecialchars(substr($row['created_date'], 0, 10)) : '-' ?></td>
+                                <td><?= (!empty($row['created_date']) && substr($row['created_date'], 0, 10) !== '0000-00-00') ? htmlspecialchars(substr($row['created_date'], 0, 10)) : '-' ?></td>
                                 <td onclick="event.stopPropagation();">
                                     <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editCamModal<?= $row['id'] ?>">
                                         <i class="bi bi-gear-fill"></i>
@@ -482,9 +487,9 @@ $exportParams = http_build_query([
                                                             <?php endforeach; ?>
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" value="<?= htmlspecialchars($row['brand'] ?? '') ?>" ></div>
-                                                    <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" value="<?= htmlspecialchars($row['model'] ?? '') ?>" ></div>
-                                                    <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no" value="<?= htmlspecialchars($row['serial_no'] ?? '') ?>" ></div>
+                                                    <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" value="<?= htmlspecialchars($row['brand'] ?? '') ?>"></div>
+                                                    <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" value="<?= htmlspecialchars($row['model'] ?? '') ?>"></div>
+                                                    <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no" value="<?= htmlspecialchars($row['serial_no'] ?? '') ?>"></div>
                                                     <div class="col-md-6"><label class="form-label">Acquisition Details</label><input type="text" class="form-control" name="acquisition_details" value="<?= htmlspecialchars($row['acquisition_details'] ?? '') ?>"></div>
                                                     <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" class="form-control" name="acquisition_date" value="<?= htmlspecialchars($row['acquisition_date'] ?? '') ?>"></div>
                                                     <div class="col-md-6">
@@ -585,9 +590,7 @@ $exportParams = http_build_query([
                 bsView.hide();
             }
         });
-
-       
-   </script>
+    </script>
 
     <script>
     function showToast(message, type = "success") {
