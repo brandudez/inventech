@@ -49,7 +49,7 @@
 
             <div class="menu-item">
                 <span class="icon">
-                    <i class="bi bi-hdd-network"></i>
+                    <i class="bi bi-pc-display-horizontal"></i>
                 </span>
 
                 <span class="text">Devices</span>
@@ -125,6 +125,36 @@
                 </div>
             </a>
 
+<a href="../superadmin/device_switchers.php"
+    class="<?= basename($_SERVER['PHP_SELF']) == 'device_switchers.php' ? 'active' : '' ?>">
+    <div class="menu-item">
+        <span class="icon"><i class="bi bi-hdd-network"></i></span>
+        <span class="text">Switchers</span>
+    </div>
+</a>
+
+            <a href="../superadmin/device_splitter.php"
+                class="<?= basename($_SERVER['PHP_SELF']) == 'device_splitter.php' ? 'active' : '' ?>">
+                <div class="menu-item">
+                    <span class="icon"><i class="bi bi-diagram-3"></i></span>
+                    <span class="text">Splitters</span>
+                </div>
+            </a>
+
+            <a href="../superadmin/device_ups.php"
+                class="<?= basename($_SERVER['PHP_SELF']) == 'device_ups.php' ? 'active' : '' ?>">
+                <div class="menu-item">
+                    <span class="icon"><i class="bi bi-lightning-charge"></i></span>
+                    <span class="text">UPS</span>
+                </div>
+            </a>
+            <a href="../superadmin/device_others.php"
+                class="<?= basename($_SERVER['PHP_SELF']) == 'device_others.php' ? 'active' : '' ?>">
+                <div class="menu-item">
+                    <span class="icon"><i class="bi bi-hdd-stack"></i></span>
+                    <span class="text">Others</span>
+                </div>
+            </a>
         </div>
 
     </div>
