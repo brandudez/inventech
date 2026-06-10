@@ -49,7 +49,8 @@ function getPersonnelNames($conn, $json)
     return implode(",<br>", $names);
 }
 
-function dash($val) {
+function dash($val)
+{
     $v = trim($val ?? '');
     return $v !== '' ? htmlspecialchars($v) : '-';
 }
@@ -262,6 +263,7 @@ $exportParams = http_build_query([
             background-color: #f0f4ff !important;
             cursor: pointer;
         }
+
         .view-label {
             font-size: 0.75rem;
             font-weight: 600;
@@ -270,6 +272,7 @@ $exportParams = http_build_query([
             letter-spacing: .05em;
             margin-bottom: 4px;
         }
+
         .view-value {
             background: #f8f9fa;
             border: 1px solid #dee2e6;
@@ -289,15 +292,15 @@ $exportParams = http_build_query([
     <div class="top-bar">
         <div class="search-container">
             <form class="search-form" method="GET" action="device_desktops.php">
-                <?php foreach ($os_filter     as $v): ?><input type="hidden" name="filter_os[]"     value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
+                <?php foreach ($os_filter     as $v): ?><input type="hidden" name="filter_os[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
                 <?php foreach ($office_filter as $v): ?><input type="hidden" name="filter_office[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
-                <input type="hidden" name="is_active"  value="<?= htmlspecialchars($active_filter) ?>">
+                <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
                 <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
                 <input type="text" name="search" class="search-input" placeholder="Search desktops..." value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
                 <a href="export_desktops.php?<?= htmlspecialchars($exportParams) ?>"
-                   class="btn add-desktop-btn"
-                   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
+                    class="btn add-desktop-btn"
+                    onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
                     <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
                 </a>
             </form>
@@ -306,8 +309,8 @@ $exportParams = http_build_query([
         <div class="right-side">
             <div class="filters">
                 <form method="GET" action="device_desktops.php" id="filterForm">
-                    <input type="hidden" name="search"     value="<?= htmlspecialchars($search) ?>">
-                    <input type="hidden" name="is_active"  value="<?= htmlspecialchars($active_filter) ?>">
+                    <input type="hidden" name="search" value="<?= htmlspecialchars($search) ?>">
+                    <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
                     <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
 
                     <!-- OS -->
@@ -424,6 +427,7 @@ $exportParams = http_build_query([
                                 <label class="form-label">Personnel</label>
                                 <select name="personnel_id" class="form-select" required>
                                     <option value="" disabled selected hidden>Select Personnel</option>
+                                    <option value="-">-</option>
                                     <?php foreach ($addPersonnelRows as $p):
                                         $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
                                         <option value="<?= $p['id'] ?>"><?= htmlspecialchars($fn) ?></option>
@@ -687,35 +691,122 @@ $exportParams = http_build_query([
                                         </div>
                                         <div class="modal-body">
                                             <div class="row g-3">
-                                                <div class="col-md-4"><div class="view-label">Device Name</div><div class="view-value"><?= htmlspecialchars($row['device_name'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Personnel</div><div class="view-value"><?= htmlspecialchars($row['personnel_name'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Division</div><div class="view-value"><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">IP Address</div><div class="view-value"><?= htmlspecialchars($row['ip_address'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">MAC Address</div><div class="view-value"><?= htmlspecialchars($row['mac_address'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">GUID</div><div class="view-value"><?= htmlspecialchars($row['guid'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Operating System</div><div class="view-value"><?= htmlspecialchars($row['os'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Is OS Licensed?</div><div class="view-value"><?= ($row['is_os_licensed'] == 1) ? '<span class="text-success fw-bold">Yes</span>' : '<span class="text-danger fw-bold">No</span>' ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">OS License Key</div><div class="view-value"><?= htmlspecialchars($row['os_license_key'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Office Application</div><div class="view-value"><?= htmlspecialchars($row['office_application'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Is Office Licensed?</div><div class="view-value"><?= ($row['is_office_licensed'] == 1) ? '<span class="text-success fw-bold">Yes</span>' : '<span class="text-danger fw-bold">No</span>' ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Office License Key</div><div class="view-value"><?= htmlspecialchars($row['office_license_key'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-6"><div class="view-label">Endpoint Security</div><div class="view-value"><?= getEndpointNames($conn, $row['endpoint_security_id']) ?: 'N/A' ?></div></div>
-                                                <div class="col-md-3"><div class="view-label"># Installed Antivirus</div><div class="view-value"><?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-3"><div class="view-label">Date Installed</div><div class="view-value"><?= htmlspecialchars($row['date_installed'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">CPU Brand</div><div class="view-value"><?= htmlspecialchars($row['cpu_brand'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label"># CPU Cores</div><div class="view-value"><?= htmlspecialchars($row['cpu_cores'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">GB RAM</div><div class="view-value"><?= htmlspecialchars($row['gb_ram'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Monitor Brand</div><div class="view-value"><?= htmlspecialchars($row['monitor_brand'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Monitor Size</div><div class="view-value"><?= htmlspecialchars($row['monitor_size_inches'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label"># User Accounts</div><div class="view-value"><?= htmlspecialchars($row['no_of_user_accounts'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-6"><div class="view-label">User Account Type</div><div class="view-value"><?= htmlspecialchars($row['user_account_type'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-6"><div class="view-label">Acquisition Date</div><div class="view-value"><?= htmlspecialchars($row['acquisition_date'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-6"><div class="view-label">PAR Serial Number</div><div class="view-value"><?= htmlspecialchars($row['par_serial_no'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-6"><div class="view-label">Authorized Software</div><div class="view-value"><?= htmlspecialchars($row['authorized_software'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-6"><div class="view-label">Unauthorized Software</div><div class="view-value"><?= htmlspecialchars($row['unauthorized_software'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-3"><div class="view-label">Is Remotely Accessible?</div><div class="view-value"><?= $row['is_remote_acc'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></div></div>
-                                                <div class="col-md-3"><div class="view-label">Is Active?</div><div class="view-value"><?= $row['is_active'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></div></div>
-                                                <div class="col-md-12"><div class="view-label">Previous Handlers</div><div class="view-value"><?= getPersonnelNames($conn, $row['previous_owners_id']) ?: 'N/A' ?></div></div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Device Name</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['device_name'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Personnel</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['personnel_name'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Division</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">IP Address</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['ip_address'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">MAC Address</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['mac_address'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">GUID</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['guid'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Operating System</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['os'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Is OS Licensed?</div>
+                                                    <div class="view-value"><?= ($row['is_os_licensed'] == 1) ? '<span class="text-success fw-bold">Yes</span>' : '<span class="text-danger fw-bold">No</span>' ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">OS License Key</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['os_license_key'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Office Application</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['office_application'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Is Office Licensed?</div>
+                                                    <div class="view-value"><?= ($row['is_office_licensed'] == 1) ? '<span class="text-success fw-bold">Yes</span>' : '<span class="text-danger fw-bold">No</span>' ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Office License Key</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['office_license_key'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="view-label">Endpoint Security</div>
+                                                    <div class="view-value"><?= getEndpointNames($conn, $row['endpoint_security_id']) ?: 'N/A' ?></div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="view-label"># Installed Antivirus</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="view-label">Date Installed</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['date_installed'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">CPU Brand</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['cpu_brand'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label"># CPU Cores</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['cpu_cores'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">GB RAM</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['gb_ram'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Monitor Brand</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['monitor_brand'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Monitor Size</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['monitor_size_inches'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label"># User Accounts</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_user_accounts'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="view-label">User Account Type</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['user_account_type'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="view-label">Acquisition Date</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_date'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="view-label">PAR Serial Number</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['par_serial_no'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="view-label">Authorized Software</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['authorized_software'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="view-label">Unauthorized Software</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['unauthorized_software'] ?? 'N/A') ?></div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="view-label">Is Remotely Accessible?</div>
+                                                    <div class="view-value"><?= $row['is_remote_acc'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="view-label">Is Active?</div>
+                                                    <div class="view-value"><?= $row['is_active'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></div>
+                                                </div>
+                                                <div class="col-md-12">
+                                                    <div class="view-label">Previous Handlers</div>
+                                                    <div class="view-value"><?= getPersonnelNames($conn, $row['previous_owners_id']) ?: 'N/A' ?></div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="modal-footer">
@@ -750,6 +841,7 @@ $exportParams = http_build_query([
                                                     <div class="col-md-4">
                                                         <label class="form-label">Personnel</label>
                                                         <select name="personnel_id" class="form-select" required>
+                                                            <option value="-">-</option>
                                                             <?php foreach ($addPersonnelRows as $p2):
                                                                 $fn = trim(($p2['rank'] ?? '') . ' ' . ($p2['last_name'] ?? '') . ' ' . ($p2['first_name'] ?? '') . ' ' . ($p2['middle_name'] ?? '')); ?>
                                                                 <option value="<?= $p2['id'] ?>" <?= ($row['personnel_id'] ?? '') == $p2['id'] ? 'selected' : '' ?>><?= htmlspecialchars($fn) ?></option>
@@ -999,8 +1091,8 @@ $exportParams = http_build_query([
             const btn = e.target.closest('[data-edit-target]');
             if (!btn) return;
             const editTarget = btn.getAttribute('data-edit-target');
-            const viewModal  = btn.closest('.modal');
-            const bsView     = bootstrap.Modal.getInstance(viewModal);
+            const viewModal = btn.closest('.modal');
+            const bsView = bootstrap.Modal.getInstance(viewModal);
             if (bsView) {
                 viewModal.addEventListener('hidden.bs.modal', function handler() {
                     viewModal.removeEventListener('hidden.bs.modal', handler);
@@ -1012,11 +1104,17 @@ $exportParams = http_build_query([
     </script>
 
     <script>
-    function showToast(message, type = "success") {
-        const colors = { success: "#198754", danger: "#dc3545" };
-        const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
-        const toast  = document.createElement("div");
-        toast.style.cssText = `
+        function showToast(message, type = "success") {
+            const colors = {
+                success: "#198754",
+                danger: "#dc3545"
+            };
+            const icons = {
+                success: "bi-check-circle-fill",
+                danger: "bi-x-circle-fill"
+            };
+            const toast = document.createElement("div");
+            toast.style.cssText = `
             position:fixed;bottom:24px;right:24px;z-index:9999;
             background:${colors[type]};color:#fff;
             padding:14px 20px;border-radius:10px;
@@ -1025,38 +1123,41 @@ $exportParams = http_build_query([
             font-size:.95rem;max-width:340px;
             animation:slideIn .3s ease;
         `;
-        toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
-        document.body.appendChild(toast);
-        if (!document.getElementById("toastKeyframe")) {
-            const s = document.createElement("style");
-            s.id = "toastKeyframe";
-            s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
-            document.head.appendChild(s);
+            toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
+            document.body.appendChild(toast);
+            if (!document.getElementById("toastKeyframe")) {
+                const s = document.createElement("style");
+                s.id = "toastKeyframe";
+                s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
+                document.head.appendChild(s);
+            }
+            setTimeout(() => {
+                toast.style.transition = "opacity .4s";
+                toast.style.opacity = "0";
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
         }
-        setTimeout(() => {
-            toast.style.transition = "opacity .4s";
-            toast.style.opacity = "0";
-            setTimeout(() => toast.remove(), 400);
-        }, 3500);
-    }
     </script>
 
     <?php if (!empty($_SESSION['toast_success'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
-    });
-    </script>
-    <?php unset($_SESSION['toast_success']); endif; ?>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
+            });
+        </script>
+    <?php unset($_SESSION['toast_success']);
+    endif; ?>
 
     <?php if (!empty($_SESSION['toast_error'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
-    });
-    </script>
-    <?php unset($_SESSION['toast_error']); endif; ?>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
+            });
+        </script>
+    <?php unset($_SESSION['toast_error']);
+    endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
