@@ -45,7 +45,8 @@ function getPersonnelNames($conn, $json)
     }
     return implode(",<br>", $names);
 }
-function dash($val) {
+function dash($val)
+{
     $v = trim($val ?? '');
     return $v !== '' ? htmlspecialchars($v) : '-';
 }
@@ -214,7 +215,7 @@ $osList = [
 ];
 
 $officeAppsList = [
-     "-",
+    "-",
     "Microsoft 365 Personal",
     "Microsoft 365 Family",
     "Microsoft 365 Business Basic",
@@ -307,11 +308,11 @@ $exportParams = http_build_query([
                 <input type="text" name="search" class="search-input" placeholder="Search desktops..." value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
                 <!-- EXPORT BUTTON -->
-<a href="admin_export_desktops.php?<?= htmlspecialchars($exportParams) ?>"
-   class="btn add-desktop-btn"
-   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
-    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
-</a>
+                <a href="admin_export_desktops.php?<?= htmlspecialchars($exportParams) ?>"
+                    class="btn add-desktop-btn"
+                    onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
+                </a>
             </form>
         </div>
 
@@ -454,6 +455,7 @@ $exportParams = http_build_query([
                                 <label class="form-label">Personnel</label>
                                 <select name="personnel_id" class="form-select" required>
                                     <option value="" disabled selected hidden>Select Personnel</option>
+                                    <option value="-">-</option>
                                     <?php foreach ($addPersonnelRows as $p): $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
                                         <option value="<?= $p['id'] ?>"><?= htmlspecialchars($fn) ?></option>
                                     <?php endforeach; ?>
@@ -488,10 +490,10 @@ $exportParams = http_build_query([
                             <div class="col-md-6">
                                 <label class="form-label">Office Application</label>
                                 <select name="office_application" class="form-select">
-    <?php foreach ($officeAppsList as $app): ?>
-        <option value="<?= htmlspecialchars($app) ?>" <?= trim($app) === '-' ? 'selected' : '' ?>><?= htmlspecialchars($app) ?></option>
-    <?php endforeach; ?>
-</select>
+                                    <?php foreach ($officeAppsList as $app): ?>
+                                        <option value="<?= htmlspecialchars($app) ?>" <?= trim($app) === '-' ? 'selected' : '' ?>><?= htmlspecialchars($app) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                             <div class="col-md-6"><label class="form-label">Office License Key</label><input type="text" class="form-control" name="office_license_key"></div>
                             <div class="col-md-6">
@@ -807,8 +809,9 @@ $exportParams = http_build_query([
                                                     <div class="col-md-4">
                                                         <label class="form-label">Personnel</label>
                                                         <select name="personnel_id" class="form-select" required>
+                                                            <option value="-">-</option>
                                                             <?php $pq2 = $conn->query("SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY r.id DESC, p.last_name ASC, p.first_name ASC");
-while ($p2 = mysqli_fetch_assoc($pq2)): $fn = trim(($p2['rank'] ?? '') . ' ' . ($p2['last_name'] ?? '') . ' ' . ($p2['first_name'] ?? '') . ' ' . ($p2['middle_name'] ?? '')); ?>
+                                                            while ($p2 = mysqli_fetch_assoc($pq2)): $fn = trim(($p2['rank'] ?? '') . ' ' . ($p2['last_name'] ?? '') . ' ' . ($p2['first_name'] ?? '') . ' ' . ($p2['middle_name'] ?? '')); ?>
                                                                 <option value="<?= $p2['id'] ?>" <?= ($row['personnel_id'] ?? '') == $p2['id'] ? 'selected' : '' ?>><?= htmlspecialchars($fn) ?></option>
                                                             <?php endwhile; ?>
                                                         </select>
@@ -848,7 +851,7 @@ while ($p2 = mysqli_fetch_assoc($pq2)): $fn = trim(($p2['rank'] ?? '') . ' ' . (
                                                     <div class="col-md-6">
                                                         <label class="form-label">Office Application</label>
                                                         <select name="office_application" class="form-select">
-                                                            <?php foreach ($officeAppsList as $app): $isSelected = ($row['office_application'] ?? '') == $app || (trim($row['office_application'] ?? '') === '' && trim($app) === '-');?><option value="<?= htmlspecialchars($app) ?>" <?= $isSelected ? 'selected' : '' ?>><?= htmlspecialchars($app) ?></option><?php endforeach; ?>
+                                                            <?php foreach ($officeAppsList as $app): $isSelected = ($row['office_application'] ?? '') == $app || (trim($row['office_application'] ?? '') === '' && trim($app) === '-'); ?><option value="<?= htmlspecialchars($app) ?>" <?= $isSelected ? 'selected' : '' ?>><?= htmlspecialchars($app) ?></option><?php endforeach; ?>
                                                         </select>
                                                     </div>
                                                     <div class="col-md-6"><label class="form-label">Office License Key</label><input type="text" class="form-control" name="office_license_key" value="<?= htmlspecialchars($row['office_license_key'] ?? '') ?>"></div>
@@ -896,8 +899,8 @@ while ($p2 = mysqli_fetch_assoc($pq2)): $fn = trim(($p2['rank'] ?? '') . ' ' . (
                                                             <div class="dropdown-menu w-100 p-2" style="max-height:250px;overflow-y:auto;">
                                                                 <?php $selH = json_decode($row['previous_owners_id'] ?? '[]', true);
                                                                 if (!is_array($selH)) $selH = [];
-                                                               $hQ = $conn->query("SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY r.id DESC, p.last_name ASC, p.first_name ASC");
-while ($h = mysqli_fetch_assoc($hQ)): $fn = trim(($h['rank'] ?? '') . ' ' . ($h['last_name'] ?? '') . ' ' . ($h['first_name'] ?? '') . ' ' . ($h['middle_name'] ?? '')); ?>
+                                                                $hQ = $conn->query("SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY r.id DESC, p.last_name ASC, p.first_name ASC");
+                                                                while ($h = mysqli_fetch_assoc($hQ)): $fn = trim(($h['rank'] ?? '') . ' ' . ($h['last_name'] ?? '') . ' ' . ($h['first_name'] ?? '') . ' ' . ($h['middle_name'] ?? '')); ?>
                                                                     <div class="form-check">
                                                                         <input class="form-check-input" type="checkbox" name="previous_owners_id[]" value="<?= $h['id'] ?>" id="ph<?= $row['id'] . '_' . $h['id'] ?>" <?= in_array($h['id'], $selH) ? 'checked' : '' ?>>
                                                                         <label class="form-check-label" for="ph<?= $row['id'] . '_' . $h['id'] ?>"><?= htmlspecialchars($fn) ?></label>
@@ -1012,14 +1015,20 @@ while ($h = mysqli_fetch_assoc($hQ)): $fn = trim(($h['rank'] ?? '') . ' ' . ($h[
                 bsView.hide();
             }
         });
-</script>
+    </script>
 
     <script>
-    function showToast(message, type = "success") {
-        const colors = { success: "#198754", danger: "#dc3545" };
-        const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
-        const toast  = document.createElement("div");
-        toast.style.cssText = `
+        function showToast(message, type = "success") {
+            const colors = {
+                success: "#198754",
+                danger: "#dc3545"
+            };
+            const icons = {
+                success: "bi-check-circle-fill",
+                danger: "bi-x-circle-fill"
+            };
+            const toast = document.createElement("div");
+            toast.style.cssText = `
             position:fixed;bottom:24px;right:24px;z-index:9999;
             background:${colors[type]};color:#fff;
             padding:14px 20px;border-radius:10px;
@@ -1028,38 +1037,41 @@ while ($h = mysqli_fetch_assoc($hQ)): $fn = trim(($h['rank'] ?? '') . ' ' . ($h[
             font-size:.95rem;max-width:340px;
             animation:slideIn .3s ease;
         `;
-        toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
-        document.body.appendChild(toast);
-        if (!document.getElementById("toastKeyframe")) {
-            const s = document.createElement("style");
-            s.id = "toastKeyframe";
-            s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
-            document.head.appendChild(s);
+            toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
+            document.body.appendChild(toast);
+            if (!document.getElementById("toastKeyframe")) {
+                const s = document.createElement("style");
+                s.id = "toastKeyframe";
+                s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
+                document.head.appendChild(s);
+            }
+            setTimeout(() => {
+                toast.style.transition = "opacity .4s";
+                toast.style.opacity = "0";
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
         }
-        setTimeout(() => {
-            toast.style.transition = "opacity .4s";
-            toast.style.opacity = "0";
-            setTimeout(() => toast.remove(), 400);
-        }, 3500);
-    }
     </script>
 
     <?php if (!empty($_SESSION['toast_success'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
-    });
-    </script>
-    <?php unset($_SESSION['toast_success']); endif; ?>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
+            });
+        </script>
+    <?php unset($_SESSION['toast_success']);
+    endif; ?>
 
     <?php if (!empty($_SESSION['toast_error'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
-    });
-    </script>
-    <?php unset($_SESSION['toast_error']); endif; ?>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
+            });
+        </script>
+    <?php unset($_SESSION['toast_error']);
+    endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

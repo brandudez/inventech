@@ -110,7 +110,7 @@ $rq = $conn->query("SELECT id, role_name FROM roles WHERE id != 1 ORDER BY id AS
 while ($r = $rq->fetch_assoc()) $allRoles[] = $r;
 
 $allRanks     = [];
-$rkq = $conn->query("SELECT id, rank FROM ranks ORDER BY id ASC");
+$rkq = $conn->query("SELECT id, rank FROM ranks ORDER BY id DESC");
 while ($r = $rkq->fetch_assoc()) $allRanks[] = $r;
 
 $allDivisions = [];
@@ -447,7 +447,7 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
                 <input type="hidden" name="user_id" id="edit_id">
                 <div class="form-group">
                     <label>Role</label>
-                   <div class="form-group">
+                    <div class="form-group">
                         <input type="text" id="edit_role_display" readonly>
                         <input type="hidden" id="edit_role" name="role">
                     </div>
@@ -616,7 +616,11 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
             document.getElementById('edit_name').value = name;
             document.getElementById('edit_email').value = email;
             document.getElementById('edit_created_by').value = created_by;
-            const roleMap = { '1': 'Superadmin', '2': 'Admin', '3': 'Encoder' };
+            const roleMap = {
+                '1': 'Superadmin',
+                '2': 'Admin',
+                '3': 'Encoder'
+            };
             document.getElementById('edit_role').value = role;
             document.getElementById('edit_role_display').value = roleMap[role] ?? 'Unknown';
             document.getElementById('edit_rank').value = rank;

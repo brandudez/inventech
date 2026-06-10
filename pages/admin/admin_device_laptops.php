@@ -321,10 +321,10 @@ $exportParams = http_build_query([
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
                 <!-- EXPORT BUTTON -->
                 <a href="admin_export_laptops.php?<?= htmlspecialchars($exportParams) ?>"
-   class="btn add-laptop-btn"
-   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
-    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
-</a>
+                    class="btn add-laptop-btn"
+                    onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
+                </a>
             </form>
         </div>
 
@@ -465,6 +465,7 @@ $exportParams = http_build_query([
                                 <label class="form-label">Personnel</label>
                                 <select name="personnel_id" class="form-select" required>
                                     <option value="" disabled selected hidden>Select Personnel</option>
+                                    <option value="-">-</option>
                                     <?php foreach ($addPersonnelRows as $p): $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
                                         <option value="<?= $p['id'] ?>"><?= htmlspecialchars($fn) ?></option>
                                     <?php endforeach; ?>
@@ -624,42 +625,42 @@ $exportParams = http_build_query([
                     <?php if ($result->num_rows > 0): ?>
                         <?php while ($row = $result->fetch_assoc()): ?>
                             <tr class="clickable-row" data-active="<?= $row['is_active'] ? '1' : '0' ?>"
-    data-bs-toggle="modal" data-bs-target="#viewLtModal<?= $row['id'] ?>">
-    <td><?= htmlspecialchars($row['device_name']              ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['personnel_name']            ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['division_name']             ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['ip_address']                ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['os']                        ?? '') ?: '-' ?></td>
-    <td><?= ($row['is_os_licensed'] == 1) ? 'Yes' : 'No' ?></td>
-    <td><?= htmlspecialchars($row['os_license_key']            ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['office_application']        ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['office_license_key']        ?? '') ?: '-' ?></td>
-    <td><?= ($row['is_office_licensed'] == 1) ? 'Yes' : 'No' ?></td>
-    <td><?= getEndpointNames($conn, $row['endpoint_security_id']) ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?: '-' ?></td>
-    <td><?= (!empty($row['date_installed']) && $row['date_installed'] !== '0000-00-00') ? htmlspecialchars($row['date_installed']) : '-' ?></td>
-    <td><?= htmlspecialchars($row['guid']                       ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['mac_address']                ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['cpu_brand']                  ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['cpu_cores']                  ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['gb_ram']                     ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['monitor_brand']              ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['monitor_size_inches']        ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['no_of_user_accounts']        ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['user_account_type']          ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['authorized_software']        ?? '') ?: '-' ?></td>
-    <td><?= htmlspecialchars($row['unauthorized_software']      ?? '') ?: '-' ?></td>
-    <td><?= (!empty($row['acquisition_date']) && $row['acquisition_date'] !== '0000-00-00') ? htmlspecialchars($row['acquisition_date']) : '-' ?></td>
-    <td><?= htmlspecialchars($row['par_serial_no']              ?? '') ?: '-' ?></td>
-    <td><?= getPersonnelNames($conn, $row['previous_owners_id']) ?: '-' ?></td>
-    <td><?= $row['is_remote_acc'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
-    <td><?= $row['is_active']     ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
-    <td onclick="event.stopPropagation();">
-        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal<?= $row['id'] ?>">
-            <i class="bi bi-gear-fill"></i>
-        </button>
-    </td>
-</tr>
+                                data-bs-toggle="modal" data-bs-target="#viewLtModal<?= $row['id'] ?>">
+                                <td><?= htmlspecialchars($row['device_name']              ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['personnel_name']            ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['division_name']             ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['ip_address']                ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['os']                        ?? '') ?: '-' ?></td>
+                                <td><?= ($row['is_os_licensed'] == 1) ? 'Yes' : 'No' ?></td>
+                                <td><?= htmlspecialchars($row['os_license_key']            ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['office_application']        ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['office_license_key']        ?? '') ?: '-' ?></td>
+                                <td><?= ($row['is_office_licensed'] == 1) ? 'Yes' : 'No' ?></td>
+                                <td><?= getEndpointNames($conn, $row['endpoint_security_id']) ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?: '-' ?></td>
+                                <td><?= (!empty($row['date_installed']) && $row['date_installed'] !== '0000-00-00') ? htmlspecialchars($row['date_installed']) : '-' ?></td>
+                                <td><?= htmlspecialchars($row['guid']                       ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['mac_address']                ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['cpu_brand']                  ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['cpu_cores']                  ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['gb_ram']                     ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['monitor_brand']              ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['monitor_size_inches']        ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['no_of_user_accounts']        ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['user_account_type']          ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['authorized_software']        ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['unauthorized_software']      ?? '') ?: '-' ?></td>
+                                <td><?= (!empty($row['acquisition_date']) && $row['acquisition_date'] !== '0000-00-00') ? htmlspecialchars($row['acquisition_date']) : '-' ?></td>
+                                <td><?= htmlspecialchars($row['par_serial_no']              ?? '') ?: '-' ?></td>
+                                <td><?= getPersonnelNames($conn, $row['previous_owners_id']) ?: '-' ?></td>
+                                <td><?= $row['is_remote_acc'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
+                                <td><?= $row['is_active']     ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
+                                <td onclick="event.stopPropagation();">
+                                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal<?= $row['id'] ?>">
+                                        <i class="bi bi-gear-fill"></i>
+                                    </button>
+                                </td>
+                            </tr>
 
                             <!-- VIEW MODAL -->
                             <div class="modal fade" id="viewLtModal<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
@@ -815,6 +816,7 @@ $exportParams = http_build_query([
                                                     <div class="col-md-4">
                                                         <label class="form-label">Personnel</label>
                                                         <select name="personnel_id" class="form-select" required>
+                                                            <option value="-">-</option>
                                                             <?php $pq2 = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY r.id DESC, p.last_name ASC, p.first_name ASC");
                                                             while ($p2 = mysqli_fetch_assoc($pq2)): $fn = trim(($p2['rank'] ?? '') . ' ' . ($p2['last_name'] ?? '') . ' ' . ($p2['first_name'] ?? '') . ' ' . ($p2['middle_name'] ?? '')); ?>
                                                                 <option value="<?= $p2['id'] ?>" <?= ($row['personnel_id'] ?? '') == $p2['id'] ? 'selected' : '' ?>><?= htmlspecialchars($fn) ?></option>
@@ -1008,14 +1010,20 @@ $exportParams = http_build_query([
                 bsView.hide();
             }
         });
- </script>
+    </script>
 
     <script>
-    function showToast(message, type = "success") {
-        const colors = { success: "#198754", danger: "#dc3545" };
-        const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
-        const toast  = document.createElement("div");
-        toast.style.cssText = `
+        function showToast(message, type = "success") {
+            const colors = {
+                success: "#198754",
+                danger: "#dc3545"
+            };
+            const icons = {
+                success: "bi-check-circle-fill",
+                danger: "bi-x-circle-fill"
+            };
+            const toast = document.createElement("div");
+            toast.style.cssText = `
             position:fixed;bottom:24px;right:24px;z-index:9999;
             background:${colors[type]};color:#fff;
             padding:14px 20px;border-radius:10px;
@@ -1024,38 +1032,41 @@ $exportParams = http_build_query([
             font-size:.95rem;max-width:340px;
             animation:slideIn .3s ease;
         `;
-        toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
-        document.body.appendChild(toast);
-        if (!document.getElementById("toastKeyframe")) {
-            const s = document.createElement("style");
-            s.id = "toastKeyframe";
-            s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
-            document.head.appendChild(s);
+            toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
+            document.body.appendChild(toast);
+            if (!document.getElementById("toastKeyframe")) {
+                const s = document.createElement("style");
+                s.id = "toastKeyframe";
+                s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
+                document.head.appendChild(s);
+            }
+            setTimeout(() => {
+                toast.style.transition = "opacity .4s";
+                toast.style.opacity = "0";
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
         }
-        setTimeout(() => {
-            toast.style.transition = "opacity .4s";
-            toast.style.opacity = "0";
-            setTimeout(() => toast.remove(), 400);
-        }, 3500);
-    }
     </script>
 
     <?php if (!empty($_SESSION['toast_success'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
-    });
-    </script>
-    <?php unset($_SESSION['toast_success']); endif; ?>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
+            });
+        </script>
+    <?php unset($_SESSION['toast_success']);
+    endif; ?>
 
     <?php if (!empty($_SESSION['toast_error'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
-    });
-    </script>
-    <?php unset($_SESSION['toast_error']); endif; ?>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
+            });
+        </script>
+    <?php unset($_SESSION['toast_error']);
+    endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

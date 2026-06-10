@@ -203,8 +203,8 @@ $exportParams = http_build_query([
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
                 <!-- EXPORT BUTTON -->
                 <a href="admin_export_headsets.php?<?= htmlspecialchars($exportParams) ?>"
-                   class="btn add-laptop-btn"
-                   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
+                    class="btn add-laptop-btn"
+                    onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
                     <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
                 </a>
             </form>
@@ -299,6 +299,7 @@ $exportParams = http_build_query([
                                 <label class="form-label">Personnel</label>
                                 <select name="personnel_id" class="form-select" required>
                                     <option value="" disabled selected hidden>Select Personnel</option>
+                                    <option value="-">-</option>
                                     <?php foreach ($allPersonnel as $p): $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
                                         <option value="<?= $p['id'] ?>"><?= htmlspecialchars($fn) ?></option>
                                     <?php endforeach; ?>
@@ -376,7 +377,7 @@ $exportParams = http_build_query([
                         <?php while ($row = $result->fetch_assoc()): ?>
                             <tr class="clickable-row" data-active="<?= $row['is_active'] ? '1' : '0' ?>"
                                 data-bs-toggle="modal" data-bs-target="#viewHsModal<?= $row['id'] ?>">
-                                <td><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></td>
+                                <td><?= htmlspecialchars($row['fullname'] ?? '-') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['brand'] ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['model'] ?? '') ?: '-' ?></td>
@@ -474,6 +475,7 @@ $exportParams = http_build_query([
                                                     <div class="col-md-6">
                                                         <label class="form-label">Personnel</label>
                                                         <select name="personnel_id" class="form-select" required>
+                                                            <option value="-">-</option>
                                                             <?php foreach ($allPersonnel as $p): $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
                                                                 <option value="<?= $p['id'] ?>" <?= ($row['personnel_id'] ?? '') == $p['id'] ? 'selected' : '' ?>><?= htmlspecialchars($fn) ?></option>
                                                             <?php endforeach; ?>
@@ -593,11 +595,17 @@ $exportParams = http_build_query([
     </script>
 
     <script>
-    function showToast(message, type = "success") {
-        const colors = { success: "#198754", danger: "#dc3545" };
-        const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
-        const toast  = document.createElement("div");
-        toast.style.cssText = `
+        function showToast(message, type = "success") {
+            const colors = {
+                success: "#198754",
+                danger: "#dc3545"
+            };
+            const icons = {
+                success: "bi-check-circle-fill",
+                danger: "bi-x-circle-fill"
+            };
+            const toast = document.createElement("div");
+            toast.style.cssText = `
             position:fixed;bottom:24px;right:24px;z-index:9999;
             background:${colors[type]};color:#fff;
             padding:14px 20px;border-radius:10px;
@@ -606,38 +614,41 @@ $exportParams = http_build_query([
             font-size:.95rem;max-width:340px;
             animation:slideIn .3s ease;
         `;
-        toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
-        document.body.appendChild(toast);
-        if (!document.getElementById("toastKeyframe")) {
-            const s = document.createElement("style");
-            s.id = "toastKeyframe";
-            s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
-            document.head.appendChild(s);
+            toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
+            document.body.appendChild(toast);
+            if (!document.getElementById("toastKeyframe")) {
+                const s = document.createElement("style");
+                s.id = "toastKeyframe";
+                s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
+                document.head.appendChild(s);
+            }
+            setTimeout(() => {
+                toast.style.transition = "opacity .4s";
+                toast.style.opacity = "0";
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
         }
-        setTimeout(() => {
-            toast.style.transition = "opacity .4s";
-            toast.style.opacity = "0";
-            setTimeout(() => toast.remove(), 400);
-        }, 3500);
-    }
     </script>
 
     <?php if (!empty($_SESSION['toast_success'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
-    });
-    </script>
-    <?php unset($_SESSION['toast_success']); endif; ?>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
+            });
+        </script>
+    <?php unset($_SESSION['toast_success']);
+    endif; ?>
 
     <?php if (!empty($_SESSION['toast_error'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
-    });
-    </script>
-    <?php unset($_SESSION['toast_error']); endif; ?>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
+            });
+        </script>
+    <?php unset($_SESSION['toast_error']);
+    endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
