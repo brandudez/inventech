@@ -417,7 +417,7 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
                             <input type="text" class="form-control" name="firstName" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Middle Name</label>
+                            <label class="form-label">Middle Name <span class="text-muted small">(optional)</span></label>
                             <input type="text" class="form-control" name="middleName">
                         </div>
                         <div class="mb-3">
@@ -491,18 +491,31 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
         function showToast(id, delay = 4000) {
             const el = document.getElementById(id);
             if (!el) return;
-            new bootstrap.Toast(el, { delay }).show();
+            new bootstrap.Toast(el, {
+                delay
+            }).show();
         }
 
         /* ── PAGE-LOAD: fire toast from ?msg= redirect ── */
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const toastMap = {
                 'PersonnelUpdated': 'toastEditSuccess',
-                'PersonnelFailed':  'toastEditError',
-                'PersonnelAdded':   'toastAddSuccess',
+                'PersonnelFailed': 'toastEditError',
+                'PersonnelAdded': 'toastAddSuccess',
             };
             const key = '<?= addslashes($msg ?: $error) ?>';
             if (key && toastMap[key]) showToast(toastMap[key]);
+
+            /* ── Clear validation errors on input ── */
+            ['firstName', 'middleName', 'lastName'].forEach(name => {
+                const el = document.querySelector(`#addPersonnelForm [name="${name}"]`);
+                if (!el) return;
+                el.addEventListener('input', function() {
+                    this.classList.remove('is-invalid');
+                    const fb = this.nextElementSibling;
+                    if (fb && fb.classList.contains('invalid-feedback')) fb.remove();
+                });
+            });
         });
 
         /* ── FILTER CHECKBOX: "All" toggling (rank only) ── */
@@ -536,7 +549,7 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
             confirmModal.show();
         }
 
-        document.getElementById('confirmDeactivateBtn').addEventListener('click', function () {
+        document.getElementById('confirmDeactivateBtn').addEventListener('click', function() {
             if (!_deactivateId) return;
             document.getElementById('deactivateBtnText').classList.add('d-none');
             document.getElementById('deactivateBtnSpinner').classList.remove('d-none');
@@ -545,47 +558,49 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
             if (rowDelBtn) rowDelBtn.disabled = true;
 
             fetch('deactivate_personnel.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'personnel_id=' + encodeURIComponent(_deactivateId)
-            })
-            .then(r => r.json())
-            .then(data => {
-                confirmModal.hide();
-                resetDeactivateBtn();
-                if (data.success) {
-                    const row = document.getElementById('row-' + _deactivateId);
-                    if (row) {
-                        row.classList.add('removing');
-                        setTimeout(() => {
-                            row.classList.add('d-none');
-                            row.classList.remove('removing');
-                            updateTotalCount();
-                            const remaining = document.querySelectorAll('#personnelsTableBody tr[id^="row-"]:not(.d-none)');
-                            if (remaining.length === 0) {
-                                let emptyRow = document.getElementById('noDataRow');
-                                if (!emptyRow) {
-                                    emptyRow = document.createElement('tr');
-                                    emptyRow.id = 'noDataRow';
-                                    emptyRow.innerHTML = '<td colspan="5" class="text-center py-3">No personnel found.</td>';
-                                    document.getElementById('personnelsTableBody').appendChild(emptyRow);
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: 'personnel_id=' + encodeURIComponent(_deactivateId)
+                })
+                .then(r => r.json())
+                .then(data => {
+                    confirmModal.hide();
+                    resetDeactivateBtn();
+                    if (data.success) {
+                        const row = document.getElementById('row-' + _deactivateId);
+                        if (row) {
+                            row.classList.add('removing');
+                            setTimeout(() => {
+                                row.classList.add('d-none');
+                                row.classList.remove('removing');
+                                updateTotalCount();
+                                const remaining = document.querySelectorAll('#personnelsTableBody tr[id^="row-"]:not(.d-none)');
+                                if (remaining.length === 0) {
+                                    let emptyRow = document.getElementById('noDataRow');
+                                    if (!emptyRow) {
+                                        emptyRow = document.createElement('tr');
+                                        emptyRow.id = 'noDataRow';
+                                        emptyRow.innerHTML = '<td colspan="5" class="text-center py-3">No personnel found.</td>';
+                                        document.getElementById('personnelsTableBody').appendChild(emptyRow);
+                                    }
+                                    emptyRow.classList.remove('d-none');
                                 }
-                                emptyRow.classList.remove('d-none');
-                            }
-                        }, 450);
+                            }, 450);
+                        }
+                        showToast('toastInactiveSuccess');
+                    } else {
+                        if (rowDelBtn) rowDelBtn.disabled = false;
+                        showToast('toastInactiveError');
                     }
-                    showToast('toastInactiveSuccess');
-                } else {
+                })
+                .catch(() => {
+                    confirmModal.hide();
+                    resetDeactivateBtn();
                     if (rowDelBtn) rowDelBtn.disabled = false;
                     showToast('toastInactiveError');
-                }
-            })
-            .catch(() => {
-                confirmModal.hide();
-                resetDeactivateBtn();
-                if (rowDelBtn) rowDelBtn.disabled = false;
-                showToast('toastInactiveError');
-            });
+                });
         });
 
         function resetDeactivateBtn() {
@@ -597,11 +612,11 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
         /* ── EDIT MODAL ──
            Note: division param removed — division is fixed server-side */
         function openEditModal(id, name, rank, created_by, status) {
-            document.getElementById('edit_id').value       = id;
-            document.getElementById('edit_name').value     = name;
-            document.getElementById('edit_rank').value     = rank;
+            document.getElementById('edit_id').value = id;
+            document.getElementById('edit_name').value = name;
+            document.getElementById('edit_rank').value = rank;
             document.getElementById('edit_created_by').value = created_by;
-            document.getElementById('edit_status').value   = status;
+            document.getElementById('edit_status').value = status;
             document.getElementById('editModal').style.display = 'flex';
             document.body.classList.add('modal-open');
         }
@@ -610,32 +625,100 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
             document.getElementById('editModal').style.display = 'none';
             document.body.classList.remove('modal-open');
         }
-        window.addEventListener('click', function (e) {
+        window.addEventListener('click', function(e) {
             if (e.target === document.getElementById('editModal')) closeEditModal();
         });
 
-        /* ── ADD PERSONNEL (AJAX) ── */
-        document.getElementById('addPersonnelForm').addEventListener('submit', function (e) {
+        /* ── ADD PERSONNEL (AJAX) with name validation ── */
+        document.getElementById('addPersonnelForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            fetch('../encoder/encoder_add_personnel.php', {
-                method: 'POST',
-                body: new FormData(this)
-            })
-            .then(res => res.json())
-            .then(res => {
-                if (res.status === 'success') {
-                    bootstrap.Modal.getInstance(document.getElementById('addPersonnelModal')).hide();
-                    showToast('toastAddSuccess', 3000);
-                    setTimeout(() => location.reload(), 3000);
-                } else {
-                    document.getElementById('toastAddErrorMsg').textContent = res.message || 'Failed to add personnel.';
-                    showToast('toastAddError');
+
+            /* ── NAME VALIDATION ── */
+            // Allows letters (including accented: ñ, é, etc.), spaces, hyphens, apostrophes, periods
+            // Blocks digits and special characters like @, #, !, $, etc.
+            const namePattern = /^[a-zA-ZÀ-ÖØ-öø-ÿ\s\-'.]+$/;
+            const fields = [{
+                    name: 'firstName',
+                    label: 'First Name'
+                },
+                {
+                    name: 'middleName',
+                    label: 'Middle Name'
+                },
+                {
+                    name: 'lastName',
+                    label: 'Last Name'
+                },
+            ];
+
+            let hasError = false;
+
+            for (const field of fields) {
+                const input = this.elements[field.name];
+                const val = input.value.trim();
+
+                // Middle name is optional — skip validation if left empty
+                if (field.name === 'middleName' && val === '') {
+                    input.classList.remove('is-invalid');
+                    const fb = input.nextElementSibling;
+                    if (fb && fb.classList.contains('invalid-feedback')) fb.remove();
+                    continue;
                 }
-            })
-            .catch(() => {
-                document.getElementById('toastAddErrorMsg').textContent = 'Something went wrong. Please try again.';
-                showToast('toastAddError');
-            });
+
+                if (!namePattern.test(val)) {
+                    input.classList.add('is-invalid');
+
+                    // Add or update the error message below the field
+                    let feedback = input.nextElementSibling;
+                    if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                        feedback = document.createElement('div');
+                        feedback.className = 'invalid-feedback';
+                        input.after(feedback);
+                    }
+                    feedback.textContent = `${field.label} must contain letters only (no numbers or special characters).`;
+
+                    if (!hasError) {
+                        input.focus(); // focus the first invalid field
+                        hasError = true;
+                    }
+                } else {
+                    input.classList.remove('is-invalid');
+                    const feedback = input.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) feedback.remove();
+                }
+            }
+
+            // Stop submission if any name field failed validation
+            if (hasError) return;
+
+            /* ── SUBMIT via AJAX ── */
+            fetch('../encoder/encoder_add_personnel.php', {
+                    method: 'POST',
+                    body: new FormData(this)
+                })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === 'success') {
+                        bootstrap.Modal.getInstance(document.getElementById('addPersonnelModal')).hide();
+                        showToast('toastAddSuccess', 3000);
+                        setTimeout(() => location.reload(), 3000);
+                    } else {
+                        document.getElementById('toastAddErrorMsg').textContent = res.message || 'Failed to add personnel.';
+                        showToast('toastAddError');
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('toastAddErrorMsg').textContent = 'Something went wrong. Please try again.';
+                    showToast('toastAddError');
+                });
+        });
+
+        /* ── Reset add form validation when modal is closed ── */
+        document.getElementById('addPersonnelModal').addEventListener('hidden.bs.modal', function() {
+            const form = document.getElementById('addPersonnelForm');
+            form.reset();
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
         });
 
         /* ── SEARCH — submit on Enter ── */
@@ -647,4 +730,5 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
         }
     </script>
 </body>
+
 </html>

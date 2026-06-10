@@ -232,9 +232,6 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
 
         <!-- FILTERS + ADD BUTTON -->
         <div class="right-side">
-
-            <!-- display:contents makes the form invisible to flexbox
-             so all dropdowns become direct flex children of .right-side -->
             <form method="GET" action="personnel_list.php" id="filterForm" style="display:contents;">
                 <input type="hidden" name="search" value="<?= htmlspecialchars($search) ?>">
 
@@ -432,7 +429,7 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
                             <input type="text" class="form-control" name="firstName" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Middle Name</label>
+                            <label class="form-label">Middle Name <span class="text-muted small">(optional)</span></label>
                             <input type="text" class="form-control" name="middleName">
                         </div>
                         <div class="mb-3">
@@ -522,6 +519,17 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
             };
             const key = '<?= addslashes($msg ?: $error) ?>';
             if (key && toastMap[key]) showToast(toastMap[key]);
+
+            /* ── Clear validation errors on input ── */
+            ['firstName', 'middleName', 'lastName'].forEach(name => {
+                const el = document.querySelector(`#addPersonnelForm [name="${name}"]`);
+                if (!el) return;
+                el.addEventListener('input', function() {
+                    this.classList.remove('is-invalid');
+                    const fb = this.nextElementSibling;
+                    if (fb && fb.classList.contains('invalid-feedback')) fb.remove();
+                });
+            });
         });
 
         /* ── FILTER CHECKBOX: "All" toggling ── */
@@ -636,9 +644,69 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
             if (e.target === document.getElementById('editModal')) closeEditModal();
         });
 
-        /* ── ADD PERSONNEL (AJAX) ── */
+        /* ── ADD PERSONNEL (AJAX) with name validation ── */
         document.getElementById('addPersonnelForm').addEventListener('submit', function(e) {
             e.preventDefault();
+
+            /* ── NAME VALIDATION ── */
+            // Allows letters (including accented: ñ, é, etc.), spaces, hyphens, apostrophes, periods
+            // Blocks digits and special characters like @, #, !, $, etc.
+            const namePattern = /^[a-zA-ZÀ-ÖØ-öø-ÿ\s\-'.]+$/;
+            const fields = [{
+                    name: 'firstName',
+                    label: 'First Name'
+                },
+                {
+                    name: 'middleName',
+                    label: 'Middle Name'
+                },
+                {
+                    name: 'lastName',
+                    label: 'Last Name'
+                },
+            ];
+
+            let hasError = false;
+
+            for (const field of fields) {
+                const input = this.elements[field.name];
+                const val = input.value.trim();
+
+                // Middle name is optional — skip validation if left empty
+                if (field.name === 'middleName' && val === '') {
+                    input.classList.remove('is-invalid');
+                    const fb = input.nextElementSibling;
+                    if (fb && fb.classList.contains('invalid-feedback')) fb.remove();
+                    continue;
+                }
+
+                if (!namePattern.test(val)) {
+                    input.classList.add('is-invalid');
+
+                    // Add or update the error message below the field
+                    let feedback = input.nextElementSibling;
+                    if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                        feedback = document.createElement('div');
+                        feedback.className = 'invalid-feedback';
+                        input.after(feedback);
+                    }
+                    feedback.textContent = `${field.label} must contain letters only (no numbers or special characters).`;
+
+                    if (!hasError) {
+                        input.focus(); // focus the first invalid field
+                        hasError = true;
+                    }
+                } else {
+                    input.classList.remove('is-invalid');
+                    const feedback = input.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) feedback.remove();
+                }
+            }
+
+            // Stop submission if any name field failed validation
+            if (hasError) return;
+
+            /* ── SUBMIT via AJAX ── */
             fetch('../superadmin/add_personnel.php', {
                     method: 'POST',
                     body: new FormData(this)
@@ -658,6 +726,14 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
                     document.getElementById('toastAddErrorMsg').textContent = 'Something went wrong. Please try again.';
                     showToast('toastAddError');
                 });
+        });
+
+        /* ── Reset add form validation when modal is closed ── */
+        document.getElementById('addPersonnelModal').addEventListener('hidden.bs.modal', function() {
+            const form = document.getElementById('addPersonnelForm');
+            form.reset();
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
         });
 
         /* ── SEARCH — submit on Enter ── */
