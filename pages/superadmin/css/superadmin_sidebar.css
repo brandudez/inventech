@@ -1,247 +1,250 @@
-
 /* ===== SIDEBAR ===== */
 .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 215px;
-    height: 100vh;
-    background: #0d6ea8;
-    padding: 20px 15px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    /* SCROLLABLE */
-    overflow-y: auto;
-    overflow-x: hidden;
-    transition: width 0.3s ease, padding 0.3s ease;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 215px;
+  height: 100vh;
+  background: #0d6ea8;
+  padding: 20px 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* SCROLLABLE */
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition:
+    width 0.3s ease,
+    padding 0.3s ease;
 }
 
 /* ===== COLLAPSED ===== */
 .sidebar.collapsed {
-    width: 85px;
-    padding: 20px 8px;
+  width: 85px;
+  padding: 20px 8px;
 }
 
 /* ===== TOGGLE TOP ===== */
 .nav-left {
-    width: 100%;
-    display: flex;
-    justify-content: flex-start;
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
 }
 
 /* ===== CENTER TOGGLE WHEN COLLAPSED ===== */
 .sidebar.collapsed .nav-left {
-    justify-content: center;
+  justify-content: center;
 }
 
 /* ===== TOGGLE BUTTON ===== */
 .toggle-btn {
-    font-size: 24px;
-    color: white;
-    cursor: pointer;
-    border-radius: 15px;
-    transition: background 0.3s ease;
+  font-size: 24px;
+  color: white;
+  cursor: pointer;
+  border-radius: 15px;
+  transition: background 0.3s ease;
 }
 
 .toggle-btn:hover {
-    background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* ===== LOGO ===== */
 .logo {
-    width: 75px;
-    height: 75px;
-    object-fit: cover;
-    border-radius: 50%;
-    margin-bottom: 15px;
-    border: 3px solid rgba(255,255,255,0.4);
-    transition: width 0.3s ease, height 0.3s ease;
+  width: 75px;
+  height: 75px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-bottom: 15px;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  transition:
+    width 0.3s ease,
+    height 0.3s ease;
 }
 
 .sidebar.collapsed .logo {
-    margin-top: 10px;
-    width: 45px;
-    height: 45px;
+  margin-top: 10px;
+  width: 45px;
+  height: 45px;
 }
 
 /* ===== TITLE ===== */
 .sidebar-title {
-    color: white;
-    font-size: 20px;
-    font-weight: bold;
-    margin-bottom: 35px;
-    transition: opacity 0.3s ease;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 35px;
+  transition: opacity 0.3s ease;
 }
 
 /* HIDE TITLE WHEN COLLAPSED */
 .sidebar.collapsed .sidebar-title {
-    display: none;
+  display: none;
 }
 
 /* ===== SIDEBAR LINKS ===== */
 .sidebar a {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
-    margin-bottom: 12px;
-    border-radius: 14px;
-    text-decoration: none;
-    color: white;
-    font-size: 15px;
-    font-weight: 600;
-    transition: 0.25s ease;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  border-radius: 14px;
+  text-decoration: none;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  transition: 0.25s ease;
 }
 
 /* ===== ICON ===== */
 .sidebar .icon {
-    min-width: 25px;
-    text-align: center;
-    font-size: 20px;
+  min-width: 25px;
+  text-align: center;
+  font-size: 20px;
 }
 
 /* ===== TEXT ===== */
 .sidebar .text {
-    white-space: nowrap;
+  white-space: nowrap;
 }
 
 /* ===== HOVER ===== */
 .sidebar a:hover {
-    background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* ===== ACTIVE ===== */
 .sidebar a.active {
-    background: white;
-    color: #0d6ea8;
+  background: white;
+  color: #0d6ea8;
 }
 
 /* ===== COLLAPSED LINKS ===== */
 .sidebar.collapsed > a {
-    justify-content: center;
-    padding: 14px 0;
+  justify-content: center;
+  padding: 14px 0;
 }
 
 /* HIDE TEXT WHEN COLLAPSED */
 .sidebar.collapsed .text {
-    display: none;
+  display: none;
 }
 /* ===== DROPDOWN ===== */
 .dropdown {
-    width: 100%;
-        font-size: 15px;
-    font-weight: 600;
+  width: 100%;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 /* ===== DROPDOWN BUTTON SAME STYLE AS LINKS ===== */
 .dropdown-btn {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    padding: 14px 16px;
-    margin-bottom: 12px;
-    border: none;
-    border-radius: 14px;
-    background: transparent;
-    color: white;
-    font-size: 15px;
-    font-weight: 600;
-    font-family: inherit;
-    text-align: left;
-    cursor: pointer;
-    outline: none;
-    transition: 0.25s ease;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  transition: 0.25s ease;
 }
 
 /* HOVER */
 .dropdown-btn:hover {
-    background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* REMOVE CLICK STYLE */
 .dropdown-btn:focus,
 .dropdown-btn:active {
-    outline: none;
-    box-shadow: none;
+  outline: none;
+  box-shadow: none;
 }
 
 /* ACTIVE OPEN STATE */
 .dropdown-btn.open {
-    background: white;
-    color: #0d6ea8;
+  background: white;
+  color: #0d6ea8;
 }
 
 .dropdown-content {
-    display: none;
-    flex-direction: column;
-    background: rgba(255,255,255,0.05);
+  display: none;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .dropdown-content a {
-    padding-left: 45px;
+  padding-left: 25px;
 }
 
 .dropdown-content a:hover {
-    background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .dropdown-content.show {
-    display: flex;
+  display: flex;
 }
 
 .arrow {
-    font-size: 12px;
+  font-size: 12px;
 }
 .menu-item {
-    display: flex;
-    align-items: center;
-    gap: 10px; /* space between icon and text */
+  display: flex;
+  align-items: center;
+  gap: 10px; /* space between icon and text */
 }
 
 .menu-item .icon i {
-    font-size: 18px;
+  font-size: 18px;
 }
 
- /* SCROLLABLE */
+/* SCROLLABLE */
 /* OPTIONAL: SMOOTH SCROLLBAR */
 .sidebar::-webkit-scrollbar {
-    width: 6px;
+  width: 6px;
 }
 
 .sidebar::-webkit-scrollbar-track {
-    background: transparent;
+  background: transparent;
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-    background: rgba(0,0,0,0.25);
-    border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
 }
 
 .sidebar::-webkit-scrollbar-thumb:hover {
-    background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.4);
 }
 /* ===== CENTER DEVICE ICON WHEN COLLAPSED ===== */
 .sidebar.collapsed .dropdown-btn {
-    justify-content: center;
-    padding: 14px 0;
+  justify-content: center;
+  padding: 14px 0;
 }
 
 /* HIDE ARROW WHEN COLLAPSED */
 .sidebar.collapsed .dropdown-btn .arrow {
-    display: none;
+  display: none;
 }
 
 /* CENTER MENU ITEM */
 .sidebar.collapsed .menu-item {
-    width: 100%;
-    justify-content: center;
+  width: 100%;
+  justify-content: center;
 }
 
 /* REMOVE EXTRA SPACE */
 .sidebar.collapsed .menu-item .icon {
-    margin: 0;
+  margin: 0;
 }
