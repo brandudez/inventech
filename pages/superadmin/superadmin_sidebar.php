@@ -129,7 +129,7 @@
                 class="<?= basename($_SERVER['PHP_SELF']) == 'device_switchers.php' ? 'active' : '' ?>">
                 <div class="menu-item">
                     <span class="icon"><i class="bi bi-hdd-network"></i></span>
-                    <span class="text">Switchers</span>
+                    <span class="text">Video Switchers</span>
                 </div>
             </a>
 
