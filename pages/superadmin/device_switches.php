@@ -92,12 +92,18 @@ if (!empty($search)) {
         d.division LIKE ?
     )";
     $sp = "%$search%";
-    for ($i = 0; $i < 10; $i++) { $params[] = $sp; $types .= 's'; }
+    for ($i = 0; $i < 10; $i++) {
+        $params[] = $sp;
+        $types .= 's';
+    }
 }
 if (!empty($division_filter)) {
     $ph      = implode(',', array_fill(0, count($division_filter), '?'));
     $where[] = "d.division IN ($ph)";
-    foreach ($division_filter as $v) { $params[] = $v; $types .= 's'; }
+    foreach ($division_filter as $v) {
+        $params[] = $v;
+        $types .= 's';
+    }
 }
 if ($active_filter !== '') {
     $where[]  = "s.is_active = ?";
@@ -160,8 +166,10 @@ $stmt = $conn->prepare("
     ORDER BY s.id DESC
     LIMIT ?, ?
 ");
-$fp = $params; $ft = $types . 'ii';
-$fp[] = $offset; $fp[] = $limit;
+$fp = $params;
+$ft = $types . 'ii';
+$fp[] = $offset;
+$fp[] = $limit;
 $stmt->bind_param($ft, ...$fp);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -176,6 +184,7 @@ $exportParams = http_build_query([
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -185,11 +194,31 @@ $exportParams = http_build_query([
     <link rel="stylesheet" href="css/superadmin_navbar.css">
     <link rel="stylesheet" href="./css/superadmin_sidebar.css">
     <style>
-        .clickable-row:hover { background-color: #f0f4ff !important; cursor: pointer; }
-        .view-label { font-size: 0.75rem; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
-        .view-value { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 8px 12px; min-height: 38px; font-size: 0.95rem; }
+        .clickable-row:hover {
+            background-color: #f0f4ff !important;
+            cursor: pointer;
+        }
+
+        .view-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            margin-bottom: 4px;
+        }
+
+        .view-value {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 8px 12px;
+            min-height: 38px;
+            font-size: 0.95rem;
+        }
     </style>
 </head>
+
 <body>
 
     <?php include 'superadmin_sidebar.php'; ?>
@@ -204,17 +233,17 @@ $exportParams = http_build_query([
                 <?php foreach ($division_filter as $v): ?>
                     <input type="hidden" name="division[]" value="<?= htmlspecialchars($v) ?>">
                 <?php endforeach; ?>
-                <input type="hidden" name="is_active"  value="<?= htmlspecialchars($active_filter) ?>">
+                <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
                 <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
                 <input type="text" name="search" class="search-input"
                     placeholder="Search switches..." value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
                 <!-- EXPORT BUTTON -->
                 <a href="export_switches.php?<?= htmlspecialchars($exportParams) ?>"
-   class="btn add-laptop-btn"
-   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
-    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
-</a>
+                    class="btn add-laptop-btn"
+                    onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
+                </a>
             </form>
         </div>
 
@@ -223,8 +252,8 @@ $exportParams = http_build_query([
 
             <div class="filters">
                 <form method="GET" action="device_switches.php" id="filterForm">
-                    <input type="hidden" name="search"     value="<?= htmlspecialchars($search) ?>">
-                    <input type="hidden" name="is_active"  value="<?= htmlspecialchars($active_filter) ?>">
+                    <input type="hidden" name="search" value="<?= htmlspecialchars($search) ?>">
+                    <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
                     <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
 
                     <!-- DIVISION DROPDOWN -->
@@ -331,27 +360,29 @@ $exportParams = http_build_query([
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-6"><label class="form-label">Manufacturer</label><input type="text" class="form-control" name="manufacturer" ></div>
-                            <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" ></div>
-                            <div class="col-md-6"><label class="form-label">PAR Serial No</label><input type="text" class="form-control" name="par_serial_no" ></div>
-                            <div class="col-md-6"><label class="form-label">Ports</label><input type="number" class="form-control" name="no_of_ports" min="0" ></div>
-                            <div class="col-md-6"><label class="form-label">Active Ports</label><input type="number" class="form-control" name="active_ports" min="0" ></div>
-                            <div class="col-md-6"><label class="form-label"># Managed Ports</label><input type="number" class="form-control" name="no_of_managed" min="0" ></div>
-                            <div class="col-md-6"><label class="form-label"># Unmanaged Ports</label><input type="number" class="form-control" name="no_of_unmanaged" min="0" ></div>
-                            <div class="col-md-6"><label class="form-label">Firmware</label><input type="text" class="form-control" name="firmware" ></div>
+                            <div class="col-md-6"><label class="form-label">Manufacturer</label><input type="text" class="form-control" name="manufacturer"></div>
+                            <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model"></div>
+                            <div class="col-md-6"><label class="form-label">PAR Serial No</label><input type="text" class="form-control" name="par_serial_no"></div>
+                            <div class="col-md-6"><label class="form-label">Ports</label><input type="number" class="form-control" name="no_of_ports" min="0"></div>
+                            <div class="col-md-6"><label class="form-label">Active Ports</label><input type="number" class="form-control" name="active_ports" min="0"></div>
+                            <div class="col-md-6"><label class="form-label"># Managed Ports</label><input type="number" class="form-control" name="no_of_managed" min="0"></div>
+                            <div class="col-md-6"><label class="form-label"># Unmanaged Ports</label><input type="number" class="form-control" name="no_of_unmanaged" min="0"></div>
+                            <div class="col-md-6"><label class="form-label">Firmware</label><input type="text" class="form-control" name="firmware"></div>
                             <div class="col-md-6">
                                 <label class="form-label">VLAN Supported</label>
-                                <select class="form-select" name="vlan_supported" >
+                                <select class="form-select" name="vlan_supported">
                                     <option value="" disabled selected hidden>Select</option>
-                                    <option value="1">Yes</option><option value="0">No</option>
+                                    <option value="1">Yes</option>
+                                    <option value="0">No</option>
                                 </select>
                             </div>
-                            <div class="col-md-6"><label class="form-label">Location</label><input type="text" class="form-control" name="location" ></div>
+                            <div class="col-md-6"><label class="form-label">Location</label><input type="text" class="form-control" name="location"></div>
                             <div class="col-md-6">
                                 <label class="form-label">Remote Accessible?</label>
-                                <select class="form-select" name="remote_access" >
+                                <select class="form-select" name="remote_access">
                                     <option value="" disabled selected hidden>Select</option>
-                                    <option value="1">Yes</option><option value="0">No</option>
+                                    <option value="1">Yes</option>
+                                    <option value="0">No</option>
                                 </select>
                             </div>
                             <div class="col-md-6"><label class="form-label">Remote Details</label><input type="text" class="form-control" name="remote_details"></div>
@@ -378,9 +409,10 @@ $exportParams = http_build_query([
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Is Active?</label>
-                                <select class="form-select" name="is_active" >
+                                <select class="form-select" name="is_active">
                                     <option value="" disabled selected hidden>Select</option>
-                                    <option value="1">Yes</option><option value="0">No</option>
+                                    <option value="1">Yes</option>
+                                    <option value="0">No</option>
                                 </select>
                             </div>
                         </div>
@@ -432,7 +464,7 @@ $exportParams = http_build_query([
 
                             <tr class="clickable-row" data-active="<?= $row['is_active'] ? '1' : '0' ?>"
                                 data-bs-toggle="modal" data-bs-target="#viewSwitchModal<?= $row['id'] ?>">
-                                <td><?= htmlspecialchars($row['fullname'] ?? '-')?: '-'  ?></td>
+                                <td><?= htmlspecialchars($row['fullname'] ?? '-') ?: '-'  ?></td>
                                 <td><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['manufacturer'] ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['model'] ?? '') ?: '-' ?></td>
@@ -445,7 +477,7 @@ $exportParams = http_build_query([
                                 <td><?= $row['is_vlan_supported'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
                                 <td><?= htmlspecialchars($row['location'] ?? '') ?: '-' ?></td>
                                 <td><?= $row['is_remote_access'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
-                               <td><?= htmlspecialchars($row['remote_connection_details'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['remote_connection_details'] ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['remarks'] ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['pnp_focal_person'] ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['contact_details'] ?? '') ?: '-' ?></td>
@@ -473,28 +505,94 @@ $exportParams = http_build_query([
                                         </div>
                                         <div class="modal-body">
                                             <div class="row g-3">
-                                                <div class="col-md-4"><div class="view-label">Personnel</div><div class="view-value"><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Division</div><div class="view-value"><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Manufacturer</div><div class="view-value"><?= htmlspecialchars($row['manufacturer'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Model</div><div class="view-value"><?= htmlspecialchars($row['model'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">PAR Serial No</div><div class="view-value"><?= htmlspecialchars($row['serial_no'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Ports</div><div class="view-value"><?= htmlspecialchars($row['no_of_ports'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Active Ports</div><div class="view-value"><?= htmlspecialchars($row['no_of_active_ports'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label"># Managed Ports</div><div class="view-value"><?= htmlspecialchars($row['no_of_managed'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label"># Unmanaged Ports</div><div class="view-value"><?= htmlspecialchars($row['no_of_unmanaged'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Firmware</div><div class="view-value"><?= htmlspecialchars($row['firmware_version'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">VLAN Supported</div><div class="view-value"><?= $row['is_vlan_supported'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Location</div><div class="view-value"><?= htmlspecialchars($row['location'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Is Remote Accessible?</div><div class="view-value"><?= $row['is_remote_access'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Remote Details</div><div class="view-value"><?= htmlspecialchars($row['remote_connection_details'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Remarks</div><div class="view-value"><?= htmlspecialchars($row['remarks'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">PNP Focal</div><div class="view-value"><?= htmlspecialchars($row['pnp_focal_person'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Contact</div><div class="view-value"><?= htmlspecialchars($row['contact_details'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Acquisition Date</div><div class="view-value"><?= htmlspecialchars($row['acquisition_date'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Acquisition Type</div><div class="view-value"><?= htmlspecialchars($row['acquisition_type'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Acquisition Details</div><div class="view-value"><?= htmlspecialchars($row['acquisition_details'] ?? 'N/A') ?></div></div>
-                                                <div class="col-md-4"><div class="view-label">Is Active?</div><div class="view-value"><?= $row['is_active'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></div></div>
-                                                <div class="col-md-12"><div class="view-label">Previous Handlers</div><div class="view-value"><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?></div></div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Personnel</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['fullname'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Division</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['division_name'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Manufacturer</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['manufacturer'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Model</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['model'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">PAR Serial No</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['serial_no'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Ports</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_ports'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Active Ports</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_active_ports'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label"># Managed Ports</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_managed'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label"># Unmanaged Ports</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_unmanaged'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Firmware</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['firmware_version'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">VLAN Supported</div>
+                                                    <div class="view-value"><?= $row['is_vlan_supported'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Location</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['location'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Is Remote Accessible?</div>
+                                                    <div class="view-value"><?= $row['is_remote_access'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Remote Details</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['remote_connection_details'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Remarks</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['remarks'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">PNP Focal</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['pnp_focal_person'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Contact</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['contact_details'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Acquisition Date</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_date'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Acquisition Type</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_type'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Acquisition Details</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_details'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Is Active?</div>
+                                                    <div class="view-value"><?= $row['is_active'] ? '<span class="text-success fw-bold">YES</span>' : '<span class="text-danger fw-bold">NO</span>' ?></div>
+                                                </div>
+                                                <div class="col-md-12">
+                                                    <div class="view-label">Previous Handlers</div>
+                                                    <div class="view-value"><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?></div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="modal-footer">
@@ -538,8 +636,8 @@ $exportParams = http_build_query([
                                                             <?php endforeach; ?>
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-6"><label class="form-label">Manufacturer</label><input type="text" class="form-control" name="manufacturer" value="<?= htmlspecialchars($row['manufacturer'] ?? '') ?>" ></div>
-                                                    <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" value="<?= htmlspecialchars($row['model'] ?? '') ?>" ></div>
+                                                    <div class="col-md-6"><label class="form-label">Manufacturer</label><input type="text" class="form-control" name="manufacturer" value="<?= htmlspecialchars($row['manufacturer'] ?? '') ?>"></div>
+                                                    <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" value="<?= htmlspecialchars($row['model'] ?? '') ?>"></div>
                                                     <div class="col-md-6"><label class="form-label">PAR Serial No</label><input type="text" class="form-control" name="par_serial_no" value="<?= htmlspecialchars($row['serial_no'] ?? '') ?>"></div>
                                                     <div class="col-md-6"><label class="form-label">Ports</label><input type="number" class="form-control" name="no_of_ports" min="0" value="<?= htmlspecialchars($row['no_of_ports'] ?? '') ?>"></div>
                                                     <div class="col-md-6"><label class="form-label">Active Ports</label><input type="number" class="form-control" name="no_of_active_ports" min="0" value="<?= htmlspecialchars($row['no_of_active_ports'] ?? '') ?>"></div>
@@ -611,7 +709,9 @@ $exportParams = http_build_query([
                         <?php endwhile; ?>
 
                     <?php else: ?>
-                        <tr><td colspan="23" class="text-center">No switches found.</td></tr>
+                        <tr>
+                            <td colspan="23" class="text-center">No switches found.</td>
+                        </tr>
                     <?php endif; ?>
 
                 </tbody>
@@ -645,14 +745,14 @@ $exportParams = http_build_query([
 
     <script>
         function setupFilterGroup(allSelector, itemSelector) {
-            const allCb   = document.querySelector(allSelector);
+            const allCb = document.querySelector(allSelector);
             const itemCbs = document.querySelectorAll(itemSelector);
             if (!allCb) return;
-            allCb.addEventListener('change', function () {
+            allCb.addEventListener('change', function() {
                 if (this.checked) itemCbs.forEach(cb => cb.checked = false);
             });
             itemCbs.forEach(cb => {
-                cb.addEventListener('change', function () {
+                cb.addEventListener('change', function() {
                     allCb.checked = !Array.from(itemCbs).some(c => c.checked);
                 });
             });
@@ -660,12 +760,12 @@ $exportParams = http_build_query([
         setupFilterGroup('#allDivision', '.division-checkbox');
 
         // View → Edit transition
-        document.addEventListener('click', function (e) {
+        document.addEventListener('click', function(e) {
             const btn = e.target.closest('[data-edit-target]');
             if (!btn) return;
             const editTarget = btn.getAttribute('data-edit-target');
-            const viewModal  = btn.closest('.modal');
-            const bsView     = bootstrap.Modal.getInstance(viewModal);
+            const viewModal = btn.closest('.modal');
+            const bsView = bootstrap.Modal.getInstance(viewModal);
             if (bsView) {
                 viewModal.addEventListener('hidden.bs.modal', function handler() {
                     viewModal.removeEventListener('hidden.bs.modal', handler);
@@ -674,15 +774,20 @@ $exportParams = http_build_query([
                 bsView.hide();
             }
         });
-
     </script>
 
-   <script>
-    function showToast(message, type = "success") {
-        const colors = { success: "#198754", danger: "#dc3545" };
-        const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
-        const toast  = document.createElement("div");
-        toast.style.cssText = `
+    <script>
+        function showToast(message, type = "success") {
+            const colors = {
+                success: "#198754",
+                danger: "#dc3545"
+            };
+            const icons = {
+                success: "bi-check-circle-fill",
+                danger: "bi-x-circle-fill"
+            };
+            const toast = document.createElement("div");
+            toast.style.cssText = `
             position:fixed;bottom:24px;right:24px;z-index:9999;
             background:${colors[type]};color:#fff;
             padding:14px 20px;border-radius:10px;
@@ -691,38 +796,41 @@ $exportParams = http_build_query([
             font-size:.95rem;max-width:340px;
             animation:slideIn .3s ease;
         `;
-        toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
-        document.body.appendChild(toast);
-        if (!document.getElementById("toastKeyframe")) {
-            const s = document.createElement("style");
-            s.id = "toastKeyframe";
-            s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
-            document.head.appendChild(s);
+            toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
+            document.body.appendChild(toast);
+            if (!document.getElementById("toastKeyframe")) {
+                const s = document.createElement("style");
+                s.id = "toastKeyframe";
+                s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
+                document.head.appendChild(s);
+            }
+            setTimeout(() => {
+                toast.style.transition = "opacity .4s";
+                toast.style.opacity = "0";
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
         }
-        setTimeout(() => {
-            toast.style.transition = "opacity .4s";
-            toast.style.opacity = "0";
-            setTimeout(() => toast.remove(), 400);
-        }, 3500);
-    }
     </script>
 
     <?php if (!empty($_SESSION['toast_success'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
-    });
-    </script>
-    <?php unset($_SESSION['toast_success']); endif; ?>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
+            });
+        </script>
+    <?php unset($_SESSION['toast_success']);
+    endif; ?>
 
     <?php if (!empty($_SESSION['toast_error'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
-    });
-    </script>
-    <?php unset($_SESSION['toast_error']); endif; ?>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
+            });
+        </script>
+    <?php unset($_SESSION['toast_error']);
+    endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

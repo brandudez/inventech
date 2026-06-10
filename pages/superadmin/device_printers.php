@@ -196,11 +196,11 @@ $exportParams = http_build_query([
                 <input type="text" name="search" class="search-input" placeholder="Search printers..." value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
                 <!-- EXPORT BUTTON -->
-      <a href="export_printers.php?<?= htmlspecialchars($exportParams) ?>"
-   class="btn add-laptop-btn"
-   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
-    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
-</a>
+                <a href="export_printers.php?<?= htmlspecialchars($exportParams) ?>"
+                    class="btn add-laptop-btn"
+                    onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
+                </a>
             </form>
         </div>
 
@@ -308,14 +308,14 @@ $exportParams = http_build_query([
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" ></div>
-                            <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" ></div>
-                            <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no" ></div>
+                            <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand"></div>
+                            <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model"></div>
+                            <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no"></div>
                             <div class="col-md-6"><label class="form-label">Acquisition Details</label><input type="text" class="form-control" name="acquisition_details"></div>
                             <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" name="acquisition_date" class="form-control"></div>
                             <div class="col-md-6">
                                 <label class="form-label">Is Active?</label>
-                                <select name="is_active" class="form-select" >
+                                <select name="is_active" class="form-select">
                                     <option value="" disabled selected hidden>Select</option>
                                     <option value="1">Yes</option>
                                     <option value="0">No</option>
@@ -371,14 +371,14 @@ $exportParams = http_build_query([
                         <?php while ($row = $result->fetch_assoc()): ?>
                             <tr class="clickable-row" data-active="<?= $row['is_active'] ? '1' : '0' ?>"
                                 data-bs-toggle="modal" data-bs-target="#viewPrModal<?= $row['id'] ?>">
-                                <td><?= htmlspecialchars($row['fullname'] ?? '-')?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['fullname'] ?? '-') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['brand'] ?? '')  ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['model'] ?? '')  ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['serial_no'] ?? '') ?: '-'  ?></td>
                                 <td><?= htmlspecialchars($row['acquisition_details'] ?? '')  ?: '-' ?></td>
                                 <td><?= (!empty($row['acquisition_date']) && $row['acquisition_date'] !== '0000-00-00') ? htmlspecialchars($row['acquisition_date']) : '-' ?></td>
-                                <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id'])?: '-' ?></td>
+                                <td><?= getPreviousOwnersNames($conn, $row['previous_owners_id']) ?: '-' ?></td>
                                 <td><?= $row['is_active'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
                                 <td><?= (!empty($row['created_date']) && substr($row['created_date'], 0, 10) !== '0000-00-00') ? htmlspecialchars(substr($row['created_date'], 0, 10)) : '-' ?></td>
                                 <td onclick="event.stopPropagation();">
@@ -400,31 +400,31 @@ $exportParams = http_build_query([
                                             <div class="row g-3">
                                                 <div class="col-md-6">
                                                     <div class="view-label">Personnel</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['fullname'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Division</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['division_name'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Brand</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['brand'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['brand'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Model</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['model'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['model'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Serial Number</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['serial_no'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['serial_no'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Acquisition Details</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_details'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_details'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Acquisition Date</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_date'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_date'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Is Active?</div>
@@ -483,9 +483,9 @@ $exportParams = http_build_query([
                                                             <?php endforeach; ?>
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" value="<?= htmlspecialchars($row['brand'] ?? '') ?>" ></div>
-                                                    <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" value="<?= htmlspecialchars($row['model'] ?? '') ?>" ></div>
-                                                    <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no" value="<?= htmlspecialchars($row['serial_no'] ?? '') ?>" ></div>
+                                                    <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" value="<?= htmlspecialchars($row['brand'] ?? '') ?>"></div>
+                                                    <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" value="<?= htmlspecialchars($row['model'] ?? '') ?>"></div>
+                                                    <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no" value="<?= htmlspecialchars($row['serial_no'] ?? '') ?>"></div>
                                                     <div class="col-md-6"><label class="form-label">Acquisition Details</label><input type="text" class="form-control" name="acquisition_details" value="<?= htmlspecialchars($row['acquisition_details'] ?? '') ?>"></div>
                                                     <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" class="form-control" name="acquisition_date" value="<?= htmlspecialchars($row['acquisition_date'] ?? '') ?>"></div>
                                                     <div class="col-md-6">
@@ -586,16 +586,20 @@ $exportParams = http_build_query([
                 bsView.hide();
             }
         });
-
-     
-   </script>
+    </script>
 
     <script>
-    function showToast(message, type = "success") {
-        const colors = { success: "#198754", danger: "#dc3545" };
-        const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
-        const toast  = document.createElement("div");
-        toast.style.cssText = `
+        function showToast(message, type = "success") {
+            const colors = {
+                success: "#198754",
+                danger: "#dc3545"
+            };
+            const icons = {
+                success: "bi-check-circle-fill",
+                danger: "bi-x-circle-fill"
+            };
+            const toast = document.createElement("div");
+            toast.style.cssText = `
             position:fixed;bottom:24px;right:24px;z-index:9999;
             background:${colors[type]};color:#fff;
             padding:14px 20px;border-radius:10px;
@@ -604,38 +608,41 @@ $exportParams = http_build_query([
             font-size:.95rem;max-width:340px;
             animation:slideIn .3s ease;
         `;
-        toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
-        document.body.appendChild(toast);
-        if (!document.getElementById("toastKeyframe")) {
-            const s = document.createElement("style");
-            s.id = "toastKeyframe";
-            s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
-            document.head.appendChild(s);
+            toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
+            document.body.appendChild(toast);
+            if (!document.getElementById("toastKeyframe")) {
+                const s = document.createElement("style");
+                s.id = "toastKeyframe";
+                s.textContent = `@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`;
+                document.head.appendChild(s);
+            }
+            setTimeout(() => {
+                toast.style.transition = "opacity .4s";
+                toast.style.opacity = "0";
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
         }
-        setTimeout(() => {
-            toast.style.transition = "opacity .4s";
-            toast.style.opacity = "0";
-            setTimeout(() => toast.remove(), 400);
-        }, 3500);
-    }
     </script>
 
     <?php if (!empty($_SESSION['toast_success'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
-    });
-    </script>
-    <?php unset($_SESSION['toast_success']); endif; ?>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
+            });
+        </script>
+    <?php unset($_SESSION['toast_success']);
+    endif; ?>
 
     <?php if (!empty($_SESSION['toast_error'])): ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
-    });
-    </script>
-    <?php unset($_SESSION['toast_error']); endif; ?>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
+            });
+        </script>
+    <?php unset($_SESSION['toast_error']);
+    endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

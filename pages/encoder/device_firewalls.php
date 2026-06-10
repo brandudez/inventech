@@ -461,43 +461,43 @@ $exportParams = http_build_query([
                                             <div class="row g-3">
                                                 <div class="col-md-4">
                                                     <div class="view-label">Personnel</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['fullname'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Division</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['division_name'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Manufacturer</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['manufacturer'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['manufacturer'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Model</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['model'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['model'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Serial No</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['serial_no'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['serial_no'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">No of Ports</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_ports'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_ports'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Active Ports</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_active_ports'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_active_ports'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Firmware Version</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['firmware_version'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['firmware_version'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Management Interface</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['management_interface_type'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['management_interface_type'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Location</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['location'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['location'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Is Remote Accessible?</div>
@@ -505,31 +505,31 @@ $exportParams = http_build_query([
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Remote Details</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['remote_connection_details'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['remote_connection_details'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Remarks</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['remarks'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['remarks'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">PNP Focal</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['pnp_focal_person'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['pnp_focal_person'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Contact</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['contact_details'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['contact_details'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Acquisition Date</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_date'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_date'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Acquisition Type</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_type'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_type'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Acquisition Details</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_details'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_details'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Is Active?</div>

@@ -718,31 +718,31 @@ $exportParams = http_build_query([
                                             <div class="row g-3">
                                                 <div class="col-md-4">
                                                     <div class="view-label">Device Name</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['device_name'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['device_name'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Personnel</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['personnel_name'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['personnel_name'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Division</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['division_name'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">IP Address</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['ip_address'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['ip_address'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">MAC Address</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['mac_address'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['mac_address'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">GUID</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['guid'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['guid'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Operating System</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['os'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['os'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Is OS Licensed?</div>
@@ -750,11 +750,11 @@ $exportParams = http_build_query([
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">OS License Key</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['os_license_key'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['os_license_key'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Office Application</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['office_application'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['office_application'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Is Office Licensed?</div>
@@ -762,63 +762,63 @@ $exportParams = http_build_query([
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Office License Key</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['office_license_key'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['office_license_key'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Endpoint Security</div>
-                                                    <div class="view-value"><?= getEndpointNames($conn, $row['endpoint_security_id']) ?: 'N/A' ?></div>
+                                                    <div class="view-value"><?= getEndpointNames($conn, $row['endpoint_security_id']) ?: '' ?></div>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <div class="view-label"># Installed Antivirus</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <div class="view-label">Date Installed</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['date_installed'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['date_installed'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">CPU Brand</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['cpu_brand'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['cpu_brand'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label"># CPU Cores</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['cpu_cores'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['cpu_cores'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">GB RAM</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['gb_ram'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['gb_ram'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Monitor Brand</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['monitor_brand'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['monitor_brand'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Monitor Size</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['monitor_size_inches'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['monitor_size_inches'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label"># User Accounts</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_user_accounts'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_user_accounts'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">User Account Type</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['user_account_type'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['user_account_type'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Acquisition Date</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_date'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_date'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">PAR Serial Number</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['par_serial_no'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['par_serial_no'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Authorized Software</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['authorized_software'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['authorized_software'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Unauthorized Software</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['unauthorized_software'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['unauthorized_software'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <div class="view-label">Is Remotely Accessible?</div>
@@ -830,7 +830,7 @@ $exportParams = http_build_query([
                                                 </div>
                                                 <div class="col-md-12">
                                                     <div class="view-label">Previous Handlers</div>
-                                                    <div class="view-value"><?= getPersonnelNames($conn, $row['previous_owners_id']) ?: 'N/A' ?></div>
+                                                    <div class="view-value"><?= getPersonnelNames($conn, $row['previous_owners_id']) ?: '' ?></div>
                                                 </div>
                                             </div>
                                         </div>
