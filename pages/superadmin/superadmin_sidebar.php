@@ -125,13 +125,13 @@
                 </div>
             </a>
 
-<a href="../superadmin/device_switchers.php"
-    class="<?= basename($_SERVER['PHP_SELF']) == 'device_switchers.php' ? 'active' : '' ?>">
-    <div class="menu-item">
-        <span class="icon"><i class="bi bi-hdd-network"></i></span>
-        <span class="text">Switchers</span>
-    </div>
-</a>
+            <a href="../superadmin/device_switchers.php"
+                class="<?= basename($_SERVER['PHP_SELF']) == 'device_switchers.php' ? 'active' : '' ?>">
+                <div class="menu-item">
+                    <span class="icon"><i class="bi bi-hdd-network"></i></span>
+                    <span class="text">Switchers</span>
+                </div>
+            </a>
 
             <a href="../superadmin/device_splitters.php"
                 class="<?= basename($_SERVER['PHP_SELF']) == 'device_splitters.php' ? 'active' : '' ?>">

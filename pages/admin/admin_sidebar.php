@@ -67,7 +67,7 @@ $devicesActive = in_array($currentPage, $devicePages);
 
         <button class="dropdown-btn <?= $devicesActive ? 'active' : '' ?>" id="deviceDropdownBtn">
             <div class="menu-item">
-                <span class="icon"><i class="bi bi-hdd-network"></i></span>
+                <span class="icon"><i class="bi bi-pc-display-horizontal"></i></span>
                 <span class="text">Devices</span>
             </div>
             <span class="arrow"><i class="bi bi-chevron-down"></i></span>
@@ -136,6 +136,36 @@ $devicesActive = in_array($currentPage, $devicePages);
                 <div class="menu-item">
                     <span class="icon"><i class="bi bi-shield-lock"></i></span>
                     <span class="text">Firewalls</span>
+                </div>
+            </a>
+            <a href="admin_device_switchers.php"
+                class="<?= $currentPage == 'admin_device_switchers.php' ? 'active' : '' ?>">
+                <div class="menu-item">
+                    <span class="icon"><i class="bi bi-hdd-network"></i></span>
+                    <span class="text">Switchers</span>
+                </div>
+            </a>
+
+            <a href="admin_device_splitters.php"
+                class="<?= $currentPage == 'admin_device_splitters.php' ? 'active' : '' ?>">
+                <div class="menu-item">
+                    <span class="icon"><i class="bi bi-diagram-3"></i></span>
+                    <span class="text">Splitters</span>
+                </div>
+            </a>
+
+            <a href="admin_device_ups.php"
+                class="<?= $currentPage == 'admin_device_ups.php' ? 'active' : '' ?>">
+                <div class="menu-item">
+                    <span class="icon"><i class="bi bi-lightning-charge"></i></span>
+                    <span class="text">UPS</span>
+                </div>
+            </a>
+            <a href="admin_device_others.php"
+                class="<?= $currentPage == 'admin_device_others.php' ? 'active' : '' ?>">
+                <div class="menu-item">
+                    <span class="icon"><i class="bi bi-hdd-stack"></i></span>
+                    <span class="text">Others</span>
                 </div>
             </a>
 
