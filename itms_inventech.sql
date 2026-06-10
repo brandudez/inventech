@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 05, 2026 at 09:45 PM
+-- Generation Time: Jun 10, 2026 at 08:55 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -44,6 +44,13 @@ CREATE TABLE `cameras` (
   `is_active` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `cameras`
+--
+
+INSERT INTO `cameras` (`id`, `device_code`, `personnel_id`, `device_id`, `division_id`, `acquisition_date`, `acquisition_details`, `brand`, `model`, `serial_no`, `previous_owners_id`, `created_date`, `last_update_at`, `is_active`) VALUES
+(1, '', 0, 0, 1, '0000-00-00', '', '', '', '', '[]', '2026-06-07 16:00:00', '2026-06-10', 1);
+
 -- --------------------------------------------------------
 
 --
@@ -71,7 +78,7 @@ CREATE TABLE `desktops` (
   `monitor_brand` varchar(100) DEFAULT NULL,
   `monitor_size_inches` int(11) DEFAULT NULL,
   `no_of_user_accounts` int(11) DEFAULT NULL,
-  `user_account_type` varchar(100) DEFAULT NULL,
+  `user_account_type` longtext DEFAULT NULL,
   `authorized_software` text DEFAULT NULL,
   `unauthorized_software` text DEFAULT NULL,
   `office_application` varchar(150) DEFAULT NULL,
@@ -85,6 +92,17 @@ CREATE TABLE `desktops` (
   `is_active` tinyint(1) DEFAULT 1,
   `acquisition_date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `desktops`
+--
+
+INSERT INTO `desktops` (`id`, `personnel_id`, `device_id`, `device_name`, `division_id`, `ip_address`, `os`, `is_os_licensed`, `is_remote_acc`, `endpoint_security_id`, `no_of_installed_anti_virus`, `date_installed`, `guid`, `mac_address`, `cpu_brand`, `cpu_cores`, `gb_ram`, `monitor_brand`, `monitor_size_inches`, `no_of_user_accounts`, `user_account_type`, `authorized_software`, `unauthorized_software`, `office_application`, `is_office_licensed`, `previous_owners_id`, `created_date`, `last_updated_at`, `os_license_key`, `office_license_key`, `par_serial_no`, `is_active`, `acquisition_date`) VALUES
+(1, 0, 0, 'DESKTOP-ITSD', 1, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, '[]', NULL, NULL, '-', 1, '[]', '2026-06-08', NULL, NULL, NULL, NULL, 1, NULL),
+(3, 0, 0, '', 1, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, '[]', NULL, NULL, '-', 1, '[]', '2026-06-09', NULL, NULL, NULL, NULL, 1, '2026-06-10'),
+(4, 1, 0, 'LAPTOP-ITSD01', 3, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3, NULL, NULL, NULL, '-', 1, '[]', '2026-06-09', NULL, NULL, NULL, NULL, 1, NULL),
+(5, 1, 0, 'DESKTOP-ITSD-01', 17, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, '-', 1, '[]', '2026-06-09', NULL, NULL, NULL, NULL, 1, NULL),
+(6, 1, 0, 'LAPTOP-ITSD', 1, NULL, NULL, 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3, '[{\"name\":\"jake\",\"type\":\"Admin\"},{\"name\":\"asas\",\"type\":\"Admin\"},{\"name\":\"personnel\",\"type\":\"User\"}]', NULL, NULL, '-', 1, NULL, '2026-06-09', NULL, NULL, NULL, NULL, 1, NULL);
 
 -- --------------------------------------------------------
 
@@ -213,6 +231,14 @@ CREATE TABLE `firewalls` (
   `last_updated_at` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `firewalls`
+--
+
+INSERT INTO `firewalls` (`id`, `personnel_id`, `division_id`, `device_id`, `manufacturer`, `model`, `serial_no`, `no_of_ports`, `no_of_active_ports`, `firmware_version`, `management_interface_type`, `location`, `is_active`, `is_remotely_accessible`, `remote_connection_details`, `remarks`, `pnp_focal_person`, `contact_details`, `acquisition_date`, `acquisition_type`, `acquisition_details`, `previous_owners_id`, `created_date`, `last_updated_at`) VALUES
+(1, 0, 1, 1, '', '', '', 0, 0, '', '', '', 0, 0, '', '', '', 0, '2026-06-09', '', '', NULL, '2026-06-08', '2026-06-10'),
+(2, 0, 1, 1, '', '', '', 0, 0, '', '', '', 0, 0, '', '', '', 0, NULL, '', '', '[]', '2026-06-10', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -235,6 +261,13 @@ CREATE TABLE `headsets` (
   `last_update_at` date DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `headsets`
+--
+
+INSERT INTO `headsets` (`id`, `device_code`, `personnel_id`, `device_id`, `division_id`, `acquisition_date`, `acquisition_details`, `brand`, `model`, `serial_no`, `previous_owners_id`, `created_date`, `last_update_at`, `is_active`) VALUES
+(1, '', 0, 0, 1, '0000-00-00', '', '', '', '', '[]', '2026-06-07 16:00:00', NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -278,6 +311,13 @@ CREATE TABLE `laptops` (
   `acquisition_date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `laptops`
+--
+
+INSERT INTO `laptops` (`id`, `personnel_id`, `device_id`, `device_name`, `division_id`, `ip_address`, `os`, `is_os_licensed`, `is_remote_acc`, `endpoint_security_id`, `no_of_installed_anti_virus`, `date_installed`, `guid`, `mac_address`, `cpu_brand`, `cpu_cores`, `gb_ram`, `monitor_brand`, `monitor_size_inches`, `no_of_user_accounts`, `user_account_type`, `authorized_software`, `unauthorized_software`, `office_application`, `is_office_licensed`, `previous_owners_id`, `created_date`, `last_updated_at`, `os_license_key`, `office_license_key`, `par_serial_no`, `is_active`, `acquisition_date`) VALUES
+(1, 0, 0, 'LAPTOP-ITSD01', 1, '', '-', 0, 0, '[\"7\"]', 0, '0000-00-00', '', '', '', 0, 0, '', 0, 0, '', '', '', '-', 0, '[]', '2026-06-08', NULL, '', '', '', 1, '0000-00-00');
+
 -- --------------------------------------------------------
 
 --
@@ -294,6 +334,19 @@ CREATE TABLE `personnels` (
   `created_by` int(11) NOT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `personnels`
+--
+
+INSERT INTO `personnels` (`id`, `division_id`, `rank_id`, `first_name`, `middle_name`, `last_name`, `created_by`, `is_active`) VALUES
+(1, 1, 1, 'ITSD', 'ENCODER', '.', 2, 1),
+(2, 1, 1, 'LAYLA', 'BALMOND', 'THAMUZ', 2, 0),
+(3, 1, 14, 'NEW', 'NEW', 'NEW', 3, 1),
+(4, 1, 1, 'NGUYEN', '', 'AMURAO', 3, 1),
+(5, 1, 1, 'BRENON', '', 'BANAO', 3, 1),
+(6, 17, 1, 'MARK', '', 'AQUINO', 3, 1),
+(7, 1, 14, 'BRANDON JAKE', 'FERNANDEZ', 'DIAZ', 1, 1);
 
 -- --------------------------------------------------------
 
@@ -316,6 +369,13 @@ CREATE TABLE `printers` (
   `serial_no` varchar(255) DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `printers`
+--
+
+INSERT INTO `printers` (`id`, `personnel_id`, `device_id`, `division_id`, `acquisition_date`, `acquisition_details`, `brand`, `model`, `previous_owners_id`, `created_date`, `last_update_at`, `serial_no`, `is_active`) VALUES
+(1, 0, 0, 1, '0000-00-00', '', '', '', '[]', '2026-06-08', '2026-06-10', '', 1);
 
 -- --------------------------------------------------------
 
@@ -401,6 +461,76 @@ CREATE TABLE `routers` (
   `division_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `routers`
+--
+
+INSERT INTO `routers` (`id`, `personnel_id`, `device_id`, `manufacturer`, `model`, `serial_no`, `no_of_ports`, `no_of_active_ports`, `active_port_ip_address_range`, `firmware_version`, `location`, `is_active`, `is_remotely_accessible`, `remote_connection_details`, `remarks`, `pnp_focal_person`, `contact_details`, `acquisition_date`, `acquisition_type`, `previous_owners_id`, `created_date`, `last_update_at`, `division_id`) VALUES
+(1, 0, 0, '', '', '', 0, 0, '', '', '', 0, 0, '', '', '', 0, '2021-01-07', '', '[]', '2026-06-08', NULL, 1),
+(2, 0, 0, '', '', '', 0, 0, '', '', '', 1, 0, '', '', '', 0, NULL, '', '[]', '2026-06-10', NULL, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `splitters`
+--
+
+CREATE TABLE `splitters` (
+  `id` int(11) NOT NULL,
+  `personnel_id` int(11) NOT NULL,
+  `division_id` int(11) NOT NULL,
+  `brand` varchar(255) DEFAULT NULL,
+  `model` varchar(255) DEFAULT NULL,
+  `serial_no` varchar(255) DEFAULT NULL,
+  `hdmi_in` int(11) DEFAULT NULL,
+  `hdmi_out` int(11) DEFAULT NULL,
+  `no_of_ports` int(11) DEFAULT NULL,
+  `acquisition_details` text DEFAULT NULL,
+  `acquisition_date` date DEFAULT NULL,
+  `previous_owners_id` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`previous_owners_id`)),
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_date` date NOT NULL DEFAULT current_timestamp(),
+  `last_update_at` date DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `splitters`
+--
+
+INSERT INTO `splitters` (`id`, `personnel_id`, `division_id`, `brand`, `model`, `serial_no`, `hdmi_in`, `hdmi_out`, `no_of_ports`, `acquisition_details`, `acquisition_date`, `previous_owners_id`, `is_active`, `created_date`, `last_update_at`) VALUES
+(1, 3, 2, 'Acer', 'charing', '14352354326', 1, 13, 14, 'frerhe', '2026-06-10', '[3]', 1, '2026-06-10', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `switchers`
+--
+
+CREATE TABLE `switchers` (
+  `id` int(11) NOT NULL,
+  `personnel_id` int(11) NOT NULL,
+  `division_id` int(11) NOT NULL,
+  `brand` varchar(255) DEFAULT NULL,
+  `model` varchar(255) DEFAULT NULL,
+  `serial_no` varchar(255) DEFAULT NULL,
+  `hdmi_in` int(11) DEFAULT NULL,
+  `hdmi_out` int(11) DEFAULT NULL,
+  `no_of_ports` int(11) DEFAULT NULL,
+  `acquisition_details` text DEFAULT NULL,
+  `acquisition_date` date DEFAULT NULL,
+  `previous_owners_id` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`previous_owners_id`)),
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_date` date NOT NULL DEFAULT current_timestamp(),
+  `last_update_at` date DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `switchers`
+--
+
+INSERT INTO `switchers` (`id`, `personnel_id`, `division_id`, `brand`, `model`, `serial_no`, `hdmi_in`, `hdmi_out`, `no_of_ports`, `acquisition_details`, `acquisition_date`, `previous_owners_id`, `is_active`, `created_date`, `last_update_at`) VALUES
+(1, 3, 1, '', '', '', NULL, NULL, NULL, '', NULL, '[]', 1, '2026-06-10', '2026-06-10');
+
 -- --------------------------------------------------------
 
 --
@@ -437,6 +567,15 @@ CREATE TABLE `switches` (
   `last_update_at` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `switches`
+--
+
+INSERT INTO `switches` (`id`, `personnel_id`, `division_id`, `device_id`, `manufacturer`, `model`, `serial_no`, `no_of_ports`, `no_of_active_ports`, `no_of_managed`, `no_of_unmanaged`, `firmware_version`, `is_vlan_supported`, `location`, `is_status`, `is_active`, `is_remote_access`, `remote_connection_details`, `remarks`, `pnp_focal_person`, `contact_details`, `acquisition_date`, `acquisition_type`, `acquisition_details`, `previous_owners_id`, `created_date`, `last_update_at`) VALUES
+(1, 0, 1, 0, '', '', '', 0, 0, 0, 0, '0', 0, '', 0, 1, 0, '', '', '', '', '0000-00-00', '', '', '[]', '2026-06-08', '2026-06-10'),
+(2, 0, 1, 0, '', '', '', 0, 0, 0, 0, '0', 0, '', 0, 0, 0, '', '', '', '', '0000-00-00', '', '', '[]', '2026-06-10', '2026-06-10'),
+(3, 0, 1, 0, '', '', '', 0, 0, 0, 0, '0', 0, '', 0, 0, 0, '', '', '', '', NULL, '', '', '[]', '2026-06-10', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -465,7 +604,11 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `role_id`, `division_id`, `email`, `password`, `rank_id`, `first_name`, `middle_name`, `last_name`, `username`, `is_active`, `creator_user_id`, `created_date`, `last_update_at`) VALUES
-(1, 1, 1, 'itsd.superadmin@itms.com', '$2y$10$aisUHgeqUkfpDVPYWE6KuOV4pzsD8twbv11LfwnUhpykBuh/Z9bXm', 1, 'ITSD', 'SUPER', 'ADMIN', 'superadmin', 1, 1, '2026-06-06', NULL);
+(1, 1, 1, 'itsd.superadmin@itms.com', '$2y$10$aisUHgeqUkfpDVPYWE6KuOV4pzsD8twbv11LfwnUhpykBuh/Z9bXm', 1, 'ITSD', 'SUPER', 'ADMIN', 'superadmin', 1, 1, '2026-06-06', NULL),
+(2, 3, 1, 'itsd.encoder@itms.com', '$2y$10$r4ds9k1t3YGmXaIjWbpBe.4a/l5ywy29lm0ZXUD2hBpR1/GEQuwfe', 1, 'BRANDON JAKE', 'FERNANDEZ', 'DIAZ', 'diazbf', 1, 1, '2026-06-08', NULL),
+(3, 2, 1, 'itsd.admin@itms.com', '$2y$10$0fmrsGlKIsYLWel22a1nN.98nF6nYES59.TVgTDaEXM75hD/6DbvS', 1, 'ITSD', 'ADMIN', '01', '01ia', 1, 1, '2026-06-08', NULL),
+(4, 3, 1, 'nmamurao@itms.com', '$2y$10$YHVoHPB5xQaZ4ZJiah4bLeStvYqxLyNO8GAqmkK9ssc8ECJ9FtqSi', 1, 'NGUYEN', 'FERNANDEZ', 'AMURAO', 'amuraonf', 1, 3, '2026-06-10', NULL),
+(5, 3, 1, 'hahhahaha@itms.com', '$2y$10$0UaWj7MD7SGlS4IacsG/F.dvthUixdmS9dhMvz42mkQv6P78Ouo9m', 2, 'NEW', 'NEW', 'PAN', 'pannn', 1, 3, '2026-06-10', NULL);
 
 --
 -- Indexes for dumped tables
@@ -557,6 +700,18 @@ ALTER TABLE `routers`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `splitters`
+--
+ALTER TABLE `splitters`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `switchers`
+--
+ALTER TABLE `switchers`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `switches`
 --
 ALTER TABLE `switches`
@@ -578,13 +733,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `cameras`
 --
 ALTER TABLE `cameras`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `desktops`
 --
 ALTER TABLE `desktops`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `devices`
@@ -608,31 +763,31 @@ ALTER TABLE `endpoint_security`
 -- AUTO_INCREMENT for table `firewalls`
 --
 ALTER TABLE `firewalls`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `headsets`
 --
 ALTER TABLE `headsets`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `laptops`
 --
 ALTER TABLE `laptops`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `personnels`
 --
 ALTER TABLE `personnels`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `printers`
 --
 ALTER TABLE `printers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `ranks`
@@ -644,19 +799,31 @@ ALTER TABLE `ranks`
 -- AUTO_INCREMENT for table `routers`
 --
 ALTER TABLE `routers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `splitters`
+--
+ALTER TABLE `splitters`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `switchers`
+--
+ALTER TABLE `switchers`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `switches`
 --
 ALTER TABLE `switches`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
