@@ -177,7 +177,7 @@ $exportParams = http_build_query([
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UPS Devices</title>
+    <title>Switcher Devices</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../superadmin/css/devices.css">
     <link rel="stylesheet" href="css/superadmin_navbar.css">
@@ -201,17 +201,17 @@ $exportParams = http_build_query([
 
         <!-- SEARCH -->
         <div class="search-container">
-            <form method="GET" action="device_ups.php" class="search-form">
+            <form method="GET" action="device_switchers.php" class="search-form">
                 <?php foreach ($division_filter as $v): ?>
                     <input type="hidden" name="division[]" value="<?= htmlspecialchars($v) ?>">
                 <?php endforeach; ?>
                 <input type="hidden" name="is_active"  value="<?= htmlspecialchars($active_filter) ?>">
                 <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
                 <input type="text" name="search" class="search-input"
-                    placeholder="Search ups..." value="<?= htmlspecialchars($search) ?>">
+                    placeholder="Search switchers..." value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
                 <!-- EXPORT BUTTON -->
-              <a href="export_ups.php?<?= htmlspecialchars($exportParams) ?>"
+              <a href="export_switchers.php?<?= htmlspecialchars($exportParams) ?>">
    class="btn add-laptop-btn"
    onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
     <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
@@ -223,7 +223,7 @@ $exportParams = http_build_query([
         <div class="right-side">
 
             <div class="filters">
-                <form method="GET" action="device_ups.php" id="filterForm">
+                <form method="GET" action="device_switchers.php" id="filterForm">
                     <input type="hidden" name="search"     value="<?= htmlspecialchars($search) ?>">
                     <input type="hidden" name="is_active"  value="<?= htmlspecialchars($active_filter) ?>">
                     <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
@@ -295,23 +295,23 @@ $exportParams = http_build_query([
             </div>
 
             <!-- ADD BUTTON -->
-            <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addUpsModal">
-                Add UPS
+            <button type="button" class="btn add-btn" data-bs-toggle="modal" data-bs-target="#addSwitchersModal">
+                Add Switcher
             </button>
 
         </div>
     </div>
 
-    <!-- ADD UPS MODAL -->
-    <div class="modal fade" id="addUpsModal" tabindex="-1" aria-labelledby="addUpsModalLabel" aria-hidden="true">
+    <!-- ADD SWITCHERS MODAL -->
+    <div class="modal fade" id="addSwitchersModal" tabindex="-1" aria-labelledby="addSwitchersModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header text-white" style="background-color:#0d6ea8;">
-                    <h5 class="modal-title" id="addUpsModalLabel">Add UPS</h5>
+                    <h5 class="modal-title" id="addSwitchersModalLabel">Add Switcher</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form action="add_ups.php" method="POST">
+                    <form action="add_switchers.php" method="POST">
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label">Personnel</label>
@@ -379,7 +379,7 @@ $exportParams = http_build_query([
                         </div>
                         <div class="modal-footer mt-3">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">Save Ups</button>
+                            <button type="submit" class="btn text-white" style="background-color:#0d6ea8;">Save Switcher</button>
                         </div>
                     </form>
                 </div>
@@ -391,19 +391,16 @@ $exportParams = http_build_query([
     <div class="contenttable">
         <div class="table-container">
             <table class="users-table">
-               <thead>
+                <thead>
                     <tr>
                         <th>PERSONNEL</th>
                         <th>DIVISION</th>
                         <th>BRAND</th>
                         <th>MODEL</th>
                         <th>SERIAL NO</th>
-                        <th>CAPACITY (VA)</th>
-                        <th>CAPACITY (WATTS)</th>
-                        <th>BATTERY TYPE</th>
-                        <th>BACKUP TIME</th>
-                        <th>INPUT VOLTAGE</th>
-                        <th>OUTPUT VOLTAGE</th>
+                        <th>HDMI IN</th>
+                        <th>HDMI OUT</th>
+                        <th># OF PORTS</th>
                         <th>ACQUISITION DETAILS</th>
                         <th>ACQUISITION DATE</th>
                         <th>PREVIOUS HANDLERS</th>
@@ -418,18 +415,15 @@ $exportParams = http_build_query([
                         <?php while ($row = $result->fetch_assoc()): ?>
 
                             <tr class="clickable-row" data-active="<?= $row['is_active'] ? '1' : '0' ?>"
-                                data-bs-toggle="modal" data-bs-target="#viewUpsModal<?= $row['id'] ?>">
-                               <td><?= htmlspecialchars($row['fullname'] ?? '-') ?: '-' ?></td>
+                                data-bs-toggle="modal" data-bs-target="#viewSwitchersModal<?= $row['id'] ?>">
+<td><?= htmlspecialchars($row['fullname'] ?? '-') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['manufacturer'] ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['model'] ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['par_serial_no'] ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['capacity_va'] ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['capacity_watts'] ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['battery_type'] ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['backup_time'] ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['input_voltage'] ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['output_voltage'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['hdmi_in'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['hdmi_out'] ?? '') ?: '-' ?></td>
+                                <td><?= htmlspecialchars($row['ports'] ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['acquisition_details'] ?? '') ?: '-' ?></td>
                                 <td>
                                     <?= (!empty($row['acquisition_date']) && $row['acquisition_date'] !== '0000-00-00')
@@ -442,22 +436,26 @@ $exportParams = http_build_query([
                                         ? '<span style="color:green;font-weight:bold;">YES</span>'
                                         : '<span style="color:red;font-weight:bold;">NO</span>' ?>
                                 </td>
-                                <td><?= htmlspecialchars($row['created_at'] ?? '') ?: '-' ?></td>
+                                <td>
+                                    <?= (!empty($row['created_at']))
+                                        ? htmlspecialchars($row['created_at'])
+                                        : '-' ?>
+                                </td>
                                 <td onclick="event.stopPropagation();">
                                     <button class="btn btn-primary btn-sm"
                                         data-bs-toggle="modal"
-                                        data-bs-target="#editUpsModal<?= $row['id'] ?>">
+                                        data-bs-target="#editSwitchersModal<?= $row['id'] ?>">
                                         <i class="bi bi-gear-fill"></i>
                                     </button>
                                 </td>
                             </tr>
 
                             <!-- VIEW MODAL -->
-                            <div class="modal fade" id="viewUpsModal<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
+                            <div class="modal fade" id="viewSwitchersModal<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
                                     <div class="modal-content">
                                         <div class="modal-header text-white" style="background-color:#0d6ea8;">
-                                            <h5 class="modal-title"><i class="bi bi-shield-lock me-2"></i>UPS Details — <?= htmlspecialchars(($row['manufacturer'] ?? '') . ' ' . ($row['model'] ?? '')) ?></h5>
+                                            <h5 class="modal-title"><i class="bi bi-shield-lock me-2"></i>Switcher Details — <?= htmlspecialchars(($row['manufacturer'] ?? '') . ' ' . ($row['model'] ?? '')) ?></h5>
                                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                         </div>
                                         <div class="modal-body">
@@ -486,7 +484,7 @@ $exportParams = http_build_query([
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-edit-target="#editUpsModal<?= $row['id'] ?>">
+                                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-edit-target="#editSwitchersModal<?= $row['id'] ?>">
                                                 <i class="bi bi-gear-fill me-1"></i>Edit
                                             </button>
                                         </div>
@@ -495,15 +493,15 @@ $exportParams = http_build_query([
                             </div>
 
                             <!-- EDIT MODAL -->
-                            <div class="modal fade" id="editUpsModal<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
+                            <div class="modal fade" id="editSwitchersModal<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
                                     <div class="modal-content">
                                         <div class="modal-header text-white" style="background-color:#0d6ea8;">
-                                            <h5 class="modal-title">Edit Ups</h5>
+                                            <h5 class="modal-title">Edit Switcher</h5>
                                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                         </div>
                                         <div class="modal-body">
-                                            <form action="edit_ups.php" method="POST">
+                                            <form action="edit_switchers.php" method="POST">
                                                 <input type="hidden" name="id" value="<?= $row['id'] ?>">
                                                 <div class="row g-3">
                                                     <div class="col-md-4">
@@ -590,7 +588,7 @@ $exportParams = http_build_query([
                         <?php endwhile; ?>
 
                     <?php else: ?>
-                        <tr><td colspan="21" class="text-center">No Ups devices found.</td></tr>
+                        <tr><td colspan="21" class="text-center">No Switchers found.</td></tr>
                     <?php endif; ?>
 
                 </tbody>

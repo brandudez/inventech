@@ -133,8 +133,8 @@
     </div>
 </a>
 
-            <a href="../superadmin/device_splitter.php"
-                class="<?= basename($_SERVER['PHP_SELF']) == 'device_splitter.php' ? 'active' : '' ?>">
+            <a href="../superadmin/device_splitters.php"
+                class="<?= basename($_SERVER['PHP_SELF']) == 'device_splitters.php' ? 'active' : '' ?>">
                 <div class="menu-item">
                     <span class="icon"><i class="bi bi-diagram-3"></i></span>
                     <span class="text">Splitters</span>
