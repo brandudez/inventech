@@ -211,11 +211,11 @@ $exportParams = http_build_query([
                     placeholder="Search switchers..." value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
                 <!-- EXPORT BUTTON -->
-              <a href="export_switchers.php?<?= htmlspecialchars($exportParams) ?>">
-   class="btn add-laptop-btn"
-   onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
-    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
-</a>
+              <a href="export_switchers.php?<?= htmlspecialchars($exportParams) ?>"
+                class="btn add-laptop-btn"
+                onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Export as Excel
+             </a>
             </form>
         </div>
 
