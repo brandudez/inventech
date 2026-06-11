@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 10, 2026 at 08:55 AM
+-- Generation Time: Jun 11, 2026 at 11:39 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -321,6 +321,37 @@ INSERT INTO `laptops` (`id`, `personnel_id`, `device_id`, `device_name`, `divisi
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `others`
+--
+
+CREATE TABLE `others` (
+  `id` int(11) NOT NULL,
+  `personnel_id` int(11) NOT NULL,
+  `division_id` int(11) NOT NULL,
+  `brand` varchar(255) DEFAULT NULL,
+  `model` varchar(255) DEFAULT NULL,
+  `serial_no` varchar(255) DEFAULT NULL,
+  `acquisition_details` text DEFAULT NULL,
+  `acquisition_date` date DEFAULT NULL,
+  `previous_owners_id` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`previous_owners_id`)),
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_date` date NOT NULL DEFAULT current_timestamp(),
+  `last_update_at` date DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `others`
+--
+
+INSERT INTO `others` (`id`, `personnel_id`, `division_id`, `brand`, `model`, `serial_no`, `acquisition_details`, `acquisition_date`, `previous_owners_id`, `is_active`, `created_date`, `last_update_at`) VALUES
+(1, 7, 2, '', '', '', '', NULL, '[]', 1, '2026-06-11', '2026-06-11'),
+(2, 3, 1, '', '', '', '', NULL, '[]', 1, '2026-06-11', '2026-06-11'),
+(3, 0, 2, '', '', '', '', NULL, '[]', 1, '2026-06-11', '2026-06-11'),
+(4, 0, 1, '', '', '', '', NULL, '[]', 1, '2026-06-11', NULL);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `personnels`
 --
 
@@ -498,7 +529,10 @@ CREATE TABLE `splitters` (
 --
 
 INSERT INTO `splitters` (`id`, `personnel_id`, `division_id`, `brand`, `model`, `serial_no`, `hdmi_in`, `hdmi_out`, `no_of_ports`, `acquisition_details`, `acquisition_date`, `previous_owners_id`, `is_active`, `created_date`, `last_update_at`) VALUES
-(1, 3, 2, 'Acer', 'charing', '14352354326', 1, 13, 14, 'frerhe', '2026-06-10', '[3]', 1, '2026-06-10', NULL);
+(1, 0, 2, 'Acer', 'charing', '14352354326', 1, 13, 14, '', NULL, '[3]', 0, '2026-06-10', '2026-06-11'),
+(2, 5, 2, '', '', '', NULL, NULL, NULL, '', NULL, '[]', 1, '2026-06-11', NULL),
+(3, 0, 2, '', '', '', NULL, NULL, NULL, '', NULL, '[]', 1, '2026-06-11', '2026-06-11'),
+(4, 3, 1, '', '', '', NULL, NULL, NULL, '', NULL, '[]', 1, '2026-06-11', NULL);
 
 -- --------------------------------------------------------
 
@@ -529,7 +563,10 @@ CREATE TABLE `switchers` (
 --
 
 INSERT INTO `switchers` (`id`, `personnel_id`, `division_id`, `brand`, `model`, `serial_no`, `hdmi_in`, `hdmi_out`, `no_of_ports`, `acquisition_details`, `acquisition_date`, `previous_owners_id`, `is_active`, `created_date`, `last_update_at`) VALUES
-(1, 3, 1, '', '', '', NULL, NULL, NULL, '', NULL, '[]', 1, '2026-06-10', '2026-06-10');
+(1, 0, 1, '', '', '', NULL, NULL, NULL, '', NULL, '[]', 1, '2026-06-10', '2026-06-11'),
+(2, 0, 4, '', '', '', NULL, NULL, NULL, '', NULL, '[]', 1, '2026-06-11', '2026-06-11'),
+(3, 7, 1, '', '', '', NULL, NULL, NULL, '', NULL, '[]', 1, '2026-06-11', '2026-06-11'),
+(4, 0, 1, '', '', '', NULL, NULL, NULL, '', NULL, '[]', 1, '2026-06-11', NULL);
 
 -- --------------------------------------------------------
 
@@ -579,6 +616,43 @@ INSERT INTO `switches` (`id`, `personnel_id`, `division_id`, `device_id`, `manuf
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `ups`
+--
+
+CREATE TABLE `ups` (
+  `id` int(11) NOT NULL,
+  `personnel_id` int(11) NOT NULL,
+  `division_id` int(11) NOT NULL,
+  `brand` varchar(255) DEFAULT NULL,
+  `model` varchar(255) DEFAULT NULL,
+  `serial_no` varchar(255) DEFAULT NULL,
+  `capacity_va` int(11) DEFAULT NULL,
+  `capacity_watts` int(11) DEFAULT NULL,
+  `battery_type` varchar(255) DEFAULT NULL,
+  `backup_time` int(11) DEFAULT NULL,
+  `input_voltage` int(11) DEFAULT NULL,
+  `output_voltage` int(11) DEFAULT NULL,
+  `acquisition_details` text DEFAULT NULL,
+  `acquisition_date` date DEFAULT NULL,
+  `previous_owners_id` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`previous_owners_id`)),
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_date` date NOT NULL DEFAULT current_timestamp(),
+  `last_update_at` date DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `ups`
+--
+
+INSERT INTO `ups` (`id`, `personnel_id`, `division_id`, `brand`, `model`, `serial_no`, `capacity_va`, `capacity_watts`, `battery_type`, `backup_time`, `input_voltage`, `output_voltage`, `acquisition_details`, `acquisition_date`, `previous_owners_id`, `is_active`, `created_date`, `last_update_at`) VALUES
+(1, 7, 1, '', '', '', NULL, NULL, '0', NULL, NULL, NULL, '', NULL, '[]', 1, '2026-06-11', '2026-06-11'),
+(2, 1, 1, '', '', '', NULL, NULL, '0', NULL, NULL, NULL, '', NULL, '[]', 1, '2026-06-11', '2026-06-11'),
+(3, 1, 1, '', '', '', NULL, NULL, '0', NULL, NULL, NULL, '', NULL, '[]', 1, '2026-06-11', '2026-06-11'),
+(4, 5, 2, '', '', '', NULL, NULL, '0', NULL, NULL, NULL, '', NULL, '[]', 1, '2026-06-11', '2026-06-11');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `users`
 --
 
@@ -605,8 +679,8 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `role_id`, `division_id`, `email`, `password`, `rank_id`, `first_name`, `middle_name`, `last_name`, `username`, `is_active`, `creator_user_id`, `created_date`, `last_update_at`) VALUES
 (1, 1, 1, 'itsd.superadmin@itms.com', '$2y$10$aisUHgeqUkfpDVPYWE6KuOV4pzsD8twbv11LfwnUhpykBuh/Z9bXm', 1, 'ITSD', 'SUPER', 'ADMIN', 'superadmin', 1, 1, '2026-06-06', NULL),
-(2, 3, 1, 'itsd.encoder@itms.com', '$2y$10$r4ds9k1t3YGmXaIjWbpBe.4a/l5ywy29lm0ZXUD2hBpR1/GEQuwfe', 1, 'BRANDON JAKE', 'FERNANDEZ', 'DIAZ', 'diazbf', 1, 1, '2026-06-08', NULL),
-(3, 2, 1, 'itsd.admin@itms.com', '$2y$10$0fmrsGlKIsYLWel22a1nN.98nF6nYES59.TVgTDaEXM75hD/6DbvS', 1, 'ITSD', 'ADMIN', '01', '01ia', 1, 1, '2026-06-08', NULL),
+(2, 3, 2, 'itsd.encoder@itms.com', '$2y$10$HX6LSk3BvbJ7yjpkeZFrQeZs0rzD6j0Ew/.DLLeaWQ5SGL4MB3nC.', 1, 'BRANDON', 'JAKE', 'FERNANDEZ DIAZ', 'diazbf', 1, 1, '2026-06-08', NULL),
+(3, 2, 1, 'itsd.admin@itms.com', '$2y$10$wy4zHHOFg/GWG1pouf1d9.ek91jk36zjkIkdi8yltvBCwPM9ZF87y', 1, 'ITSD', 'ADMIN', '01', '01ia', 1, 1, '2026-06-08', NULL),
 (4, 3, 1, 'nmamurao@itms.com', '$2y$10$YHVoHPB5xQaZ4ZJiah4bLeStvYqxLyNO8GAqmkK9ssc8ECJ9FtqSi', 1, 'NGUYEN', 'FERNANDEZ', 'AMURAO', 'amuraonf', 1, 3, '2026-06-10', NULL),
 (5, 3, 1, 'hahhahaha@itms.com', '$2y$10$0UaWj7MD7SGlS4IacsG/F.dvthUixdmS9dhMvz42mkQv6P78Ouo9m', 2, 'NEW', 'NEW', 'PAN', 'pannn', 1, 3, '2026-06-10', NULL);
 
@@ -670,6 +744,12 @@ ALTER TABLE `laptops`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `others`
+--
+ALTER TABLE `others`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `personnels`
 --
 ALTER TABLE `personnels`
@@ -715,6 +795,12 @@ ALTER TABLE `switchers`
 -- Indexes for table `switches`
 --
 ALTER TABLE `switches`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `ups`
+--
+ALTER TABLE `ups`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -778,6 +864,12 @@ ALTER TABLE `laptops`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT for table `others`
+--
+ALTER TABLE `others`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
 -- AUTO_INCREMENT for table `personnels`
 --
 ALTER TABLE `personnels`
@@ -805,19 +897,25 @@ ALTER TABLE `routers`
 -- AUTO_INCREMENT for table `splitters`
 --
 ALTER TABLE `splitters`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `switchers`
 --
 ALTER TABLE `switchers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `switches`
 --
 ALTER TABLE `switches`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `ups`
+--
+ALTER TABLE `ups`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `users`
