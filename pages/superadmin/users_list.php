@@ -110,7 +110,7 @@ $rq = $conn->query("SELECT id, role_name FROM roles ORDER BY id ASC");
 while ($r = $rq->fetch_assoc()) $allRoles[] = $r;
 
 $allRanks     = [];
-$rkq = $conn->query("SELECT id, rank FROM ranks ORDER BY id ASC");
+$rkq = $conn->query("SELECT id, rank FROM ranks ORDER BY id DESC");
 while ($r = $rkq->fetch_assoc()) $allRanks[] = $r;
 
 $allDivisions = [];
