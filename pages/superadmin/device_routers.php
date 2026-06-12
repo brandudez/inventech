@@ -112,6 +112,8 @@ if ($acq_filter === 'lt5') {
     $where[] = "r.acquisition_date IS NOT NULL AND r.acquisition_date != '0000-00-00' AND r.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 } elseif ($acq_filter === 'gt5') {
     $where[] = "r.acquisition_date IS NOT NULL AND r.acquisition_date != '0000-00-00' AND r.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+}elseif ($acq_filter === 'none') {
+    $baseWhere[] = "(d.acquisition_date IS NULL OR d.acquisition_date = '' OR d.acquisition_date = '0000-00-00')";
 }
 
 $whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
@@ -290,6 +292,7 @@ $exportParams = http_build_query([
                 $acqLabel = 'ACQ Date';
                 if ($acq_filter === 'lt5') $acqLabel = 'Age < 5 Years';
                 elseif ($acq_filter === 'gt5') $acqLabel = 'Age > 5 Years';
+                elseif ($acq_filter === 'none') $acqLabel = 'No ACQ Date';
                 $acqBase = '?search=' . urlencode($search) . '&' . http_build_query([
                     'division'  => $division_filter,
                     'is_active' => $active_filter,
@@ -300,6 +303,7 @@ $exportParams = http_build_query([
                     <li><a class="dropdown-item" href="<?= $acqBase ?>">All</a></li>
                     <li><a class="dropdown-item" href="<?= $acqBase ?>&filter_acq=lt5">Less than 5 years</a></li>
                     <li><a class="dropdown-item" href="<?= $acqBase ?>&filter_acq=gt5">More than 5 years</a></li>
+                    <li><a class="dropdown-item" href="<?= $acqBase ?>&filter_acq=none">No Acquisition Date</a></li>
                 </ul>
             </div>
 
