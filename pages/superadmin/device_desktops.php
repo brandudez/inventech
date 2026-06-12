@@ -45,6 +45,29 @@ function getPersonnelNames($conn, $json)
     }
     return implode(",<br>", $names);
 }
+
+/**
+ * Parse user_account_type JSON and return only the names as a comma-separated string.
+ * Supports both new format: [{"name":"Jake","type":"Admin"}]
+ * and legacy plain-text fallback.
+ */
+function getAccountNames($json)
+{
+    if (empty($json)) return '-';
+    $decoded = json_decode($json, true);
+    if (is_array($decoded)) {
+        $names = [];
+        foreach ($decoded as $entry) {
+            if (isset($entry['name']) && trim($entry['name']) !== '') {
+                $names[] = htmlspecialchars(trim($entry['name']));
+            }
+        }
+        return !empty($names) ? implode(', ', $names) : '-';
+    }
+    // Legacy: plain text stored
+    return htmlspecialchars($json);
+}
+
 function dash($val)
 {
     $v = trim($val ?? '');
@@ -134,15 +157,14 @@ $baseJoin = "FROM desktops d
              LEFT JOIN ranks r       ON p.rank_id = r.id
              LEFT JOIN divisions dv  ON d.division_id = dv.id";
 
-// ── Total count (respects all active filters including is_active) ─────────────
+// ── Total count ───────────────────────────────────────────────────────────────
 $st = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $whereSQL");
-if (!empty($baseParams)) $st->bind_param($baseTypes, ...$baseParams);  // FIXED: was $params
+if (!empty($baseParams)) $st->bind_param($baseTypes, ...$baseParams);
 $st->execute();
 $totalDevices = $st->get_result()->fetch_assoc()['total'] ?? 0;
 $totalPages   = (int)ceil($totalDevices / $limit);
 
-// ── Stat-box counts: layer active/inactive on top of ALL current filters ──────
-// When is_active filter is set to YES, Inactive shows 0 (and vice versa).
+// ── Stat-box counts ───────────────────────────────────────────────────────────
 $activeWhere = $baseWhere;
 $activeWhere[] = "d.is_active = 1";
 $activeSQL = "WHERE " . implode(" AND ", $activeWhere);
@@ -246,7 +268,7 @@ $officeAppsList = [
     "Other",
 ];
 
-// ── Build export query string (mirrors all active filters) ────────────────────
+// ── Build export query string ─────────────────────────────────────────────────
 $exportParams = http_build_query([
     'search'        => $search,
     'division'      => $division_filter,
@@ -290,6 +312,44 @@ $exportParams = http_build_query([
             min-height: 38px;
             font-size: 0.95rem;
         }
+
+        /* ── Account rows ─────────────────────────────────────── */
+        .account-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .account-row .user-name {
+            flex: 1;
+        }
+
+        .account-row .account-type-select {
+            width: 120px;
+            flex-shrink: 0;
+        }
+
+        .account-row .btn-icon {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .account-badge{
+    display:inline-block;
+    background:#e9f3ff;
+    color:#0d6ea8;
+    border:1px solid #b6d7ff;
+    border-radius:20px;
+    padding:6px 12px;
+    margin:3px;
+    font-size:.9rem;
+    font-weight:500;
+}
     </style>
 </head>
 
@@ -308,7 +368,6 @@ $exportParams = http_build_query([
                 <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
                 <input type="text" name="search" class="search-input" placeholder="Search desktops..." value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
-                <!-- EXPORT BUTTON -->
                 <a href="export_desktops.php?<?= htmlspecialchars($exportParams) ?>"
                     class="btn add-desktop-btn"
                     onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
@@ -393,8 +452,8 @@ $exportParams = http_build_query([
                             <?php endforeach; ?>
                         </ul>
                     </div>
-                </form><!-- /filterForm -->
-            </div><!-- /filters -->
+                </form>
+            </div>
 
             <!-- ACQUISITION DATE FILTER -->
             <div class="dropdown">
@@ -438,7 +497,7 @@ $exportParams = http_build_query([
             </div>
             <button type="button" class="btn add-desktop-btn" data-bs-toggle="modal" data-bs-target="#addDesktopModal">Add Desktop</button>
         </div>
-    </div><!-- /top-bar -->
+    </div>
 
     <!-- ════════════════════════════════════════════════════════════════════
          ADD MODAL
@@ -529,62 +588,34 @@ $exportParams = http_build_query([
                             <div class="col-md-4"><label class="form-label">GBs of RAM</label><input type="number" class="form-control" name="gb_ram"></div>
                             <div class="col-md-4"><label class="form-label">Monitor Brand</label><input type="text" class="form-control" name="monitor_brand"></div>
                             <div class="col-md-4"><label class="form-label">Monitor Size</label><input type="text" class="form-control" name="monitor_size_inches"></div>
-                            <div class="col-md-4"><label class="form-label"># of User Accounts</label><input type="number" class="form-control" name="no_of_user_accounts"></div>
 
-                            <div class="col-md-6">
+                            <!-- ── USER ACCOUNT TYPE (Add) ──────────────────────────────── -->
+                            <!--
+                                no_of_user_accounts is now AUTO-COUNTED from the rows below.
+                                A hidden input is populated via JS before submit.
+                            -->
+                            <input type="hidden" name="no_of_user_accounts" id="addAccountCount">
 
+                            <div class="col-md-12">
                                 <label class="form-label">User Account Type</label>
-
-                                <div id="accountTypeContainer">
-
+                                <div id="addAccountContainer">
+                                    <!-- First row (always present, cannot be removed) -->
                                     <div class="account-row">
-
-                                        <input type="text"
-                                            class="form-control user-name"
-                                            placeholder="Enter Name">
-
-                                        <div class="dropdown">
-
-                                            <button class="btn btn-outline-secondary dropdown-toggle account-type-btn"
-                                                type="button"
-                                                data-bs-toggle="dropdown">
-                                                Select Type
-                                            </button>
-
-                                            <ul class="dropdown-menu">
-                                                <li>
-                                                    <a class="dropdown-item"
-                                                        href="#"
-                                                        onclick="setType(event,this,'Admin')">
-                                                        Admin
-                                                    </a>
-                                                </li>
-
-                                                <li>
-                                                    <a class="dropdown-item"
-                                                        href="#"
-                                                        onclick="setType(event,this,'Encoder')">
-                                                        Encoder
-                                                    </a>
-                                                </li>
-                                            </ul>
-
-                                            <input type="hidden"
-                                                class="account-type"
-                                                value="">
-                                        </div>
-
-                                        <button type="button"
-                                            class="btn btn-success btn-icon"
-                                            onclick="addAccountType()">
+                                        <input type="text" class="form-control user-name" placeholder="Enter account name">
+                                        <select class="form-select account-type-select">
+                                            <option value="" disabled selected>Type</option>
+                                            <option value="Admin">Admin</option>
+                                            <option value="User">User</option>
+                                        </select>
+                                        <button type="button" class="btn btn-success btn-icon" onclick="addAccountRow('addAccountContainer')">
                                             <i class="bi bi-plus-lg"></i>
                                         </button>
-
                                     </div>
-
                                 </div>
-
+                                <!-- Hidden JSON field submitted to server -->
+                                <input type="hidden" name="user_account_type" id="addAccountJson">
                             </div>
+
                             <div class="col-md-6"><label class="form-label">Authorized Software</label><textarea class="form-control" name="authorized_software"></textarea></div>
                             <div class="col-md-6"><label class="form-label">Unauthorized Software</label><textarea class="form-control" name="unauthorized_software"></textarea></div>
                             <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" class="form-control" name="acquisition_date"></div>
@@ -660,7 +691,7 @@ $exportParams = http_build_query([
                         <th>MONITOR BRAND</th>
                         <th>MONITOR SIZE</th>
                         <th># OF USER ACCOUNTS</th>
-                        <th>USER ACCOUNT TYPE</th>
+                        <th>USER ACCOUNTS</th>
                         <th>AUTHORIZED SOFTWARE</th>
                         <th>UNAUTHORIZED SOFTWARE</th>
                         <th>ACQUISITION DATE</th>
@@ -697,7 +728,8 @@ $exportParams = http_build_query([
                                 <td><?= dash($row['monitor_brand'] ?? '') ?></td>
                                 <td><?= dash($row['monitor_size_inches'] ?? '') ?></td>
                                 <td><?= dash($row['no_of_user_accounts'] ?? '') ?></td>
-                                <td><?= dash($row['user_account_type'] ?? '') ?></td>
+                                <!-- TABLE: show only names -->
+                                <td><?= getAccountNames($row['user_account_type'] ?? '') ?></td>
                                 <td><?= dash($row['authorized_software'] ?? '') ?></td>
                                 <td><?= dash($row['unauthorized_software'] ?? '') ?></td>
                                 <td><?= dash($row['acquisition_date'] ?? '') ?></td>
@@ -806,10 +838,31 @@ $exportParams = http_build_query([
                                                     <div class="view-label"># User Accounts</div>
                                                     <div class="view-value"><?= htmlspecialchars($row['no_of_user_accounts'] ?? '') ?></div>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <div class="view-label">User Account Type</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['user_account_type'] ?? '') ?></div>
+                                                <!-- VIEW: show name + type per row -->
+                                                <div class="col-md-12">
+                                                <div class="view-label">User Account Type</div>
+                                                <div class="view-value">
+                                                    <?php
+                                                    $accs = json_decode($row['user_account_type'] ?? '[]', true);
+
+                                                    if (is_array($accs) && !empty($accs)) {
+                                                        foreach ($accs as $acc) {
+                                                            $name = trim($acc['name'] ?? '');
+                                                            $type = trim($acc['type'] ?? '-');
+
+                                                            if ($name === '') continue;
+
+                                                            echo '
+                                                            <span class="account-badge">
+                                                                ' . htmlspecialchars($name) . ' : ' . htmlspecialchars($type) . '
+                                                            </span>';
+                                                        }
+                                                    } else {
+                                                        echo '-';
+                                                    }
+                                                    ?>
                                                 </div>
+                                            </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Acquisition Date</div>
                                                     <div class="view-value"><?= htmlspecialchars($row['acquisition_date'] ?? '') ?></div>
@@ -859,7 +912,9 @@ $exportParams = http_build_query([
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
                                         <div class="modal-body">
-                                            <form action="edit_desktops.php" method="POST">
+                                            <form action="edit_desktops.php" method="POST"
+                                                  id="editForm<?= $row['id'] ?>"
+                                                  onsubmit="buildAccountJson('editAccountContainer<?= $row['id'] ?>', 'editAccountJson<?= $row['id'] ?>', 'editAccountCount<?= $row['id'] ?>')">
                                                 <input type="hidden" name="id" value="<?= $row['id'] ?>">
                                                 <div class="row g-3">
                                                     <div class="col-md-4"><label class="form-label">Device Name</label><input type="text" class="form-control" name="device_name" value="<?= htmlspecialchars($row['device_name'] ?? '') ?>"></div>
@@ -924,8 +979,51 @@ $exportParams = http_build_query([
                                                     <div class="col-md-4"><label class="form-label">GB RAM</label><input type="number" class="form-control" name="gb_ram" value="<?= htmlspecialchars($row['gb_ram'] ?? '') ?>"></div>
                                                     <div class="col-md-4"><label class="form-label">Monitor Brand</label><input type="text" class="form-control" name="monitor_brand" value="<?= htmlspecialchars($row['monitor_brand'] ?? '') ?>"></div>
                                                     <div class="col-md-4"><label class="form-label">Monitor Size</label><input type="number" class="form-control" name="monitor_size_inches" value="<?= htmlspecialchars($row['monitor_size_inches'] ?? '') ?>"></div>
-                                                    <div class="col-md-4"><label class="form-label"># User Accounts</label><input type="number" class="form-control" name="no_of_user_accounts" value="<?= htmlspecialchars($row['no_of_user_accounts'] ?? '') ?>"></div>
-                                                    <div class="col-md-4"><label class="form-label">User Account Type</label><input type="text" class="form-control" name="user_account_type" value="<?= htmlspecialchars($row['user_account_type'] ?? '') ?>"></div>
+
+                                                    <!-- ── USER ACCOUNT TYPE (Edit) ─────────────────────────── -->
+                                                    <!-- no_of_user_accounts auto-counted, hidden field populated by JS -->
+                                                    <input type="hidden" name="no_of_user_accounts" id="editAccountCount<?= $row['id'] ?>">
+
+                                                    <div class="col-md-12">
+                                                        <label class="form-label">User Account Type</label>
+                                                        <div id="editAccountContainer<?= $row['id'] ?>">
+                                                            <?php
+                                                            $existingAccounts = json_decode($row['user_account_type'] ?? '[]', true);
+                                                            // Normalise: if empty or not a proper array-of-objects, seed one blank row
+                                                            if (!is_array($existingAccounts) || empty($existingAccounts)) {
+                                                                $existingAccounts = [['name' => '', 'type' => '']];
+                                                            }
+                                                            foreach ($existingAccounts as $idx => $acc):
+                                                                $accName = htmlspecialchars($acc['name'] ?? '');
+                                                                $accType = $acc['type'] ?? '';
+                                                                $isFirst = ($idx === 0);
+                                                            ?>
+                                                                <div class="account-row">
+                                                                    <input type="text" class="form-control user-name"
+                                                                           placeholder="Enter account name"
+                                                                           value="<?= $accName ?>">
+                                                                    <select class="form-select account-type-select">
+                                                                        <option value="" disabled <?= $accType === '' ? 'selected' : '' ?>>Type</option>
+                                                                        <option value="Admin" <?= $accType === 'Admin' ? 'selected' : '' ?>>Admin</option>
+                                                                        <option value="User"  <?= $accType === 'User'  ? 'selected' : '' ?>>User</option>
+                                                                    </select>
+                                                                    <?php if ($isFirst): ?>
+                                                                        <button type="button" class="btn btn-success btn-icon"
+                                                                                onclick="addAccountRow('editAccountContainer<?= $row['id'] ?>')">
+                                                                            <i class="bi bi-plus-lg"></i>
+                                                                        </button>
+                                                                    <?php else: ?>
+                                                                        <button type="button" class="btn btn-danger btn-icon"
+                                                                                onclick="removeAccountRow(this)">
+                                                                            <i class="bi bi-dash-lg"></i>
+                                                                        </button>
+                                                                    <?php endif; ?>
+                                                                </div>
+                                                            <?php endforeach; ?>
+                                                        </div>
+                                                        <input type="hidden" name="user_account_type" id="editAccountJson<?= $row['id'] ?>">
+                                                    </div>
+
                                                     <div class="col-md-4"><label class="form-label">Date Installed</label><input type="date" class="form-control" name="date_installed" value="<?= htmlspecialchars($row['date_installed'] ?? '') ?>"></div>
                                                     <div class="col-md-12">
                                                         <label class="form-label">Endpoint Security</label>
@@ -1031,7 +1129,79 @@ $exportParams = http_build_query([
     </div>
 
     <script>
-        // ── Filter checkbox helpers ────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════
+        //  ACCOUNT ROW HELPERS
+        // ═══════════════════════════════════════════════════════════════
+
+        /**
+         * Add a new account row to a given container.
+         * @param {string} containerId - ID of the container div
+         */
+        function addAccountRow(containerId) {
+            const container = document.getElementById(containerId);
+            const row = document.createElement('div');
+            row.className = 'account-row';
+            row.innerHTML = `
+                <input type="text" class="form-control user-name" placeholder="Enter account name">
+                <select class="form-select account-type-select">
+                    <option value="" disabled selected>Type</option>
+                    <option value="Admin">Admin</option>
+                    <option value="User">User</option>
+                </select>
+                <button type="button" class="btn btn-danger btn-icon" onclick="removeAccountRow(this)">
+                    <i class="bi bi-dash-lg"></i>
+                </button>
+            `;
+            container.appendChild(row);
+        }
+
+        /**
+         * Remove an account row. The first row (with the + button) cannot be removed.
+         */
+        function removeAccountRow(btn) {
+            btn.closest('.account-row').remove();
+        }
+
+        /**
+         * Collect all account rows from a container into a JSON array,
+         * then populate the hidden JSON field and the count field.
+         * Called onsubmit for both Add and Edit forms.
+         *
+         * @param {string} containerId  - ID of the rows container
+         * @param {string} jsonFieldId  - ID of the hidden input that receives JSON
+         * @param {string} countFieldId - ID of the hidden input that receives count
+         */
+        function buildAccountJson(containerId, jsonFieldId, countFieldId) {
+            const container = document.getElementById(containerId);
+            const rows      = container.querySelectorAll('.account-row');
+            const accounts  = [];
+
+            rows.forEach(row => {
+                const name = row.querySelector('.user-name').value.trim();
+                const type = row.querySelector('.account-type-select').value;
+                if (name !== '') {
+                    accounts.push({ name: name, type: type || '' });
+                }
+            });
+
+            document.getElementById(jsonFieldId).value  = JSON.stringify(accounts);
+            document.getElementById(countFieldId).value = accounts.length;
+        }
+
+        // ── Wire up the ADD form ──────────────────────────────────────
+        document.getElementById('addDesktopForm').addEventListener('submit', function(e) {
+            // Endpoint security validation
+            const ep = document.querySelectorAll("#addDesktopModal input[name='endpoint_security[]']:checked");
+            if (ep.length === 0) {
+                e.preventDefault();
+                alert("Select at least one Endpoint Security");
+                return;
+            }
+            // Build account JSON before submit
+            buildAccountJson('addAccountContainer', 'addAccountJson', 'addAccountCount');
+        });
+
+        // ── Filter checkbox helpers ───────────────────────────────────
         function setupFilterGroup(allSel, itemSel) {
             const allCb = document.querySelector(allSel);
             const items = document.querySelectorAll(itemSel);
@@ -1044,26 +1214,16 @@ $exportParams = http_build_query([
             }));
         }
         setupFilterGroup('#allDivision', '.division-checkbox');
-        setupFilterGroup('#allOS', '.os-checkbox');
-        setupFilterGroup('#allOffice', '.office-checkbox');
+        setupFilterGroup('#allOS',       '.os-checkbox');
+        setupFilterGroup('#allOffice',   '.office-checkbox');
 
-        // ── Add modal validation ───────────────────────────────────────────────
-        document.getElementById("addDesktopForm").addEventListener("submit", function(e) {
-            const ep = document.querySelectorAll("#addDesktopModal input[name='endpoint_security[]']:checked");
-            if (ep.length === 0) {
-                e.preventDefault();
-                alert("Select at least one Endpoint Security");
-                return;
-            }
-        });
-
-        // ── View → Edit transition ────────────────────────────────────────────
+        // ── View → Edit transition ────────────────────────────────────
         document.addEventListener('click', function(e) {
             const btn = e.target.closest('[data-edit-target]');
             if (!btn) return;
             const editTarget = btn.getAttribute('data-edit-target');
-            const viewModal = btn.closest('.modal');
-            const bsView = bootstrap.Modal.getInstance(viewModal);
+            const viewModal  = btn.closest('.modal');
+            const bsView     = bootstrap.Modal.getInstance(viewModal);
             if (bsView) {
                 viewModal.addEventListener('hidden.bs.modal', function handler() {
                     viewModal.removeEventListener('hidden.bs.modal', handler);
@@ -1072,28 +1232,21 @@ $exportParams = http_build_query([
                 bsView.hide();
             }
         });
-    </script>
 
-    <script>
+        // ── Toast helper ──────────────────────────────────────────────
         function showToast(message, type = "success") {
-            const colors = {
-                success: "#198754",
-                danger: "#dc3545"
-            };
-            const icons = {
-                success: "bi-check-circle-fill",
-                danger: "bi-x-circle-fill"
-            };
-            const toast = document.createElement("div");
+            const colors = { success: "#198754", danger: "#dc3545" };
+            const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
+            const toast  = document.createElement("div");
             toast.style.cssText = `
-            position:fixed;bottom:24px;right:24px;z-index:9999;
-            background:${colors[type]};color:#fff;
-            padding:14px 20px;border-radius:10px;
-            display:flex;align-items:center;gap:10px;
-            box-shadow:0 4px 16px rgba(0,0,0,.2);
-            font-size:.95rem;max-width:340px;
-            animation:slideIn .3s ease;
-        `;
+                position:fixed;bottom:24px;right:24px;z-index:9999;
+                background:${colors[type]};color:#fff;
+                padding:14px 20px;border-radius:10px;
+                display:flex;align-items:center;gap:10px;
+                box-shadow:0 4px 16px rgba(0,0,0,.2);
+                font-size:.95rem;max-width:340px;
+                animation:slideIn .3s ease;
+            `;
             toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
             document.body.appendChild(toast);
             if (!document.getElementById("toastKeyframe")) {
@@ -1116,8 +1269,7 @@ $exportParams = http_build_query([
                 showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
             });
         </script>
-    <?php unset($_SESSION['toast_success']);
-    endif; ?>
+    <?php unset($_SESSION['toast_success']); endif; ?>
 
     <?php if (!empty($_SESSION['toast_error'])): ?>
         <script>
@@ -1125,122 +1277,9 @@ $exportParams = http_build_query([
                 showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
             });
         </script>
-    <?php unset($_SESSION['toast_error']);
-    endif; ?>
+    <?php unset($_SESSION['toast_error']); endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function setType(event, el, type) {
-
-            event.preventDefault();
-
-            const row = el.closest('.account-row');
-
-            row.querySelector('.account-type-btn').textContent = type;
-            row.querySelector('.account-type').value = type;
-        }
-
-        function addAccountType() {
-
-            const container = document.getElementById('accountTypeContainer');
-
-            const row = document.createElement('div');
-
-            row.className = 'account-row';
-
-            row.innerHTML = `
-        <input type="text"
-               class="form-control user-name"
-               placeholder="Enter Name">
-
-        <div class="dropdown">
-
-            <button class="btn btn-outline-secondary dropdown-toggle account-type-btn"
-                    type="button"
-                    data-bs-toggle="dropdown">
-                Select Type
-            </button>
-
-            <ul class="dropdown-menu">
-                <li>
-                    <a class="dropdown-item"
-                       href="#"
-                       onclick="setType(event,this,'Admin')">
-                        Admin
-                    </a>
-                </li>
-
-                <li>
-                    <a class="dropdown-item"
-                       href="#"
-                       onclick="setType(event,this,'Encoder')">
-                        Encoder
-                    </a>
-                </li>
-            </ul>
-
-            <input type="hidden"
-                   class="account-type"
-                   value="">
-        </div>
-
-        <button type="button"
-                class="btn btn-danger btn-icon"
-                onclick="removeRow(this)">
-            <i class="bi bi-dash-lg"></i>
-        </button>
-    `;
-
-            container.appendChild(row);
-        }
-
-        function removeRow(btn) {
-
-            const rows = document.querySelectorAll('.account-row');
-
-            if (rows.length <= 1) {
-                alert('At least one row must remain.');
-                return;
-            }
-
-            btn.closest('.account-row').remove();
-        }
-
-        document.addEventListener('shown.bs.dropdown', function(e) {
-            const dropdown = e.target;
-            // Only apply body-teleport to account-type dropdowns inside the add modal
-            if (!dropdown.closest('.account-row')) return;
-
-            const menu = dropdown.querySelector('.dropdown-menu');
-            if (!menu) return;
-
-            dropdown._menu = menu;
-            document.body.appendChild(menu);
-
-            const button = dropdown.querySelector('.dropdown-toggle');
-            const rect = button.getBoundingClientRect();
-
-            menu.style.position = 'absolute';
-            menu.style.top = (rect.bottom + window.scrollY) + 'px';
-            menu.style.left = (rect.left + window.scrollX) + 'px';
-            menu.style.display = 'block';
-        });
-
-        document.addEventListener('hidden.bs.dropdown', function(e) {
-            const dropdown = e.target;
-            if (!dropdown.closest('.account-row') && !dropdown._menu) return;
-
-            const menu = dropdown._menu;
-            if (!menu) return;
-
-            dropdown.appendChild(menu);
-            menu.style.position = '';
-            menu.style.top = '';
-            menu.style.left = '';
-            menu.style.display = '';
-            dropdown._menu = null;
-        });
-    </script>
 </body>
 
 </html>
