@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 11, 2026 at 11:39 AM
+-- Generation Time: Jun 13, 2026 at 04:07 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -98,11 +98,9 @@ CREATE TABLE `desktops` (
 --
 
 INSERT INTO `desktops` (`id`, `personnel_id`, `device_id`, `device_name`, `division_id`, `ip_address`, `os`, `is_os_licensed`, `is_remote_acc`, `endpoint_security_id`, `no_of_installed_anti_virus`, `date_installed`, `guid`, `mac_address`, `cpu_brand`, `cpu_cores`, `gb_ram`, `monitor_brand`, `monitor_size_inches`, `no_of_user_accounts`, `user_account_type`, `authorized_software`, `unauthorized_software`, `office_application`, `is_office_licensed`, `previous_owners_id`, `created_date`, `last_updated_at`, `os_license_key`, `office_license_key`, `par_serial_no`, `is_active`, `acquisition_date`) VALUES
-(1, 0, 0, 'DESKTOP-ITSD', 1, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, '[]', NULL, NULL, '-', 1, '[]', '2026-06-08', NULL, NULL, NULL, NULL, 1, NULL),
-(3, 0, 0, '', 1, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, '[]', NULL, NULL, '-', 1, '[]', '2026-06-09', NULL, NULL, NULL, NULL, 1, '2026-06-10'),
-(4, 1, 0, 'LAPTOP-ITSD01', 3, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3, NULL, NULL, NULL, '-', 1, '[]', '2026-06-09', NULL, NULL, NULL, NULL, 1, NULL),
-(5, 1, 0, 'DESKTOP-ITSD-01', 17, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, '-', 1, '[]', '2026-06-09', NULL, NULL, NULL, NULL, 1, NULL),
-(6, 1, 0, 'LAPTOP-ITSD', 1, NULL, NULL, 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3, '[{\"name\":\"jake\",\"type\":\"Admin\"},{\"name\":\"asas\",\"type\":\"Admin\"},{\"name\":\"personnel\",\"type\":\"User\"}]', NULL, NULL, '-', 1, NULL, '2026-06-09', NULL, NULL, NULL, NULL, 1, NULL);
+(8, 7, 0, 'LAPTOP-001', 1, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2, '[{\"name\":\"asdfadsf\",\"type\":\"Admin\"},{\"name\":\"jake\",\"type\":\"User\"}]', NULL, NULL, '-', 1, '[]', '2026-06-13', NULL, NULL, NULL, NULL, 1, NULL),
+(9, 0, 0, 'A-123', 3, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '[{\"name\":\"james\",\"type\":\"Admin\"}]', NULL, NULL, '-', 1, '[\"7\",\"3\"]', '2026-06-13', NULL, NULL, NULL, NULL, 1, NULL),
+(10, 0, 0, 'LAPTOP-001', 2, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2, '[{\"name\":\"wqweqw\",\"type\":\"Admin\"},{\"name\":\"mmmm\",\"type\":\"User\"}]', NULL, NULL, '-', 1, '[]', '2026-06-13', NULL, NULL, NULL, NULL, 1, NULL);
 
 -- --------------------------------------------------------
 
@@ -284,7 +282,7 @@ CREATE TABLE `laptops` (
   `ip_address` varchar(50) DEFAULT NULL,
   `os` varchar(100) DEFAULT NULL,
   `is_os_licensed` tinyint(1) DEFAULT NULL,
-  `is_remote_acc` tinyint(1) DEFAULT 1,
+  `is_remote_acc` tinyint(1) DEFAULT NULL,
   `endpoint_security_id` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `no_of_installed_anti_virus` int(11) DEFAULT NULL,
   `date_installed` date DEFAULT NULL,
@@ -296,7 +294,7 @@ CREATE TABLE `laptops` (
   `monitor_brand` varchar(100) DEFAULT NULL,
   `monitor_size_inches` int(11) DEFAULT NULL,
   `no_of_user_accounts` int(11) DEFAULT NULL,
-  `user_account_type` varchar(100) DEFAULT NULL,
+  `user_account_type` longtext DEFAULT NULL,
   `authorized_software` text DEFAULT NULL,
   `unauthorized_software` text DEFAULT NULL,
   `office_application` varchar(150) DEFAULT NULL,
@@ -307,7 +305,7 @@ CREATE TABLE `laptops` (
   `os_license_key` varchar(255) DEFAULT NULL,
   `office_license_key` varchar(255) DEFAULT NULL,
   `par_serial_no` varchar(255) DEFAULT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `is_active` tinyint(1) DEFAULT 1,
   `acquisition_date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -316,7 +314,9 @@ CREATE TABLE `laptops` (
 --
 
 INSERT INTO `laptops` (`id`, `personnel_id`, `device_id`, `device_name`, `division_id`, `ip_address`, `os`, `is_os_licensed`, `is_remote_acc`, `endpoint_security_id`, `no_of_installed_anti_virus`, `date_installed`, `guid`, `mac_address`, `cpu_brand`, `cpu_cores`, `gb_ram`, `monitor_brand`, `monitor_size_inches`, `no_of_user_accounts`, `user_account_type`, `authorized_software`, `unauthorized_software`, `office_application`, `is_office_licensed`, `previous_owners_id`, `created_date`, `last_updated_at`, `os_license_key`, `office_license_key`, `par_serial_no`, `is_active`, `acquisition_date`) VALUES
-(1, 0, 0, 'LAPTOP-ITSD01', 1, '', '-', 0, 0, '[\"7\"]', 0, '0000-00-00', '', '', '', 0, 0, '', 0, 0, '', '', '', '-', 0, '[]', '2026-06-08', NULL, '', '', '', 1, '0000-00-00');
+(1, 7, 0, 'LAPTOP-001', 1, NULL, '-', 0, 0, '[\"7\"]', 0, NULL, NULL, NULL, '0', NULL, NULL, NULL, 0, 2, '[{\"name\":\"asdasdf\",\"type\":\"Admin\"},{\"name\":\"jake\",\"type\":\"\"}]', NULL, NULL, '-', 1, '[]', '2026-06-13', NULL, '0', NULL, NULL, 1, NULL),
+(2, 0, 0, 'LAPTOP-001', 2, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '[{\"name\":\"asdfasda\",\"type\":\"Admin\"}]', NULL, NULL, '-', 1, '[]', '2026-06-13', NULL, NULL, NULL, NULL, 1, NULL),
+(3, 0, 0, 'A-', 2, NULL, '-', 0, 0, '[\"7\"]', 0, NULL, NULL, NULL, NULL, 0, 0, NULL, 0, 1, '[{\"name\":\"hahha\",\"type\":\"Admin\"}]', NULL, NULL, '-', 0, '[]', '2026-06-13', NULL, NULL, NULL, NULL, 1, NULL);
 
 -- --------------------------------------------------------
 
@@ -679,8 +679,8 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `role_id`, `division_id`, `email`, `password`, `rank_id`, `first_name`, `middle_name`, `last_name`, `username`, `is_active`, `creator_user_id`, `created_date`, `last_update_at`) VALUES
 (1, 1, 1, 'itsd.superadmin@itms.com', '$2y$10$aisUHgeqUkfpDVPYWE6KuOV4pzsD8twbv11LfwnUhpykBuh/Z9bXm', 1, 'ITSD', 'SUPER', 'ADMIN', 'superadmin', 1, 1, '2026-06-06', NULL),
-(2, 3, 2, 'itsd.encoder@itms.com', '$2y$10$HX6LSk3BvbJ7yjpkeZFrQeZs0rzD6j0Ew/.DLLeaWQ5SGL4MB3nC.', 1, 'BRANDON', 'JAKE', 'FERNANDEZ DIAZ', 'diazbf', 1, 1, '2026-06-08', NULL),
-(3, 2, 1, 'itsd.admin@itms.com', '$2y$10$wy4zHHOFg/GWG1pouf1d9.ek91jk36zjkIkdi8yltvBCwPM9ZF87y', 1, 'ITSD', 'ADMIN', '01', '01ia', 1, 1, '2026-06-08', NULL),
+(2, 3, 2, 'itsd.encoder@itms.com', '$2y$10$Wv7Z5Nzu7yDNol0cgfNQQOZ5nZ6dgLOY/A40gjbbI5/Vau6BF2li6', 1, 'BRANDON', 'JAKE', 'FERNANDEZ DIAZ', 'diazbf', 1, 1, '2026-06-08', NULL),
+(3, 2, 1, 'itsd.admin@itms.com', '$2y$10$A0kyu1oQ6yoIOgBxiyJTH.Bz9f7/ztFqYBzc0DmNPc9f46tdlAuce', 1, 'ITSD', 'ADMIN', '01', '01ia', 1, 1, '2026-06-08', NULL),
 (4, 3, 1, 'nmamurao@itms.com', '$2y$10$YHVoHPB5xQaZ4ZJiah4bLeStvYqxLyNO8GAqmkK9ssc8ECJ9FtqSi', 1, 'NGUYEN', 'FERNANDEZ', 'AMURAO', 'amuraonf', 1, 3, '2026-06-10', NULL),
 (5, 3, 1, 'hahhahaha@itms.com', '$2y$10$0UaWj7MD7SGlS4IacsG/F.dvthUixdmS9dhMvz42mkQv6P78Ouo9m', 2, 'NEW', 'NEW', 'PAN', 'pannn', 1, 3, '2026-06-10', NULL);
 
@@ -825,7 +825,7 @@ ALTER TABLE `cameras`
 -- AUTO_INCREMENT for table `desktops`
 --
 ALTER TABLE `desktops`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `devices`
@@ -861,7 +861,7 @@ ALTER TABLE `headsets`
 -- AUTO_INCREMENT for table `laptops`
 --
 ALTER TABLE `laptops`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `others`
