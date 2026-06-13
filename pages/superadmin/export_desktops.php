@@ -81,6 +81,33 @@ function getPersonnelNamesExport($conn, $json)
     return implode(', ', $names);
 }
 
+/**
+ * Parse user_account_type JSON and return only the names as a comma-separated string.
+ * Supports both new format: [{"name":"Jake","type":"Admin"}]
+ * and legacy plain-text fallback.
+ */
+function getAccountNamesExport($json)
+{
+    if (empty($json)) return '-';
+    $decoded = json_decode($json, true);
+    if (is_array($decoded)) {
+        $names = [];
+        foreach ($decoded as $entry) {
+            if (isset($entry['name']) && trim($entry['name']) !== '') {
+                $names[] = trim($entry['name']);
+            }
+        }
+        return !empty($names) ? implode(', ', $names) : '-';
+    }
+    // Legacy: plain text stored
+    return $json;
+}
+
+function formatDate($val) {
+    if (empty($val) || $val === '0000-00-00') return '-';
+    return $val;
+}
+
 /* =========================
    FILTERS (UNCHANGED LOGIC)
 ========================= */
@@ -243,17 +270,17 @@ while ($row = $result->fetch_assoc()) {
         $row['office_license_key'] ?? '',
         getEndpointNamesExport($conn, $row['endpoint_security_id']),
         $row['no_of_installed_anti_virus'] ?? '',
-        $row['date_installed'] ?? '',
+        formatDate($row['date_installed'] ?? ''),
         $row['cpu_brand'] ?? '',
         $row['cpu_cores'] ?? '',
         $row['gb_ram'] ?? '',
         $row['monitor_brand'] ?? '',
         $row['monitor_size_inches'] ?? '',
         $row['no_of_user_accounts'] ?? '',
-        $row['user_account_type'] ?? '',
+        getAccountNamesExport($row['user_account_type'] ?? ''),
         $row['authorized_software'] ?? '',
         $row['unauthorized_software'] ?? '',
-        $row['acquisition_date'] ?? '',
+        formatDate($row['acquisition_date'] ?? ''),
         $row['par_serial_no'] ?? '',
         getPersonnelNamesExport($conn, $row['previous_owners_id']),
         ($row['is_remote_acc'] ? 'YES' : 'NO'),

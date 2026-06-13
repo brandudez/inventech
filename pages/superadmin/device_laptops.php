@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['user'])) {
+if (! isset($_SESSION['user'])) {
     header("Location: ../../index.php");
     exit();
 }
@@ -11,16 +11,13 @@ if ($_SESSION['user']['role_id'] != 1) {
     exit();
 }
 
-include("../../config/db.php");
+include "../../config/db.php";
 
-/* =========================
-   HELPERS
-========================= */
 function getEndpointNames($conn, $json)
 {
     if (empty($json)) return '';
     $ids = json_decode($json, true);
-    if (!is_array($ids) || empty($ids)) return '';
+    if (! is_array($ids) || empty($ids)) return '';
     $ids = implode(',', array_map('intval', $ids));
     $result = $conn->query("SELECT antivirus FROM endpoint_security WHERE id IN ($ids)");
     $names = [];
@@ -34,7 +31,7 @@ function getPersonnelNames($conn, $json)
 {
     if (empty($json)) return '';
     $ids = json_decode($json, true);
-    if (!is_array($ids) || empty($ids)) return '';
+    if (! is_array($ids) || empty($ids)) return '';
     $ids = implode(',', array_map('intval', $ids));
     $result = $conn->query("
         SELECT r.rank, p.first_name, p.middle_name, p.last_name
@@ -49,16 +46,37 @@ function getPersonnelNames($conn, $json)
     return implode(",<br>", $names);
 }
 
-/* =========================
-   PAGINATION
-========================= */
+/**
+ * Parse user_account_type JSON and return only the names as a comma-separated string.
+ * Supports both new format: [{"name":"Jake","type":"Admin"}]
+ * and legacy plain-text fallback.
+ */
+function getAccountNames($json)
+{
+    if (empty($json)) return '-';
+    $decoded = json_decode($json, true);
+    if (is_array($decoded)) {
+        $names = [];
+        foreach ($decoded as $entry) {
+            if (isset($entry['name']) && trim($entry['name']) !== '') {
+                $names[] = htmlspecialchars(trim($entry['name']));
+            }
+        }
+        return !empty($names) ? implode(', ', $names) : '-';
+    }
+    // Legacy: plain text stored
+    return htmlspecialchars($json);
+}
+
+function dash($val)
+{
+    $v = trim($val ?? '');
+    return $v !== '' ? htmlspecialchars($v) : '-';
+}
 $limit  = 10;
 $page   = max(1, (int)($_GET['page'] ?? 1));
 $offset = ($page - 1) * $limit;
 
-/* =========================
-   SEARCH & FILTERS
-========================= */
 $search = trim($_GET['search'] ?? '');
 
 $division_filter_raw = $_GET['division']      ?? [];
@@ -70,123 +88,131 @@ $os_filter       = is_array($os_filter_raw)       ? array_filter(array_map('trim
 $office_filter   = is_array($office_filter_raw)   ? array_filter($office_filter_raw)   : [];
 $active_filter   = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
 
-// Acquisition date filter (lt5 = less than 5 years old, gt5 = more than 5 years old)
 $acq_filter = trim($_GET['filter_acq'] ?? '');
 
-/* =========================
-   WHERE BUILDER
-========================= */
-$where  = [];
-$params = [];
-$types  = '';
+// ── Build base WHERE + params ─────────────────────────────────────────────────
+$baseWhere  = [];
+$baseParams = [];
+$baseTypes  = '';
 
-if (!empty($search)) {
-    $where[] = "(l.device_name LIKE ? OR CONCAT(p.first_name,' ',p.middle_name,' ',p.last_name) LIKE ? OR l.ip_address LIKE ? OR l.guid LIKE ? OR l.mac_address LIKE ?)";
+if (! empty($search)) {
+    $baseWhere[] = "(d.device_name LIKE ? OR CONCAT(p.first_name,' ',p.middle_name,' ',p.last_name) LIKE ? OR d.ip_address LIKE ? OR d.guid LIKE ? OR d.mac_address LIKE ?)";
     $sv = "%$search%";
     for ($i = 0; $i < 5; $i++) {
-        $params[] = $sv;
-        $types   .= 's';
+        $baseParams[] = $sv;
+        $baseTypes .= 's';
     }
 }
-if (!empty($division_filter)) {
+if (! empty($division_filter)) {
     $ph = implode(',', array_fill(0, count($division_filter), '?'));
-    $where[] = "dv.division IN ($ph)";
+    $baseWhere[] = "dv.division IN ($ph)";
     foreach ($division_filter as $v) {
-        $params[] = $v;
-        $types .= 's';
+        $baseParams[] = $v;
+        $baseTypes .= 's';
     }
 }
-if (!empty($os_filter)) {
+if (! empty($os_filter)) {
     $conditions = [];
     foreach ($os_filter as $v) {
-        if (trim($v) === '-') {
-            $conditions[] = "(l.os IS NULL OR l.os = '' OR l.os = '-' OR l.os = ' - ')";
+        if ($v === '-') {
+            $conditions[] = "(d.os IS NULL OR d.os = '' OR d.os = '-')";
         } else {
-            $conditions[] = "l.os = ?";
-            $params[] = $v;
-            $types .= 's';
+            $conditions[] = "d.os = ?";
+            $baseParams[] = $v;
+            $baseTypes .= 's';
         }
     }
-    $where[] = '(' . implode(' OR ', $conditions) . ')';
+    $baseWhere[] = '(' . implode(' OR ', $conditions) . ')';
 }
-if (!empty($office_filter)) {
+if (! empty($office_filter)) {
     $conditions = [];
     foreach ($office_filter as $v) {
-        if (trim($v) === '-') {
-            $conditions[] = "(l.office_application IS NULL OR l.office_application = '' OR l.office_application = '-' OR l.office_application = ' - ')";
+        if ($v === '-') {
+            $conditions[] = "(d.office_application IS NULL OR d.office_application = '' OR d.office_application = '-')";
         } else {
-            $conditions[] = "l.office_application = ?";
-            $params[] = $v;
-            $types .= 's';
+            $ph = '?';
+            $conditions[] = "d.office_application = $ph";
+            $baseParams[] = $v;
+            $baseTypes .= 's';
         }
     }
-    $where[] = '(' . implode(' OR ', $conditions) . ')';
+    $baseWhere[] = '(' . implode(' OR ', $conditions) . ')';
 }
 if ($active_filter !== '') {
-    $where[] = "l.is_active = ?";
-    $params[] = $active_filter;
-    $types   .= 'i';
+    $baseWhere[] = "d.is_active = ?";
+    $baseParams[] = $active_filter;
+    $baseTypes .= 'i';
 }
-// Acquisition date filter — no bound params (computed server-side)
 if ($acq_filter === 'lt5') {
-    $where[] = "l.acquisition_date IS NOT NULL AND l.acquisition_date != '0000-00-00' AND l.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+    $baseWhere[] = "d.acquisition_date IS NOT NULL AND d.acquisition_date != '0000-00-00' AND d.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 } elseif ($acq_filter === 'gt5') {
-    $where[] = "l.acquisition_date IS NOT NULL AND l.acquisition_date != '0000-00-00' AND l.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+    $baseWhere[] = "d.acquisition_date IS NOT NULL AND d.acquisition_date != '0000-00-00' AND d.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+} elseif ($acq_filter === 'none') {
+    $baseWhere[] = "(d.acquisition_date IS NULL OR d.acquisition_date = '' OR d.acquisition_date = '0000-00-00')";
 }
 
-$whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
-$baseJoin = "FROM laptops l
-             LEFT JOIN personnels p  ON l.personnel_id = p.id
+$whereSQL = !empty($baseWhere) ? "WHERE " . implode(" AND ", $baseWhere) : "";
+$baseJoin = "FROM laptops d
+             LEFT JOIN personnels p  ON d.personnel_id = p.id
              LEFT JOIN ranks r       ON p.rank_id = r.id
-             LEFT JOIN divisions dv  ON l.division_id = dv.id";
+             LEFT JOIN divisions dv  ON d.division_id = dv.id";
 
-/* =========================
-   COUNTS — full filtered set, no pagination
-========================= */
+// ── Total count ───────────────────────────────────────────────────────────────
 $st = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $whereSQL");
-if (!empty($params)) $st->bind_param($types, ...$params);
+if (!empty($baseParams)) $st->bind_param($baseTypes, ...$baseParams);
 $st->execute();
 $totalDevices = $st->get_result()->fetch_assoc()['total'] ?? 0;
 $totalPages   = (int)ceil($totalDevices / $limit);
 
-// Stat-box counts: layer active/inactive on top of ALL current filters.
-// When is_active filter is set to YES, Inactive shows 0 (and vice versa).
-$activeWhere   = $where;
-$activeWhere[] = "l.is_active = 1";
-$activeSQL     = "WHERE " . implode(" AND ", $activeWhere);
+// ── Stat-box counts ───────────────────────────────────────────────────────────
+$activeWhere = $baseWhere;
+$activeWhere[] = "d.is_active = 1";
+$activeSQL = "WHERE " . implode(" AND ", $activeWhere);
 
-$inactiveWhere   = $where;
-$inactiveWhere[] = "l.is_active = 0";
-$inactiveSQL     = "WHERE " . implode(" AND ", $inactiveWhere);
+$inactiveWhere = $baseWhere;
+$inactiveWhere[] = "d.is_active = 0";
+$inactiveSQL = "WHERE " . implode(" AND ", $inactiveWhere);
 
 $sa = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $activeSQL");
-if (!empty($params)) $sa->bind_param($types, ...$params);
+if (!empty($baseParams)) $sa->bind_param($baseTypes, ...$baseParams);
 $sa->execute();
 $activeDevices = $sa->get_result()->fetch_assoc()['total'] ?? 0;
 
 $si = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $inactiveSQL");
-if (!empty($params)) $si->bind_param($types, ...$params);
+if (!empty($baseParams)) $si->bind_param($baseTypes, ...$baseParams);
 $si->execute();
 $inactiveDevices = $si->get_result()->fetch_assoc()['total'] ?? 0;
 
-/* =========================
-   MAIN DATA QUERY
-========================= */
+// ── Paginated row fetch ───────────────────────────────────────────────────────
 $stmt = $conn->prepare("
-    SELECT l.*, CONCAT(r.rank,'  ',p.last_name,', ',p.first_name,' ',p.middle_name) AS personnel_name, dv.division AS division_name
-    $baseJoin $whereSQL ORDER BY l.device_name ASC LIMIT ?,?
+    SELECT d.*,
+           CONCAT(r.rank,'  ',p.last_name,', ',p.first_name,' ',p.middle_name) AS personnel_name,
+           dv.division AS division_name
+    $baseJoin $whereSQL ORDER BY d.device_name ASC LIMIT ?,?
 ");
-$fp  = $params;
-$ft  = $types . 'ii';
+$fp  = $baseParams;
+$ft = $baseTypes . 'ii';
 $fp[] = $offset;
 $fp[] = $limit;
 $stmt->bind_param($ft, ...$fp);
 $stmt->execute();
 $result = $stmt->get_result();
 
-/* =========================
-   SHARED LISTS (add modal)
-========================= */
+// ── Pre-fetch data for Add modal ──────────────────────────────────────────────
+$addPersonnelRows = [];
+$pq = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY r.id DESC, p.last_name ASC, p.first_name ASC");
+while ($r = mysqli_fetch_assoc($pq)) $addPersonnelRows[] = $r;
+
+$addDivisionRows = [];
+$dq = mysqli_query($conn, "SELECT id, division FROM divisions ORDER BY id ASC");
+while ($r = mysqli_fetch_assoc($dq)) $addDivisionRows[] = $r;
+
+$addEpRows = [];
+$eq = mysqli_query($conn, "SELECT id, antivirus FROM endpoint_security ORDER BY id ASC");
+while ($r = mysqli_fetch_assoc($eq)) $addEpRows[] = $r;
+
+$addHandlerRows = $addPersonnelRows;
+
 $osList = [
     "-",
     "Windows 10 Home",
@@ -208,7 +234,7 @@ $osList = [
     "Windows 11 Education",
     "Windows 11 SE",
     "Windows 11 IoT Enterprise",
-    "Other"
+    "Other",
 ];
 
 $officeAppsList = [
@@ -226,7 +252,7 @@ $officeAppsList = [
     "Microsoft Office Home & Student 2021",
     "Microsoft Office Home & Business 2021",
     "Microsoft Office Professional 2021",
-    "Microsoft Office LTSC 2021",
+    "Microsoft Office LTSC Professional Plus 2021",
     "Microsoft Office Home & Student 2019",
     "Microsoft Office Home & Business 2019",
     "Microsoft Office Professional Plus 2019",
@@ -239,25 +265,10 @@ $officeAppsList = [
     "LibreOffice",
     "Apache OpenOffice",
     "WPS Office",
-    "Other"
+    "Other",
 ];
 
-/* Pre-fetch add-modal dropdowns outside the row loop */
-$addPersonnelRows = [];
-$pq = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY r.id DESC, p.last_name ASC, p.first_name ASC");
-while ($r = mysqli_fetch_assoc($pq)) $addPersonnelRows[] = $r;
-
-$addDivisionRows = [];
-$dq = mysqli_query($conn, "SELECT id, division FROM divisions ORDER BY id ASC");
-while ($r = mysqli_fetch_assoc($dq)) $addDivisionRows[] = $r;
-
-$addEpRows = [];
-$eq = mysqli_query($conn, "SELECT id, antivirus FROM endpoint_security ORDER BY id ASC");
-while ($r = mysqli_fetch_assoc($eq)) $addEpRows[] = $r;
-
-$addHandlerRows = $addPersonnelRows;
-
-// Build export query string (mirrors all active filters)
+// ── Build export query string ─────────────────────────────────────────────────
 $exportParams = http_build_query([
     'search'        => $search,
     'division'      => $division_filter,
@@ -301,6 +312,44 @@ $exportParams = http_build_query([
             min-height: 38px;
             font-size: 0.95rem;
         }
+
+        /* ── Account rows ─────────────────────────────────────── */
+        .account-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .account-row .user-name {
+            flex: 1;
+        }
+
+        .account-row .account-type-select {
+            width: 120px;
+            flex-shrink: 0;
+        }
+
+        .account-row .btn-icon {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .account-badge{
+    display:inline-block;
+    background:#e9f3ff;
+    color:#0d6ea8;
+    border:1px solid #b6d7ff;
+    border-radius:20px;
+    padding:6px 12px;
+    margin:3px;
+    font-size:.9rem;
+    font-weight:500;
+}
     </style>
 </head>
 
@@ -319,7 +368,6 @@ $exportParams = http_build_query([
                 <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
                 <input type="text" name="search" class="search-input" placeholder="Search laptops..." value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
-                <!-- EXPORT BUTTON -->
                 <a href="export_laptops.php?<?= htmlspecialchars($exportParams) ?>"
                     class="btn add-laptop-btn"
                     onclick="setTimeout(()=>showToast('Export downloaded successfully!','success'),800)">
@@ -343,7 +391,7 @@ $exportParams = http_build_query([
                             <li class="mb-2"><button type="submit" class="btn btn-primary w-100">Apply</button></li>
                             <li class="mb-2">
                                 <div class="form-check">
-                                    <input class="form-check-input division-all-checkbox" type="checkbox" value="" id="allDivision" <?= empty($division_filter) ? 'checked' : '' ?>>
+                                    <input class="form-check-input division-all-checkbox" type="checkbox" id="allDivision" <?= empty($division_filter) ? 'checked' : '' ?>>
                                     <label class="form-check-label" for="allDivision">All</label>
                                 </div>
                             </li>
@@ -367,7 +415,7 @@ $exportParams = http_build_query([
                             <li class="mb-2"><button type="submit" class="btn btn-primary w-100">Apply</button></li>
                             <li class="mb-2">
                                 <div class="form-check">
-                                    <input class="form-check-input os-all-checkbox" type="checkbox" value="" id="allOS" <?= empty($os_filter) ? 'checked' : '' ?>>
+                                    <input class="form-check-input os-all-checkbox" type="checkbox" id="allOS" <?= empty($os_filter) ? 'checked' : '' ?>>
                                     <label class="form-check-label" for="allOS">All</label>
                                 </div>
                             </li>
@@ -382,7 +430,7 @@ $exportParams = http_build_query([
                         </ul>
                     </div>
 
-                    <!-- OFFICE -->
+                    <!-- OFFICE APPLICATION -->
                     <div class="dropdown">
                         <?php $officeLabel = empty($office_filter) ? 'Office App' : (count($office_filter) === 1 ? $office_filter[0] : count($office_filter) . ' Apps selected'); ?>
                         <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"><?= htmlspecialchars($officeLabel) ?></button>
@@ -390,7 +438,7 @@ $exportParams = http_build_query([
                             <li class="mb-2"><button type="submit" class="btn btn-primary w-100">Apply</button></li>
                             <li class="mb-2">
                                 <div class="form-check">
-                                    <input class="form-check-input office-all-checkbox" type="checkbox" value="" id="allOffice" <?= empty($office_filter) ? 'checked' : '' ?>>
+                                    <input class="form-check-input office-all-checkbox" type="checkbox" id="allOffice" <?= empty($office_filter) ? 'checked' : '' ?>>
                                     <label class="form-check-label" for="allOffice">All</label>
                                 </div>
                             </li>
@@ -404,8 +452,8 @@ $exportParams = http_build_query([
                             <?php endforeach; ?>
                         </ul>
                     </div>
-                </form><!-- /filterForm -->
-            </div><!-- /filters -->
+                </form>
+            </div>
 
             <!-- ACQUISITION DATE FILTER -->
             <div class="dropdown">
@@ -413,6 +461,7 @@ $exportParams = http_build_query([
                 $acqLabel = 'ACQ Date';
                 if ($acq_filter === 'lt5') $acqLabel = 'Age < 5 Years';
                 elseif ($acq_filter === 'gt5') $acqLabel = 'Age > 5 Years';
+                elseif ($acq_filter === 'none') $acqLabel = 'No ACQ Date';
                 $acqBase = '?search=' . urlencode($search) . '&' . http_build_query([
                     'division'      => $division_filter,
                     'filter_os'     => $os_filter,
@@ -423,8 +472,9 @@ $exportParams = http_build_query([
                 <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown"><?= htmlspecialchars($acqLabel) ?></button>
                 <ul class="dropdown-menu p-3">
                     <li><a class="dropdown-item" href="<?= $acqBase ?>">All</a></li>
-                    <li><a class="dropdown-item" href="<?= $acqBase ?>&filter_acq=lt5">Less than 5 years</a></li>
-                    <li><a class="dropdown-item" href="<?= $acqBase ?>&filter_acq=gt5">More than 5 years</a></li>
+                    <li><a class="dropdown-item" href="<?= $acqBase ?>&filter_acq=lt5">Less than 5 years </a></li>
+                    <li><a class="dropdown-item" href="<?= $acqBase ?>&filter_acq=gt5">More than 5 years </a></li>
+                    <li><a class="dropdown-item" href="<?= $acqBase ?>&filter_acq=none">No Acquisition Date</a></li>
                 </ul>
             </div>
 
@@ -449,7 +499,9 @@ $exportParams = http_build_query([
         </div>
     </div>
 
-    <!-- ADD MODAL -->
+    <!-- ════════════════════════════════════════════════════════════════════
+         ADD MODAL
+         ════════════════════════════════════════════════════════════════════ -->
     <div class="modal fade" id="addLaptopModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content custom-modal">
@@ -460,10 +512,10 @@ $exportParams = http_build_query([
                 <div class="modal-body">
                     <form action="add_laptop.php" method="POST" id="addLaptopForm">
                         <div class="row g-3">
-                            <div class="col-md-4"><label class="form-label">Device Name</label><input type="text" class="form-control" name="device_name" required></div>
+                            <div class="col-md-4"><label class="form-label">Device Name</label><input type="text" class="form-control" name="device_name"></div>
                             <div class="col-md-4">
                                 <label class="form-label">Personnel</label>
-                                <select name="personnel_id" class="form-select" required>
+                                <select name="personnel_id" class="form-select">
                                     <option value="" disabled selected hidden>Select Personnel</option>
                                     <option value="-">-</option>
                                     <?php foreach ($addPersonnelRows as $p): $fn = trim(($p['rank'] ?? '') . ' ' . ($p['last_name'] ?? '') . ' ' . ($p['first_name'] ?? '') . ' ' . ($p['middle_name'] ?? '')); ?>
@@ -473,7 +525,7 @@ $exportParams = http_build_query([
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Division</label>
-                                <select name="division_id" class="form-select" required>
+                                <select name="division_id" class="form-select">
                                     <option value="" disabled selected hidden>Select Division</option>
                                     <?php foreach ($addDivisionRows as $d): ?>
                                         <option value="<?= $d['id'] ?>"><?= htmlspecialchars($d['division']) ?></option>
@@ -500,8 +552,9 @@ $exportParams = http_build_query([
                             <div class="col-md-6">
                                 <label class="form-label">Office Application</label>
                                 <select name="office_application" class="form-select">
-                                    <option value="" disabled selected hidden>Select Office Application</option>
-                                    <?php foreach ($officeAppsList as $app): ?><option value="<?= htmlspecialchars($app) ?>"><?= htmlspecialchars($app) ?></option><?php endforeach; ?>
+                                    <?php foreach ($officeAppsList as $app): ?>
+                                        <option value="<?= htmlspecialchars($app) ?>" <?= trim($app) === '-' ? 'selected' : '' ?>><?= htmlspecialchars($app) ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="col-md-6"><label class="form-label">Office License Key</label><input type="text" class="form-control" name="office_license_key"></div>
@@ -535,62 +588,35 @@ $exportParams = http_build_query([
                             <div class="col-md-4"><label class="form-label">GBs of RAM</label><input type="number" class="form-control" name="gb_ram"></div>
                             <div class="col-md-4"><label class="form-label">Monitor Brand</label><input type="text" class="form-control" name="monitor_brand"></div>
                             <div class="col-md-4"><label class="form-label">Monitor Size</label><input type="text" class="form-control" name="monitor_size_inches"></div>
-                            <div class="col-md-4"><label class="form-label"># of User Accounts</label><input type="number" class="form-control" name="no_of_user_accounts"></div>
 
-                            <div class="col-md-6">
+                            <!-- ── USER ACCOUNT TYPE (Add) ──────────────────────────────── -->
+                            <!--
+                                no_of_user_accounts is now AUTO-COUNTED from the rows below.
+                                A hidden input is populated via JS before submit.
+                            -->
+                            <input type="hidden" name="no_of_user_accounts" id="addAccountCount">
 
+                            <div class="col-md-12">
                                 <label class="form-label">User Account Type</label>
-
-                                <div id="accountTypeContainer">
-
+                                <div id="addAccountContainer">
+                                    <!-- First row (always present, cannot be removed) -->
                                     <div class="account-row">
-
-                                        <input type="text"
-                                            class="form-control user-name"
-                                            placeholder="Enter Name">
-
-                                        <div class="dropdown">
-
-                                            <button class="btn btn-outline-secondary dropdown-toggle account-type-btn"
-                                                type="button"
-                                                data-bs-toggle="dropdown">
-                                                Select Type
-                                            </button>
-
-                                            <ul class="dropdown-menu">
-                                                <li>
-                                                    <a class="dropdown-item"
-                                                        href="#"
-                                                        onclick="setType(event,this,'Admin')">
-                                                        Admin
-                                                    </a>
-                                                </li>
-
-                                                <li>
-                                                    <a class="dropdown-item"
-                                                        href="#"
-                                                        onclick="setType(event,this,'Encoder')">
-                                                        Encoder
-                                                    </a>
-                                                </li>
-                                            </ul>
-
-                                            <input type="hidden"
-                                                class="account-type"
-                                                value="">
-                                        </div>
-
-                                        <button type="button"
-                                            class="btn btn-success btn-icon"
-                                            onclick="addAccountType()">
+                                        <input type="text" class="form-control user-name" placeholder="Enter account name">
+                                        <select class="form-select account-type-select">
+                                            <option value="" disabled selected>Type</option>
+                                            <option value=" ">-</option>
+                                            <option value="Admin">Admin</option>
+                                            <option value="User">User</option>
+                                        </select>
+                                        <button type="button" class="btn btn-success btn-icon" onclick="addAccountRow('addAccountContainer')">
                                             <i class="bi bi-plus-lg"></i>
                                         </button>
-
                                     </div>
-
                                 </div>
-
+                                <!-- Hidden JSON field submitted to server -->
+                                <input type="hidden" name="user_account_type" id="addAccountJson">
                             </div>
+
                             <div class="col-md-6"><label class="form-label">Authorized Software</label><textarea class="form-control" name="authorized_software"></textarea></div>
                             <div class="col-md-6"><label class="form-label">Unauthorized Software</label><textarea class="form-control" name="unauthorized_software"></textarea></div>
                             <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" class="form-control" name="acquisition_date"></div>
@@ -637,7 +663,9 @@ $exportParams = http_build_query([
         </div>
     </div>
 
-    <!-- TABLE -->
+    <!-- ════════════════════════════════════════════════════════════════════
+         TABLE
+         ════════════════════════════════════════════════════════════════════ -->
     <div class="contenttable">
         <div class="table-container">
             <table class="users-table">
@@ -664,7 +692,7 @@ $exportParams = http_build_query([
                         <th>MONITOR BRAND</th>
                         <th>MONITOR SIZE</th>
                         <th># OF USER ACCOUNTS</th>
-                        <th>USER ACCOUNT TYPE</th>
+                        <th>USER ACCOUNTS</th>
                         <th>AUTHORIZED SOFTWARE</th>
                         <th>UNAUTHORIZED SOFTWARE</th>
                         <th>ACQUISITION DATE</th>
@@ -680,32 +708,33 @@ $exportParams = http_build_query([
                         <?php while ($row = $result->fetch_assoc()): ?>
                             <tr class="clickable-row" data-active="<?= $row['is_active'] ? '1' : '0' ?>"
                                 data-bs-toggle="modal" data-bs-target="#viewLtModal<?= $row['id'] ?>">
-                                <td><?= htmlspecialchars($row['device_name']              ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['personnel_name']            ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['division_name']             ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['ip_address']                ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['os']                        ?? '') ?: '-' ?></td>
+                                <td><?= dash($row['device_name'] ?? '') ?></td>
+                                <td><?= dash($row['personnel_name'] ?? '') ?></td>
+                                <td><?= dash($row['division_name'] ?? '') ?></td>
+                                <td><?= dash($row['ip_address'] ?? '') ?></td>
+                                <td><?= dash($row['os'] ?? '') ?></td>
                                 <td><?= ($row['is_os_licensed'] == 1) ? 'Yes' : 'No' ?></td>
-                                <td><?= htmlspecialchars($row['os_license_key']            ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['office_application']        ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['office_license_key']        ?? '') ?: '-' ?></td>
+                                <td><?= dash($row['os_license_key'] ?? '') ?></td>
+                                <td><?= dash($row['office_application'] ?? '') ?></td>
+                                <td><?= dash($row['office_license_key'] ?? '') ?></td>
                                 <td><?= ($row['is_office_licensed'] == 1) ? 'Yes' : 'No' ?></td>
                                 <td><?= getEndpointNames($conn, $row['endpoint_security_id']) ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?: '-' ?></td>
-                                <td><?= (!empty($row['date_installed']) && $row['date_installed'] !== '0000-00-00') ? htmlspecialchars($row['date_installed']) : '-' ?></td>
-                                <td><?= htmlspecialchars($row['guid']                       ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['mac_address']                ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['cpu_brand']                  ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['cpu_cores']                  ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['gb_ram']                     ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['monitor_brand']              ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['monitor_size_inches']        ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['no_of_user_accounts']        ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['user_account_type']          ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['authorized_software']        ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['unauthorized_software']      ?? '') ?: '-' ?></td>
-                                <td><?= (!empty($row['acquisition_date']) && $row['acquisition_date'] !== '0000-00-00') ? htmlspecialchars($row['acquisition_date']) : '-' ?></td>
-                                <td><?= htmlspecialchars($row['par_serial_no']              ?? '') ?: '-' ?></td>
+                                <td><?= dash($row['no_of_installed_anti_virus'] ?? '') ?></td>
+                                <td><?= dash($row['date_installed'] ?? '') ?></td>
+                                <td><?= dash($row['guid'] ?? '') ?></td>
+                                <td><?= dash($row['mac_address'] ?? '') ?></td>
+                                <td><?= dash($row['cpu_brand'] ?? '') ?></td>
+                                <td><?= dash($row['cpu_cores'] ?? '') ?></td>
+                                <td><?= dash($row['gb_ram'] ?? '') ?></td>
+                                <td><?= dash($row['monitor_brand'] ?? '') ?></td>
+                                <td><?= dash($row['monitor_size_inches'] ?? '') ?></td>
+                                <td><?= dash($row['no_of_user_accounts'] ?? '') ?></td>
+                                <!-- TABLE: show only names -->
+                                <td><?= getAccountNames($row['user_account_type'] ?? '') ?></td>
+                                <td><?= dash($row['authorized_software'] ?? '') ?></td>
+                                <td><?= dash($row['unauthorized_software'] ?? '') ?></td>
+                                <td><?= dash($row['acquisition_date'] ?? '') ?></td>
+                                <td><?= dash($row['par_serial_no'] ?? '') ?></td>
                                 <td><?= getPersonnelNames($conn, $row['previous_owners_id']) ?: '-' ?></td>
                                 <td><?= $row['is_remote_acc'] ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
                                 <td><?= $row['is_active']     ? '<span style="color:green;font-weight:bold;">YES</span>' : '<span style="color:red;font-weight:bold;">NO</span>' ?></td>
@@ -716,7 +745,7 @@ $exportParams = http_build_query([
                                 </td>
                             </tr>
 
-                            <!-- VIEW MODAL -->
+                            <!-- ── VIEW MODAL ── -->
                             <div class="modal fade" id="viewLtModal<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
                                     <div class="modal-content">
@@ -810,10 +839,31 @@ $exportParams = http_build_query([
                                                     <div class="view-label"># User Accounts</div>
                                                     <div class="view-value"><?= htmlspecialchars($row['no_of_user_accounts'] ?? '') ?></div>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <div class="view-label">User Account Type</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['user_account_type'] ?? '') ?></div>
+                                                <!-- VIEW: show name + type per row -->
+                                                <div class="col-md-12">
+                                                <div class="view-label">User Account Type</div>
+                                                <div class="view-value">
+                                                    <?php
+                                                    $accs = json_decode($row['user_account_type'] ?? '[]', true);
+
+                                                    if (is_array($accs) && !empty($accs)) {
+                                                        foreach ($accs as $acc) {
+                                                            $name = trim($acc['name'] ?? '');
+                                                            $type = trim($acc['type'] ?? '-');
+
+                                                            if ($name === '') continue;
+
+                                                            echo '
+                                                            <span class="account-badge">
+                                                                ' . htmlspecialchars($name) . ' : ' . htmlspecialchars($type) . '
+                                                            </span>';
+                                                        }
+                                                    } else {
+                                                        echo '-';
+                                                    }
+                                                    ?>
                                                 </div>
+                                            </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Acquisition Date</div>
                                                     <div class="view-value"><?= htmlspecialchars($row['acquisition_date'] ?? '') ?></div>
@@ -854,7 +904,7 @@ $exportParams = http_build_query([
                                 </div>
                             </div>
 
-                            <!-- EDIT MODAL -->
+                            <!-- ── EDIT MODAL ── -->
                             <div class="modal fade" id="editModal<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
                                     <div class="modal-content">
@@ -863,13 +913,15 @@ $exportParams = http_build_query([
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
                                         <div class="modal-body">
-                                            <form action="edit_laptops.php" method="POST">
+                                            <form action="edit_laptops.php" method="POST"
+                                                  id="editForm<?= $row['id'] ?>"
+                                                  onsubmit="buildAccountJson('editAccountContainer<?= $row['id'] ?>', 'editAccountJson<?= $row['id'] ?>', 'editAccountCount<?= $row['id'] ?>')">
                                                 <input type="hidden" name="id" value="<?= $row['id'] ?>">
                                                 <div class="row g-3">
-                                                    <div class="col-md-4"><label class="form-label">Device Name</label><input type="text" class="form-control" name="device_name" value="<?= htmlspecialchars($row['device_name'] ?? '') ?>" required></div>
+                                                    <div class="col-md-4"><label class="form-label">Device Name</label><input type="text" class="form-control" name="device_name" value="<?= htmlspecialchars($row['device_name'] ?? '') ?>"></div>
                                                     <div class="col-md-4">
                                                         <label class="form-label">Personnel</label>
-                                                        <select name="personnel_id" class="form-select" required>
+                                                        <select name="personnel_id" class="form-select">
                                                             <option value="-">-</option>
                                                             <?php $pq2 = mysqli_query($conn, "SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY r.id DESC, p.last_name ASC, p.first_name ASC");
                                                             while ($p2 = mysqli_fetch_assoc($pq2)): $fn = trim(($p2['rank'] ?? '') . ' ' . ($p2['last_name'] ?? '') . ' ' . ($p2['first_name'] ?? '') . ' ' . ($p2['middle_name'] ?? '')); ?>
@@ -879,7 +931,7 @@ $exportParams = http_build_query([
                                                     </div>
                                                     <div class="col-md-4">
                                                         <label class="form-label">Division</label>
-                                                        <select name="division_id" class="form-select" required>
+                                                        <select name="division_id" class="form-select">
                                                             <?php $dq2 = mysqli_query($conn, "SELECT id, division FROM divisions ORDER BY id ASC");
                                                             while ($d2 = mysqli_fetch_assoc($dq2)): ?>
                                                                 <option value="<?= $d2['id'] ?>" <?= ($row['division_id'] ?? '') == $d2['id'] ? 'selected' : '' ?>><?= htmlspecialchars($d2['division']) ?></option>
@@ -912,7 +964,7 @@ $exportParams = http_build_query([
                                                     <div class="col-md-6">
                                                         <label class="form-label">Office Application</label>
                                                         <select name="office_application" class="form-select">
-                                                            <?php foreach ($officeAppsList as $app): ?><option value="<?= $app ?>" <?= ($row['office_application'] ?? '') == $app ? 'selected' : '' ?>><?= $app ?></option><?php endforeach; ?>
+                                                            <?php foreach ($officeAppsList as $app): $isSelected = ($row['office_application'] ?? '') == $app || (trim($row['office_application'] ?? '') === '' && trim($app) === '-'); ?><option value="<?= htmlspecialchars($app) ?>" <?= $isSelected ? 'selected' : '' ?>><?= htmlspecialchars($app) ?></option><?php endforeach; ?>
                                                         </select>
                                                     </div>
                                                     <div class="col-md-6"><label class="form-label">Office License Key</label><input type="text" class="form-control" name="office_license_key" value="<?= htmlspecialchars($row['office_license_key'] ?? '') ?>"></div>
@@ -928,8 +980,52 @@ $exportParams = http_build_query([
                                                     <div class="col-md-4"><label class="form-label">GB RAM</label><input type="number" class="form-control" name="gb_ram" value="<?= htmlspecialchars($row['gb_ram'] ?? '') ?>"></div>
                                                     <div class="col-md-4"><label class="form-label">Monitor Brand</label><input type="text" class="form-control" name="monitor_brand" value="<?= htmlspecialchars($row['monitor_brand'] ?? '') ?>"></div>
                                                     <div class="col-md-4"><label class="form-label">Monitor Size</label><input type="number" class="form-control" name="monitor_size_inches" value="<?= htmlspecialchars($row['monitor_size_inches'] ?? '') ?>"></div>
-                                                    <div class="col-md-4"><label class="form-label"># User Accounts</label><input type="number" class="form-control" name="no_of_user_accounts" value="<?= htmlspecialchars($row['no_of_user_accounts'] ?? '') ?>"></div>
-                                                    <div class="col-md-4"><label class="form-label">User Account Type</label><input type="text" class="form-control" name="user_account_type" value="<?= htmlspecialchars($row['user_account_type'] ?? '') ?>"></div>
+
+                                                    <!-- ── USER ACCOUNT TYPE (Edit) ─────────────────────────── -->
+                                                    <!-- no_of_user_accounts auto-counted, hidden field populated by JS -->
+                                                    <input type="hidden" name="no_of_user_accounts" id="editAccountCount<?= $row['id'] ?>">
+
+                                                    <div class="col-md-12">
+                                                        <label class="form-label">User Account Type</label>
+                                                        <div id="editAccountContainer<?= $row['id'] ?>">
+                                                            <?php
+                                                            $existingAccounts = json_decode($row['user_account_type'] ?? '[]', true);
+                                                            // Normalise: if empty or not a proper array-of-objects, seed one blank row
+                                                            if (!is_array($existingAccounts) || empty($existingAccounts)) {
+                                                                $existingAccounts = [['name' => '', 'type' => '']];
+                                                            }
+                                                            foreach ($existingAccounts as $idx => $acc):
+                                                                $accName = htmlspecialchars($acc['name'] ?? '');
+                                                                $accType = $acc['type'] ?? '';
+                                                                $isFirst = ($idx === 0);
+                                                            ?>
+                                                                <div class="account-row">
+                                                                    <input type="text" class="form-control user-name"
+                                                                           placeholder="Enter account name"
+                                                                           value="<?= $accName ?>">
+                                                                    <select class="form-select account-type-select">
+                                                                        <option value="" disabled <?= $accType === '' ? 'selected' : '' ?>>Type</option>
+                                                                         <option value=" " <?= $accType === ' ' ? 'selected' : '' ?>>-</option>
+                                                                        <option value="Admin" <?= $accType === 'Admin' ? 'selected' : '' ?>>Admin</option>
+                                                                        <option value="User"  <?= $accType === 'User'  ? 'selected' : '' ?>>User</option>
+                                                                    </select>
+                                                                    <?php if ($isFirst): ?>
+                                                                        <button type="button" class="btn btn-success btn-icon"
+                                                                                onclick="addAccountRow('editAccountContainer<?= $row['id'] ?>')">
+                                                                            <i class="bi bi-plus-lg"></i>
+                                                                        </button>
+                                                                    <?php else: ?>
+                                                                        <button type="button" class="btn btn-danger btn-icon"
+                                                                                onclick="removeAccountRow(this)">
+                                                                            <i class="bi bi-dash-lg"></i>
+                                                                        </button>
+                                                                    <?php endif; ?>
+                                                                </div>
+                                                            <?php endforeach; ?>
+                                                        </div>
+                                                        <input type="hidden" name="user_account_type" id="editAccountJson<?= $row['id'] ?>">
+                                                    </div>
+
                                                     <div class="col-md-4"><label class="form-label">Date Installed</label><input type="date" class="form-control" name="date_installed" value="<?= htmlspecialchars($row['date_installed'] ?? '') ?>"></div>
                                                     <div class="col-md-12">
                                                         <label class="form-label">Endpoint Security</label>
@@ -940,7 +1036,7 @@ $exportParams = http_build_query([
                                                             while ($ep = mysqli_fetch_assoc($epQ)): ?>
                                                                 <div class="col-md-4">
                                                                     <div class="form-check">
-                                                                        <input class="form-check-input" type="checkbox" name="endpoint_security[]" value="<?= $ep['id'] ?>" id="ep<?= $row['id'] . '_' . $ep['id'] ?>" <?= in_array($ep['id'], $selectedEP) ? 'checked' : '' ?>>
+                                                                        <input class="form-check-input ep-checkbox" type="checkbox" name="endpoint_security[]" value="<?= $ep['id'] ?>" id="ep<?= $row['id'] . '_' . $ep['id'] ?>" <?= in_array($ep['id'], $selectedEP) ? 'checked' : '' ?>>
                                                                         <label class="form-check-label" for="ep<?= $row['id'] . '_' . $ep['id'] ?>"><?= htmlspecialchars($ep['antivirus']) ?></label>
                                                                     </div>
                                                                 </div>
@@ -988,11 +1084,10 @@ $exportParams = http_build_query([
                                     </div>
                                 </div>
                             </div>
-
                         <?php endwhile; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="29" class="text-center">No devices found.</td>
+                            <td colspan="30" class="text-center">No devices found.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -1001,10 +1096,20 @@ $exportParams = http_build_query([
 
         <div class="table-footer">
             <div class="user-stats">
-                <div class="stat-box total"><span class="label">Total Devices</span><span class="value"><?= $totalDevices ?></span></div>
-                <div class="stat-box active"><span class="label">Active</span><span class="value"><?= $activeDevices ?></span></div>
-                <div class="stat-box inactive"><span class="label">Inactive</span><span class="value"><?= $inactiveDevices ?></span></div>
+                <div class="stat-box total">
+                    <span class="label">Total Devices</span>
+                    <span class="value"><?= $totalDevices ?></span>
+                </div>
+                <div class="stat-box active">
+                    <span class="label">Active</span>
+                    <span class="value"><?= $activeDevices ?></span>
+                </div>
+                <div class="stat-box inactive">
+                    <span class="label">Inactive</span>
+                    <span class="value"><?= $inactiveDevices ?></span>
+                </div>
             </div>
+
             <?php if ($totalPages > 1):
                 $pb = http_build_query([
                     'search'        => $search,
@@ -1016,7 +1121,9 @@ $exportParams = http_build_query([
                 ]); ?>
                 <div class="pagination">
                     <?php if ($page > 1): ?><a href="?page=<?= $page - 1 ?>&<?= $pb ?>">Prev</a><?php endif; ?>
-                    <?php for ($i = 1; $i <= $totalPages; $i++): ?><a href="?page=<?= $i ?>&<?= $pb ?>" class="<?= $i == $page ? 'active-page' : '' ?>"><?= $i ?></a><?php endfor; ?>
+                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                        <a href="?page=<?= $i ?>&<?= $pb ?>" class="<?= $i == $page ? 'active-page' : '' ?>"><?= $i ?></a>
+                    <?php endfor; ?>
                     <?php if ($page < $totalPages): ?><a href="?page=<?= $page + 1 ?>&<?= $pb ?>">Next</a><?php endif; ?>
                 </div>
             <?php endif; ?>
@@ -1024,6 +1131,80 @@ $exportParams = http_build_query([
     </div>
 
     <script>
+        // ═══════════════════════════════════════════════════════════════
+        //  ACCOUNT ROW HELPERS
+        // ═══════════════════════════════════════════════════════════════
+
+        /**
+         * Add a new account row to a given container.
+         * @param {string} containerId - ID of the container div
+         */
+        function addAccountRow(containerId) {
+            const container = document.getElementById(containerId);
+            const row = document.createElement('div');
+            row.className = 'account-row';
+            row.innerHTML = `
+                <input type="text" class="form-control user-name" placeholder="Enter account name">
+                <select class="form-select account-type-select">
+                    <option value="" disabled selected>Type</option>
+                    <option value=" ">-</option>
+                    <option value="Admin">Admin</option>
+                    <option value="User">User</option>
+                </select>
+                <button type="button" class="btn btn-danger btn-icon" onclick="removeAccountRow(this)">
+                    <i class="bi bi-dash-lg"></i>
+                </button>
+            `;
+            container.appendChild(row);
+        }
+
+        /**
+         * Remove an account row. The first row (with the + button) cannot be removed.
+         */
+        function removeAccountRow(btn) {
+            btn.closest('.account-row').remove();
+        }
+
+        /**
+         * Collect all account rows from a container into a JSON array,
+         * then populate the hidden JSON field and the count field.
+         * Called onsubmit for both Add and Edit forms.
+         *
+         * @param {string} containerId  - ID of the rows container
+         * @param {string} jsonFieldId  - ID of the hidden input that receives JSON
+         * @param {string} countFieldId - ID of the hidden input that receives count
+         */
+        function buildAccountJson(containerId, jsonFieldId, countFieldId) {
+            const container = document.getElementById(containerId);
+            const rows      = container.querySelectorAll('.account-row');
+            const accounts  = [];
+
+            rows.forEach(row => {
+                const name = row.querySelector('.user-name').value.trim();
+                const type = row.querySelector('.account-type-select').value;
+                if (name !== '') {
+                    accounts.push({ name: name, type: type || '' });
+                }
+            });
+
+            document.getElementById(jsonFieldId).value  = JSON.stringify(accounts);
+            document.getElementById(countFieldId).value = accounts.length;
+        }
+
+        // ── Wire up the ADD form ──────────────────────────────────────
+        document.getElementById('addLaptopForm').addEventListener('submit', function(e) {
+            // Endpoint security validation
+            const ep = document.querySelectorAll("#addLaptopModal input[name='endpoint_security[]']:checked");
+            if (ep.length === 0) {
+                e.preventDefault();
+                alert("Select at least one Endpoint Security");
+                return;
+            }
+            // Build account JSON before submit
+            buildAccountJson('addAccountContainer', 'addAccountJson', 'addAccountCount');
+        });
+
+        // ── Filter checkbox helpers ───────────────────────────────────
         function setupFilterGroup(allSel, itemSel) {
             const allCb = document.querySelector(allSel);
             const items = document.querySelectorAll(itemSel);
@@ -1036,26 +1217,16 @@ $exportParams = http_build_query([
             }));
         }
         setupFilterGroup('#allDivision', '.division-checkbox');
-        setupFilterGroup('#allOS', '.os-checkbox');
-        setupFilterGroup('#allOffice', '.office-checkbox');
+        setupFilterGroup('#allOS',       '.os-checkbox');
+        setupFilterGroup('#allOffice',   '.office-checkbox');
 
-        document.getElementById("addLaptopForm").addEventListener("submit", function(e) {
-            const ep = document.querySelectorAll("#addLaptopModal input[name='endpoint_security[]']:checked");
-
-            if (ep.length === 0) {
-                e.preventDefault();
-                alert("Select at least one Endpoint Security");
-                return;
-            }
-        });
-
-        // View → Edit transition
+        // ── View → Edit transition ────────────────────────────────────
         document.addEventListener('click', function(e) {
             const btn = e.target.closest('[data-edit-target]');
             if (!btn) return;
             const editTarget = btn.getAttribute('data-edit-target');
-            const viewModal = btn.closest('.modal');
-            const bsView = bootstrap.Modal.getInstance(viewModal);
+            const viewModal  = btn.closest('.modal');
+            const bsView     = bootstrap.Modal.getInstance(viewModal);
             if (bsView) {
                 viewModal.addEventListener('hidden.bs.modal', function handler() {
                     viewModal.removeEventListener('hidden.bs.modal', handler);
@@ -1064,28 +1235,21 @@ $exportParams = http_build_query([
                 bsView.hide();
             }
         });
-    </script>
 
-    <script>
+        // ── Toast helper ──────────────────────────────────────────────
         function showToast(message, type = "success") {
-            const colors = {
-                success: "#198754",
-                danger: "#dc3545"
-            };
-            const icons = {
-                success: "bi-check-circle-fill",
-                danger: "bi-x-circle-fill"
-            };
-            const toast = document.createElement("div");
+            const colors = { success: "#198754", danger: "#dc3545" };
+            const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
+            const toast  = document.createElement("div");
             toast.style.cssText = `
-            position:fixed;bottom:24px;right:24px;z-index:9999;
-            background:${colors[type]};color:#fff;
-            padding:14px 20px;border-radius:10px;
-            display:flex;align-items:center;gap:10px;
-            box-shadow:0 4px 16px rgba(0,0,0,.2);
-            font-size:.95rem;max-width:340px;
-            animation:slideIn .3s ease;
-        `;
+                position:fixed;bottom:24px;right:24px;z-index:9999;
+                background:${colors[type]};color:#fff;
+                padding:14px 20px;border-radius:10px;
+                display:flex;align-items:center;gap:10px;
+                box-shadow:0 4px 16px rgba(0,0,0,.2);
+                font-size:.95rem;max-width:340px;
+                animation:slideIn .3s ease;
+            `;
             toast.innerHTML = `<i class="bi ${icons[type]}" style="font-size:1.2rem;"></i><span>${message}</span>`;
             document.body.appendChild(toast);
             if (!document.getElementById("toastKeyframe")) {
@@ -1108,8 +1272,7 @@ $exportParams = http_build_query([
                 showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
             });
         </script>
-    <?php unset($_SESSION['toast_success']);
-    endif; ?>
+    <?php unset($_SESSION['toast_success']); endif; ?>
 
     <?php if (!empty($_SESSION['toast_error'])): ?>
         <script>
@@ -1117,124 +1280,9 @@ $exportParams = http_build_query([
                 showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
             });
         </script>
-    <?php unset($_SESSION['toast_error']);
-    endif; ?>
+    <?php unset($_SESSION['toast_error']); endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function setType(event, el, type) {
-
-            event.preventDefault();
-
-            const row = el.closest('.account-row');
-
-            row.querySelector('.account-type-btn').textContent = type;
-            row.querySelector('.account-type').value = type;
-        }
-
-        function addAccountType() {
-
-            const container = document.getElementById('accountTypeContainer');
-
-            const row = document.createElement('div');
-
-            row.className = 'account-row';
-
-            row.innerHTML = `
-        <input type="text"
-               class="form-control user-name"
-               placeholder="Enter Name">
-
-        <div class="dropdown">
-
-            <button class="btn btn-outline-secondary dropdown-toggle account-type-btn"
-                    type="button"
-                    data-bs-toggle="dropdown">
-                Select Type
-            </button>
-
-            <ul class="dropdown-menu">
-                <li>
-                    <a class="dropdown-item"
-                       href="#"
-                       onclick="setType(event,this,'Admin')">
-                        Admin
-                    </a>
-                </li>
-
-                <li>
-                    <a class="dropdown-item"
-                       href="#"
-                       onclick="setType(event,this,'Encoder')">
-                        Encoder
-                    </a>
-                </li>
-            </ul>
-
-            <input type="hidden"
-                   class="account-type"
-                   value="">
-        </div>
-
-        <button type="button"
-                class="btn btn-danger btn-icon"
-                onclick="removeRow(this)">
-            <i class="bi bi-dash-lg"></i>
-        </button>
-    `;
-
-            container.appendChild(row);
-        }
-
-        function removeRow(btn) {
-
-            const rows = document.querySelectorAll('.account-row');
-
-            if (rows.length <= 1) {
-                alert('At least one row must remain.');
-                return;
-            }
-
-            btn.closest('.account-row').remove();
-        }
-
-        /* Ilabas ang dropdown sa body */
-
-        document.addEventListener('shown.bs.dropdown', function(e) {
-
-            const dropdown = e.target;
-            const menu = dropdown.querySelector('.dropdown-menu');
-
-            if (!menu) return;
-
-            dropdown._menu = menu;
-
-            document.body.appendChild(menu);
-
-            const button = dropdown.querySelector('.dropdown-toggle');
-            const rect = button.getBoundingClientRect();
-
-            menu.style.position = 'absolute';
-            menu.style.top = (rect.bottom + window.scrollY) + 'px';
-            menu.style.left = (rect.left + window.scrollX) + 'px';
-            menu.style.display = 'block';
-        });
-
-        document.addEventListener('hidden.bs.dropdown', function(e) {
-
-            const dropdown = e.target;
-            const menu = dropdown._menu;
-
-            if (!menu) return;
-
-            dropdown.appendChild(menu);
-
-            menu.style.position = '';
-            menu.style.top = '';
-            menu.style.left = '';
-            menu.style.display = '';
-        });
-    </script>
 </body>
 
 </html>

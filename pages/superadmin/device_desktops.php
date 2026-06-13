@@ -604,6 +604,7 @@ $exportParams = http_build_query([
                                         <input type="text" class="form-control user-name" placeholder="Enter account name">
                                         <select class="form-select account-type-select">
                                             <option value="" disabled selected>Type</option>
+                                            <option value=" ">-</option>
                                             <option value="Admin">Admin</option>
                                             <option value="User">User</option>
                                         </select>
@@ -1004,6 +1005,7 @@ $exportParams = http_build_query([
                                                                            value="<?= $accName ?>">
                                                                     <select class="form-select account-type-select">
                                                                         <option value="" disabled <?= $accType === '' ? 'selected' : '' ?>>Type</option>
+                                                                         <option value=" " <?= $accType === ' ' ? 'selected' : '' ?>>-</option>
                                                                         <option value="Admin" <?= $accType === 'Admin' ? 'selected' : '' ?>>Admin</option>
                                                                         <option value="User"  <?= $accType === 'User'  ? 'selected' : '' ?>>User</option>
                                                                     </select>
@@ -1145,6 +1147,7 @@ $exportParams = http_build_query([
                 <input type="text" class="form-control user-name" placeholder="Enter account name">
                 <select class="form-select account-type-select">
                     <option value="" disabled selected>Type</option>
+                    <option value=" ">-</option>
                     <option value="Admin">Admin</option>
                     <option value="User">User</option>
                 </select>

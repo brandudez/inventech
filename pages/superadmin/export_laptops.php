@@ -78,6 +78,29 @@ function getPersonnelNamesExport($conn, $json)
 
     return implode(', ', $names);
 }
+
+/**
+ * Parse user_account_type JSON and return only the names as a comma-separated string.
+ * Supports both new format: [{"name":"Jake","type":"Admin"}]
+ * and legacy plain-text fallback.
+ */
+function getAccountNamesExport($json)
+{
+    if (empty($json)) return '-';
+    $decoded = json_decode($json, true);
+    if (is_array($decoded)) {
+        $names = [];
+        foreach ($decoded as $entry) {
+            if (isset($entry['name']) && trim($entry['name']) !== '') {
+                $names[] = trim($entry['name']);
+            }
+        }
+        return !empty($names) ? implode(', ', $names) : '-';
+    }
+    // Legacy: plain text stored
+    return $json;
+}
+
 function formatDate($val) {
     if (empty($val) || $val === '0000-00-00') return '-';
     return $val;
@@ -257,7 +280,7 @@ while ($row = $result->fetch_assoc()) {
         $row['monitor_brand'] ?? '',
         $row['monitor_size_inches'] ?? '',
         $row['no_of_user_accounts'] ?? '',
-        $row['user_account_type'] ?? '',
+        getAccountNamesExport($row['user_account_type'] ?? ''),
         $row['authorized_software'] ?? '',
         $row['unauthorized_software'] ?? '',
         formatDate($row['acquisition_date']), 
