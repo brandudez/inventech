@@ -61,6 +61,28 @@ function getPersonnelNames($conn, $json)
     return implode(",<br>", $names);
 }
 
+/**
+ * Parse user_account_type JSON and return only the names as a comma-separated string.
+ * Supports both new format: [{"name":"Jake","type":"Admin"}]
+ * and legacy plain-text fallback.
+ */
+function getAccountNames($json)
+{
+    if (empty($json)) return '-';
+    $decoded = json_decode($json, true);
+    if (is_array($decoded)) {
+        $names = [];
+        foreach ($decoded as $entry) {
+            if (isset($entry['name']) && trim($entry['name']) !== '') {
+                $names[] = htmlspecialchars(trim($entry['name']));
+            }
+        }
+        return !empty($names) ? implode(', ', $names) : '-';
+    }
+    // Legacy: plain text stored
+    return htmlspecialchars($json);
+}
+
 /* =========================
    PAGINATION
 ========================= */
@@ -309,6 +331,45 @@ $exportParams = http_build_query([
             color: #3b5bdb;
             white-space: nowrap;
         }
+
+        /* ── Account rows ─────────────────────────────────────── */
+        .account-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .account-row .user-name {
+            flex: 1;
+        }
+
+        .account-row .account-type-select {
+            width: 120px;
+            flex-shrink: 0;
+        }
+
+        .account-row .btn-icon {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .account-badge {
+            display: inline-block;
+            background: #e9f3ff;
+            color: #0d6ea8;
+            border: 1px solid #b6d7ff;
+            border-radius: 20px;
+            padding: 6px 12px;
+            margin: 3px;
+            font-size: .9rem;
+            font-weight: 500;
+        }
     </style>
 </head>
 
@@ -431,7 +492,9 @@ $exportParams = http_build_query([
         </div>
     </div>
 
-    <!-- ADD MODAL -->
+    <!-- ════════════════════════════════════════════════════════════════════
+         ADD MODAL
+         ════════════════════════════════════════════════════════════════════ -->
     <div class="modal fade" id="addLaptopModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content custom-modal">
@@ -560,14 +623,34 @@ $exportParams = http_build_query([
                                 <label class="form-label">Monitor Size</label>
                                 <input type="text" class="form-control" name="monitor_size_inches">
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label"># of User Accounts</label>
-                                <input type="number" class="form-control" name="no_of_user_accounts">
-                            </div>
-                            <div class="col-md-6">
+
+                            <!-- ── USER ACCOUNT TYPE (Add) ──────────────────────────────── -->
+                            <!--
+                                no_of_user_accounts is now AUTO-COUNTED from the rows below.
+                                A hidden input is populated via JS before submit.
+                            -->
+                            <input type="hidden" name="no_of_user_accounts" id="addLtAccountCount">
+
+                            <div class="col-md-12">
                                 <label class="form-label">User Account Type</label>
-                                <input type="text" class="form-control" name="user_account_type">
+                                <div id="addLtAccountContainer">
+                                    <!-- First row (always present, cannot be removed) -->
+                                    <div class="account-row">
+                                        <input type="text" class="form-control user-name" placeholder="Enter account name">
+                                        <select class="form-select account-type-select">
+                                            <option value="" disabled selected>Type</option>
+                                            <option value="Admin">Admin</option>
+                                            <option value="User">User</option>
+                                        </select>
+                                        <button type="button" class="btn btn-success btn-icon" onclick="addAccountRow('addLtAccountContainer')">
+                                            <i class="bi bi-plus-lg"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- Hidden JSON field submitted to server -->
+                                <input type="hidden" name="user_account_type" id="addLtAccountJson">
                             </div>
+
                             <div class="col-md-6">
                                 <label class="form-label">Authorized Software</label>
                                 <textarea class="form-control" name="authorized_software"></textarea>
@@ -627,7 +710,9 @@ $exportParams = http_build_query([
         </div>
     </div>
 
-    <!-- TABLE -->
+    <!-- ════════════════════════════════════════════════════════════════════
+         TABLE
+         ════════════════════════════════════════════════════════════════════ -->
     <div class="contenttable">
         <div class="table-container">
             <table class="users-table">
@@ -654,7 +739,7 @@ $exportParams = http_build_query([
                         <th>MONITOR BRAND</th>
                         <th>MONITOR SIZE</th>
                         <th># OF USER ACCOUNTS</th>
-                        <th>USER ACCOUNT TYPE</th>
+                        <th>USER ACCOUNTS</th>
                         <th>AUTHORIZED SOFTWARE</th>
                         <th>UNAUTHORIZED SOFTWARE</th>
                         <th>ACQUISITION DATE</th>
@@ -691,7 +776,8 @@ $exportParams = http_build_query([
                                 <td><?= htmlspecialchars($row['monitor_brand']               ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['monitor_size_inches']         ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['no_of_user_accounts']         ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['user_account_type']           ?? '') ?: '-' ?></td>
+                                <!-- TABLE: show only names -->
+                                <td><?= getAccountNames($row['user_account_type'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($row['authorized_software']         ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['unauthorized_software']       ?? '') ?: '-' ?></td>
                                 <td><?= (!empty($row['acquisition_date']) && $row['acquisition_date'] !== '0000-00-00') ? htmlspecialchars($row['acquisition_date']) : '-' ?></td>
@@ -706,7 +792,7 @@ $exportParams = http_build_query([
                                 </td>
                             </tr>
 
-                            <!-- VIEW MODAL -->
+                            <!-- ── VIEW MODAL ── -->
                             <div class="modal fade" id="viewLtModal<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
                                     <div class="modal-content">
@@ -800,9 +886,26 @@ $exportParams = http_build_query([
                                                     <div class="view-label"># User Accounts</div>
                                                     <div class="view-value"><?= htmlspecialchars($row['no_of_user_accounts'] ?? '') ?></div>
                                                 </div>
-                                                <div class="col-md-6">
+                                                <!-- VIEW: show name + type per row as badges -->
+                                                <div class="col-md-12">
                                                     <div class="view-label">User Account Type</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['user_account_type'] ?? '') ?></div>
+                                                    <div class="view-value">
+                                                        <?php
+                                                        $accs = json_decode($row['user_account_type'] ?? '[]', true);
+                                                        if (is_array($accs) && !empty($accs)) {
+                                                            foreach ($accs as $acc) {
+                                                                $name = trim($acc['name'] ?? '');
+                                                                $type = trim($acc['type'] ?? '-');
+                                                                if ($name === '') continue;
+                                                                echo '<span class="account-badge">'
+                                                                    . htmlspecialchars($name) . ' : ' . htmlspecialchars($type)
+                                                                    . '</span>';
+                                                            }
+                                                        } else {
+                                                            echo '-';
+                                                        }
+                                                        ?>
+                                                    </div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Acquisition Date</div>
@@ -844,7 +947,7 @@ $exportParams = http_build_query([
                                 </div>
                             </div>
 
-                            <!-- EDIT MODAL -->
+                            <!-- ── EDIT MODAL ── -->
                             <div class="modal fade" id="editModal<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
                                     <div class="modal-content">
@@ -853,7 +956,9 @@ $exportParams = http_build_query([
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
                                         <div class="modal-body">
-                                            <form action="edit_laptops.php" method="POST">
+                                            <form action="edit_laptops.php" method="POST"
+                                                  id="editLtForm<?= $row['id'] ?>"
+                                                  onsubmit="buildAccountJson('editLtAccountContainer<?= $row['id'] ?>', 'editLtAccountJson<?= $row['id'] ?>', 'editLtAccountCount<?= $row['id'] ?>')">
                                                 <input type="hidden" name="id" value="<?= $row['id'] ?>">
                                                 <!-- Division always locked to encoder's division -->
                                                 <input type="hidden" name="division_id" value="<?= $encoderDivisionId ?>">
@@ -957,14 +1062,51 @@ $exportParams = http_build_query([
                                                         <label class="form-label">Monitor Size</label>
                                                         <input type="number" class="form-control" name="monitor_size_inches" value="<?= htmlspecialchars($row['monitor_size_inches'] ?? '') ?>">
                                                     </div>
-                                                    <div class="col-md-4">
-                                                        <label class="form-label"># User Accounts</label>
-                                                        <input type="number" class="form-control" name="no_of_user_accounts" value="<?= htmlspecialchars($row['no_of_user_accounts'] ?? '') ?>">
-                                                    </div>
-                                                    <div class="col-md-4">
+
+                                                    <!-- ── USER ACCOUNT TYPE (Edit) ─────────────────────────── -->
+                                                    <!-- no_of_user_accounts auto-counted, hidden field populated by JS -->
+                                                    <input type="hidden" name="no_of_user_accounts" id="editLtAccountCount<?= $row['id'] ?>">
+
+                                                    <div class="col-md-12">
                                                         <label class="form-label">User Account Type</label>
-                                                        <input type="text" class="form-control" name="user_account_type" value="<?= htmlspecialchars($row['user_account_type'] ?? '') ?>">
+                                                        <div id="editLtAccountContainer<?= $row['id'] ?>">
+                                                            <?php
+                                                            $existingAccounts = json_decode($row['user_account_type'] ?? '[]', true);
+                                                            // Normalise: if empty or not a proper array-of-objects, seed one blank row
+                                                            if (!is_array($existingAccounts) || empty($existingAccounts)) {
+                                                                $existingAccounts = [['name' => '', 'type' => '']];
+                                                            }
+                                                            foreach ($existingAccounts as $idx => $acc):
+                                                                $accName = htmlspecialchars($acc['name'] ?? '');
+                                                                $accType = $acc['type'] ?? '';
+                                                                $isFirst = ($idx === 0);
+                                                            ?>
+                                                                <div class="account-row">
+                                                                    <input type="text" class="form-control user-name"
+                                                                           placeholder="Enter account name"
+                                                                           value="<?= $accName ?>">
+                                                                    <select class="form-select account-type-select">
+                                                                        <option value="" disabled <?= $accType === '' ? 'selected' : '' ?>>Type</option>
+                                                                        <option value="Admin" <?= $accType === 'Admin' ? 'selected' : '' ?>>Admin</option>
+                                                                        <option value="User"  <?= $accType === 'User'  ? 'selected' : '' ?>>User</option>
+                                                                    </select>
+                                                                    <?php if ($isFirst): ?>
+                                                                        <button type="button" class="btn btn-success btn-icon"
+                                                                                onclick="addAccountRow('editLtAccountContainer<?= $row['id'] ?>')">
+                                                                            <i class="bi bi-plus-lg"></i>
+                                                                        </button>
+                                                                    <?php else: ?>
+                                                                        <button type="button" class="btn btn-danger btn-icon"
+                                                                                onclick="removeAccountRow(this)">
+                                                                            <i class="bi bi-dash-lg"></i>
+                                                                        </button>
+                                                                    <?php endif; ?>
+                                                                </div>
+                                                            <?php endforeach; ?>
+                                                        </div>
+                                                        <input type="hidden" name="user_account_type" id="editLtAccountJson<?= $row['id'] ?>">
                                                     </div>
+
                                                     <div class="col-md-4">
                                                         <label class="form-label">Date Installed</label>
                                                         <input type="date" class="form-control" name="date_installed" value="<?= htmlspecialchars($row['date_installed'] ?? '') ?>">
@@ -1085,6 +1227,60 @@ $exportParams = http_build_query([
     </div>
 
     <script>
+        // ═══════════════════════════════════════════════════════════════
+        //  ACCOUNT ROW HELPERS
+        // ═══════════════════════════════════════════════════════════════
+        function addAccountRow(containerId) {
+            const container = document.getElementById(containerId);
+            const row = document.createElement('div');
+            row.className = 'account-row';
+            row.innerHTML = `
+                <input type="text" class="form-control user-name" placeholder="Enter account name">
+                <select class="form-select account-type-select">
+                    <option value="" disabled selected>Type</option>
+                    <option value="Admin">Admin</option>
+                    <option value="User">User</option>
+                </select>
+                <button type="button" class="btn btn-danger btn-icon" onclick="removeAccountRow(this)">
+                    <i class="bi bi-dash-lg"></i>
+                </button>
+            `;
+            container.appendChild(row);
+        }
+
+        function removeAccountRow(btn) {
+            btn.closest('.account-row').remove();
+        }
+
+        function buildAccountJson(containerId, jsonFieldId, countFieldId) {
+            const container = document.getElementById(containerId);
+            const rows      = container.querySelectorAll('.account-row');
+            const accounts  = [];
+
+            rows.forEach(row => {
+                const name = row.querySelector('.user-name').value.trim();
+                const type = row.querySelector('.account-type-select').value;
+                if (name !== '') {
+                    accounts.push({ name: name, type: type || '' });
+                }
+            });
+
+            document.getElementById(jsonFieldId).value  = JSON.stringify(accounts);
+            document.getElementById(countFieldId).value = accounts.length;
+        }
+
+        // ── Wire up the ADD form ──────────────────────────────────────
+        document.getElementById("addLaptopForm").addEventListener("submit", function(e) {
+            const ep = document.querySelectorAll("#addLaptopModal input[name='endpoint_security[]']:checked");
+            if (ep.length === 0) {
+                e.preventDefault();
+                alert("Select at least one Endpoint Security");
+                return;
+            }
+            buildAccountJson('addLtAccountContainer', 'addLtAccountJson', 'addLtAccountCount');
+        });
+
+        // ── Filter checkbox helpers ────────────────────────────────────────────
         function setupFilterGroup(allSel, itemSel) {
             const allCb = document.querySelector(allSel);
             const items = document.querySelectorAll(itemSel);
@@ -1099,15 +1295,7 @@ $exportParams = http_build_query([
         setupFilterGroup('#allOS', '.os-checkbox');
         setupFilterGroup('#allOffice', '.office-checkbox');
 
-        document.getElementById("addLaptopForm").addEventListener("submit", function(e) {
-            const ep = document.querySelectorAll("#addLaptopModal input[name='endpoint_security[]']:checked");
-            if (ep.length === 0) {
-                e.preventDefault();
-                alert("Select at least one Endpoint Security");
-            }
-        });
-
-        // View → Edit transition
+        // ── View → Edit transition ────────────────────────────────────────────
         document.addEventListener('click', function(e) {
             const btn = e.target.closest('[data-edit-target]');
             if (!btn) return;
