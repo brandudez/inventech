@@ -70,42 +70,64 @@ function getPersonnelNamesExport($conn, $json)
     while ($row = $result->fetch_assoc()) {
         $names[] = trim(
             ($row['rank'] ?? '') . ' ' .
-                ($row['first_name'] ?? '') . ' ' .
-                ($row['middle_name'] ?? '') . ' ' .
-                ($row['last_name'] ?? '')
+            ($row['first_name'] ?? '') . ' ' .
+            ($row['middle_name'] ?? '') . ' ' .
+            ($row['last_name'] ?? '')
         );
     }
 
     return implode(', ', $names);
 }
+
+/**
+ * Parse user_account_type JSON and return only the names as a comma-separated string.
+ * Supports both new format: [{"name":"Jake","type":"Admin"}]
+ * and legacy plain-text fallback.
+ */
+function getAccountNamesExport($json)
+{
+    if (empty($json)) return '-';
+    $decoded = json_decode($json, true);
+    if (is_array($decoded)) {
+        $names = [];
+        foreach ($decoded as $entry) {
+            if (isset($entry['name']) && trim($entry['name']) !== '') {
+                $names[] = trim($entry['name']);
+            }
+        }
+        return !empty($names) ? implode(', ', $names) : '-';
+    }
+    // Legacy: plain text stored
+    return $json;
+}
+
 function formatDate($val) {
     if (empty($val) || $val === '0000-00-00') return '-';
     return $val;
 }
+
 /* =========================
    FILTERS (UNCHANGED LOGIC)
 ========================= */
 
-$search = trim($_GET['search'] ?? '');
-
-$division_raw = $_GET['division'] ?? [];
-$os_raw = $_GET['filter_os'] ?? [];
-$office_raw = $_GET['filter_office'] ?? [];
+$search          = trim($_GET['search'] ?? '');
+$division_raw    = $_GET['division'] ?? [];
+$os_raw          = $_GET['filter_os'] ?? [];
+$office_raw      = $_GET['filter_office'] ?? [];
 
 $division_filter = is_array($division_raw) ? array_filter($division_raw) : [];
-$os_filter = is_array($os_raw) ? array_filter($os_raw) : [];
-$office_filter = is_array($office_raw) ? array_filter($office_raw) : [];
+$os_filter       = is_array($os_raw)       ? array_filter($os_raw)       : [];
+$office_filter   = is_array($office_raw)   ? array_filter($office_raw)   : [];
 
-$active_filter = $_GET['is_active'] ?? '';
-$acq_filter = trim($_GET['filter_acq'] ?? '');
+$active_filter   = $_GET['is_active'] ?? '';
+$acq_filter      = trim($_GET['filter_acq'] ?? '');
 
-$where = [];
+$where  = [];
 $params = [];
-$types = '';
+$types  = '';
 
 if (!empty($search)) {
     $where[] = "(d.device_name LIKE ? OR CONCAT(p.first_name,' ',p.last_name) LIKE ? OR d.ip_address LIKE ? OR d.guid LIKE ? OR d.mac_address LIKE ?)";
-
     $sv = "%$search%";
 
     for ($i = 0; $i < 5; $i++) {
@@ -162,12 +184,10 @@ $whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
    QUERY
 ========================= */
 
-$baseJoin = "
-    FROM laptops d
-    LEFT JOIN personnels p ON d.personnel_id = p.id
-    LEFT JOIN ranks r ON p.rank_id = r.id
-    LEFT JOIN divisions dv ON d.division_id = dv.id
-";
+$baseJoin = "FROM laptops d
+             LEFT JOIN personnels p ON d.personnel_id = p.id
+             LEFT JOIN ranks r ON p.rank_id = r.id
+             LEFT JOIN divisions dv ON d.division_id = dv.id";
 
 $stmt = $conn->prepare("
     SELECT d.*,
@@ -193,7 +213,6 @@ ob_start();
 
 echo '<html><head><meta charset="UTF-8"></head><body><table border="1">';
 
-/* HEADER */
 $headers = [
     'Device Name',
     'Personnel',
@@ -201,15 +220,15 @@ $headers = [
     'IP Address',
     'MAC Address',
     'GUID',
-    'Operating System',
+    'OS',
     'OS Licensed',
-    'OS License Key',
-    'Office Application',
+    'OS Key',
+    'Office',
     'Office Licensed',
-    'Office License Key',
+    'Office Key',
     'Endpoint Security',
     'Antivirus Count',
-    'Date Installed',
+    'Installed Date',
     'CPU Brand',
     'CPU Cores',
     'RAM',
@@ -220,17 +239,16 @@ $headers = [
     'Authorized Software',
     'Unauthorized Software',
     'Acquisition Date',
-    'PAR Serial Number',
+    'PAR Serial',
     'Previous Handlers',
     'Remote',
     'Active'
 ];
 
-echo '<tr style="background:#0d6ea8;color:#fff;font-weight:bold;">';
+echo '<tr style="font-weight:bold;background:#0d6ea8;color:#fff;">';
 foreach ($headers as $h) echo "<td>$h</td>";
 echo '</tr>';
 
-/* DATA */
 while ($row = $result->fetch_assoc()) {
 
     echo '<tr>';
@@ -257,18 +275,18 @@ while ($row = $result->fetch_assoc()) {
         $row['monitor_brand'] ?? '',
         $row['monitor_size_inches'] ?? '',
         $row['no_of_user_accounts'] ?? '',
-        $row['user_account_type'] ?? '',
+        getAccountNamesExport($row['user_account_type'] ?? ''),
         $row['authorized_software'] ?? '',
         $row['unauthorized_software'] ?? '',
-        formatDate($row['acquisition_date']), 
+        formatDate($row['acquisition_date'] ?? ''),
         $row['par_serial_no'] ?? '',
         getPersonnelNamesExport($conn, $row['previous_owners_id']),
         ($row['is_remote_acc'] ? 'YES' : 'NO'),
         ($row['is_active'] ? 'YES' : 'NO'),
     ];
 
-    foreach ($cells as $cell) {
-        echo '<td>' . htmlspecialchars($cell) . '</td>';
+    foreach ($cells as $c) {
+        echo '<td>' . htmlspecialchars($c) . '</td>';
     }
 
     echo '</tr>';
@@ -279,12 +297,13 @@ echo '</table></body></html>';
 $html = ob_get_clean();
 
 /* =========================
-   SAVE FILE
+   SAVE FILE TO FOLDER
 ========================= */
 
 file_put_contents($filePath, $html);
+
 /* =========================
-   DOWNLOAD
+   DOWNLOAD OUTPUT
 ========================= */
 
 header('Content-Type: application/vnd.ms-excel');

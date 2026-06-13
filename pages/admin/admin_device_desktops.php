@@ -45,6 +45,29 @@ function getPersonnelNames($conn, $json)
     }
     return implode(",<br>", $names);
 }
+
+/**
+ * Parse user_account_type JSON and return only the names as a comma-separated string.
+ * Supports both new format: [{"name":"Jake","type":"Admin"}]
+ * and legacy plain-text fallback.
+ */
+function getAccountNames($json)
+{
+    if (empty($json)) return '-';
+    $decoded = json_decode($json, true);
+    if (is_array($decoded)) {
+        $names = [];
+        foreach ($decoded as $entry) {
+            if (isset($entry['name']) && trim($entry['name']) !== '') {
+                $names[] = htmlspecialchars(trim($entry['name']));
+            }
+        }
+        return !empty($names) ? implode(', ', $names) : '-';
+    }
+    // Legacy: plain text stored
+    return htmlspecialchars($json);
+}
+
 function dash($val)
 {
     $v = trim($val ?? '');
@@ -124,7 +147,7 @@ if ($acq_filter === 'lt5') {
     $baseWhere[] = "d.acquisition_date IS NOT NULL AND d.acquisition_date != '0000-00-00' AND d.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 } elseif ($acq_filter === 'gt5') {
     $baseWhere[] = "d.acquisition_date IS NOT NULL AND d.acquisition_date != '0000-00-00' AND d.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
-}elseif ($acq_filter === 'none') {
+} elseif ($acq_filter === 'none') {
     $baseWhere[] = "(d.acquisition_date IS NULL OR d.acquisition_date = '' OR d.acquisition_date = '0000-00-00')";
 }
 
@@ -136,13 +159,12 @@ $baseJoin = "FROM desktops d
 
 // ── Total count (respects all active filters including is_active) ─────────────
 $st = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $whereSQL");
-if (!empty($baseParams)) $st->bind_param($baseTypes, ...$baseParams);  // FIXED: was $params
+if (!empty($baseParams)) $st->bind_param($baseTypes, ...$baseParams);
 $st->execute();
 $totalDevices = $st->get_result()->fetch_assoc()['total'] ?? 0;
 $totalPages   = (int)ceil($totalDevices / $limit);
 
 // ── Stat-box counts: layer active/inactive on top of ALL current filters ──────
-// When is_active filter is set to YES, Inactive shows 0 (and vice versa).
 $activeWhere = $baseWhere;
 $activeWhere[] = "d.is_active = 1";
 $activeSQL = "WHERE " . implode(" AND ", $activeWhere);
@@ -291,6 +313,44 @@ $exportParams = http_build_query([
             min-height: 38px;
             font-size: 0.95rem;
         }
+
+        /* ── Account rows ─────────────────────────────────────── */
+        .account-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .account-row .user-name {
+            flex: 1;
+        }
+
+        .account-row .account-type-select {
+            width: 120px;
+            flex-shrink: 0;
+        }
+
+        .account-row .btn-icon {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .account-badge{
+    display:inline-block;
+    background:#e9f3ff;
+    color:#0d6ea8;
+    border:1px solid #b6d7ff;
+    border-radius:20px;
+    padding:6px 12px;
+    margin:3px;
+    font-size:.9rem;
+    font-weight:500;
+}
     </style>
 </head>
 
@@ -530,8 +590,34 @@ $exportParams = http_build_query([
                             <div class="col-md-4"><label class="form-label">GBs of RAM</label><input type="number" class="form-control" name="gb_ram"></div>
                             <div class="col-md-4"><label class="form-label">Monitor Brand</label><input type="text" class="form-control" name="monitor_brand"></div>
                             <div class="col-md-4"><label class="form-label">Monitor Size</label><input type="text" class="form-control" name="monitor_size_inches"></div>
-                            <div class="col-md-4"><label class="form-label"># of User Accounts</label><input type="number" class="form-control" name="no_of_user_accounts"></div>
-                            <div class="col-md-6"><label class="form-label">User Account Type</label><input type="text" class="form-control" name="user_account_type"></div>
+
+                            <!-- ── USER ACCOUNT TYPE (Add) ──────────────────────────────── -->
+                            <!--
+                                no_of_user_accounts is now AUTO-COUNTED from the rows below.
+                                A hidden input is populated via JS before submit.
+                            -->
+                            <input type="hidden" name="no_of_user_accounts" id="addAccountCount">
+
+                            <div class="col-md-12">
+                                <label class="form-label">User Account Type</label>
+                                <div id="addAccountContainer">
+                                    <!-- First row (always present, cannot be removed) -->
+                                    <div class="account-row">
+                                        <input type="text" class="form-control user-name" placeholder="Enter account name">
+                                        <select class="form-select account-type-select">
+                                            <option value="" disabled selected>Type</option>
+                                            <option value="Admin">Admin</option>
+                                            <option value="User">User</option>
+                                        </select>
+                                        <button type="button" class="btn btn-success btn-icon" onclick="addAccountRow('addAccountContainer')">
+                                            <i class="bi bi-plus-lg"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- Hidden JSON field submitted to server -->
+                                <input type="hidden" name="user_account_type" id="addAccountJson">
+                            </div>
+
                             <div class="col-md-6"><label class="form-label">Authorized Software</label><textarea class="form-control" name="authorized_software"></textarea></div>
                             <div class="col-md-6"><label class="form-label">Unauthorized Software</label><textarea class="form-control" name="unauthorized_software"></textarea></div>
                             <div class="col-md-6"><label class="form-label">Acquisition Date</label><input type="date" class="form-control" name="acquisition_date"></div>
@@ -607,7 +693,7 @@ $exportParams = http_build_query([
                         <th>MONITOR BRAND</th>
                         <th>MONITOR SIZE</th>
                         <th># OF USER ACCOUNTS</th>
-                        <th>USER ACCOUNT TYPE</th>
+                        <th>USER ACCOUNTS</th>
                         <th>AUTHORIZED SOFTWARE</th>
                         <th>UNAUTHORIZED SOFTWARE</th>
                         <th>ACQUISITION DATE</th>
@@ -644,7 +730,8 @@ $exportParams = http_build_query([
                                 <td><?= dash($row['monitor_brand'] ?? '') ?></td>
                                 <td><?= dash($row['monitor_size_inches'] ?? '') ?></td>
                                 <td><?= dash($row['no_of_user_accounts'] ?? '') ?></td>
-                                <td><?= dash($row['user_account_type'] ?? '') ?></td>
+                                <!-- TABLE: show only names -->
+                                <td><?= getAccountNames($row['user_account_type'] ?? '') ?></td>
                                 <td><?= dash($row['authorized_software'] ?? '') ?></td>
                                 <td><?= dash($row['unauthorized_software'] ?? '') ?></td>
                                 <td><?= dash($row['acquisition_date'] ?? '') ?></td>
@@ -753,10 +840,31 @@ $exportParams = http_build_query([
                                                     <div class="view-label"># User Accounts</div>
                                                     <div class="view-value"><?= htmlspecialchars($row['no_of_user_accounts'] ?? '') ?></div>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <div class="view-label">User Account Type</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['user_account_type'] ?? '') ?></div>
+                                                <!-- VIEW: show name + type per row -->
+                                                <div class="col-md-12">
+                                                <div class="view-label">User Account Type</div>
+                                                <div class="view-value">
+                                                    <?php
+                                                    $accs = json_decode($row['user_account_type'] ?? '[]', true);
+
+                                                    if (is_array($accs) && !empty($accs)) {
+                                                        foreach ($accs as $acc) {
+                                                            $name = trim($acc['name'] ?? '');
+                                                            $type = trim($acc['type'] ?? '-');
+
+                                                            if ($name === '') continue;
+
+                                                            echo '
+                                                            <span class="account-badge">
+                                                                ' . htmlspecialchars($name) . ' : ' . htmlspecialchars($type) . '
+                                                            </span>';
+                                                        }
+                                                    } else {
+                                                        echo '-';
+                                                    }
+                                                    ?>
                                                 </div>
+                                            </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Acquisition Date</div>
                                                     <div class="view-value"><?= htmlspecialchars($row['acquisition_date'] ?? '') ?></div>
@@ -806,7 +914,9 @@ $exportParams = http_build_query([
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
                                         <div class="modal-body">
-                                            <form action="admin_edit_desktops.php" method="POST">
+                                            <form action="admin_edit_desktops.php" method="POST"
+                                                  id="editForm<?= $row['id'] ?>"
+                                                  onsubmit="buildAccountJson('editAccountContainer<?= $row['id'] ?>', 'editAccountJson<?= $row['id'] ?>', 'editAccountCount<?= $row['id'] ?>')">
                                                 <input type="hidden" name="id" value="<?= $row['id'] ?>">
                                                 <div class="row g-3">
                                                     <div class="col-md-4"><label class="form-label">Device Name</label><input type="text" class="form-control" name="device_name" value="<?= htmlspecialchars($row['device_name'] ?? '') ?>" required></div>
@@ -871,8 +981,51 @@ $exportParams = http_build_query([
                                                     <div class="col-md-4"><label class="form-label">GB RAM</label><input type="number" class="form-control" name="gb_ram" value="<?= htmlspecialchars($row['gb_ram'] ?? '') ?>"></div>
                                                     <div class="col-md-4"><label class="form-label">Monitor Brand</label><input type="text" class="form-control" name="monitor_brand" value="<?= htmlspecialchars($row['monitor_brand'] ?? '') ?>"></div>
                                                     <div class="col-md-4"><label class="form-label">Monitor Size</label><input type="number" class="form-control" name="monitor_size_inches" value="<?= htmlspecialchars($row['monitor_size_inches'] ?? '') ?>"></div>
-                                                    <div class="col-md-4"><label class="form-label"># User Accounts</label><input type="number" class="form-control" name="no_of_user_accounts" value="<?= htmlspecialchars($row['no_of_user_accounts'] ?? '') ?>"></div>
-                                                    <div class="col-md-4"><label class="form-label">User Account Type</label><input type="text" class="form-control" name="user_account_type" value="<?= htmlspecialchars($row['user_account_type'] ?? '') ?>"></div>
+
+                                                    <!-- ── USER ACCOUNT TYPE (Edit) ─────────────────────────── -->
+                                                    <!-- no_of_user_accounts auto-counted, hidden field populated by JS -->
+                                                    <input type="hidden" name="no_of_user_accounts" id="editAccountCount<?= $row['id'] ?>">
+
+                                                    <div class="col-md-12">
+                                                        <label class="form-label">User Account Type</label>
+                                                        <div id="editAccountContainer<?= $row['id'] ?>">
+                                                            <?php
+                                                            $existingAccounts = json_decode($row['user_account_type'] ?? '[]', true);
+                                                            // Normalise: if empty or not a proper array-of-objects, seed one blank row
+                                                            if (!is_array($existingAccounts) || empty($existingAccounts)) {
+                                                                $existingAccounts = [['name' => '', 'type' => '']];
+                                                            }
+                                                            foreach ($existingAccounts as $idx => $acc):
+                                                                $accName = htmlspecialchars($acc['name'] ?? '');
+                                                                $accType = $acc['type'] ?? '';
+                                                                $isFirst = ($idx === 0);
+                                                            ?>
+                                                                <div class="account-row">
+                                                                    <input type="text" class="form-control user-name"
+                                                                           placeholder="Enter account name"
+                                                                           value="<?= $accName ?>">
+                                                                    <select class="form-select account-type-select">
+                                                                        <option value="" disabled <?= $accType === '' ? 'selected' : '' ?>>Type</option>
+                                                                        <option value="Admin" <?= $accType === 'Admin' ? 'selected' : '' ?>>Admin</option>
+                                                                        <option value="User"  <?= $accType === 'User'  ? 'selected' : '' ?>>User</option>
+                                                                    </select>
+                                                                    <?php if ($isFirst): ?>
+                                                                        <button type="button" class="btn btn-success btn-icon"
+                                                                                onclick="addAccountRow('editAccountContainer<?= $row['id'] ?>')">
+                                                                            <i class="bi bi-plus-lg"></i>
+                                                                        </button>
+                                                                    <?php else: ?>
+                                                                        <button type="button" class="btn btn-danger btn-icon"
+                                                                                onclick="removeAccountRow(this)">
+                                                                            <i class="bi bi-dash-lg"></i>
+                                                                        </button>
+                                                                    <?php endif; ?>
+                                                                </div>
+                                                            <?php endforeach; ?>
+                                                        </div>
+                                                        <input type="hidden" name="user_account_type" id="editAccountJson<?= $row['id'] ?>">
+                                                    </div>
+
                                                     <div class="col-md-4"><label class="form-label">Date Installed</label><input type="date" class="form-control" name="date_installed" value="<?= htmlspecialchars($row['date_installed'] ?? '') ?>"></div>
                                                     <div class="col-md-12">
                                                         <label class="form-label">Endpoint Security</label>
@@ -978,6 +1131,59 @@ $exportParams = http_build_query([
     </div>
 
     <script>
+        // ═══════════════════════════════════════════════════════════════
+        //  ACCOUNT ROW HELPERS
+        // ═══════════════════════════════════════════════════════════════
+        function addAccountRow(containerId) {
+            const container = document.getElementById(containerId);
+            const row = document.createElement('div');
+            row.className = 'account-row';
+            row.innerHTML = `
+                <input type="text" class="form-control user-name" placeholder="Enter account name">
+                <select class="form-select account-type-select">
+                    <option value="" disabled selected>Type</option>
+                    <option value="Admin">Admin</option>
+                    <option value="User">User</option>
+                </select>
+                <button type="button" class="btn btn-danger btn-icon" onclick="removeAccountRow(this)">
+                    <i class="bi bi-dash-lg"></i>
+                </button>
+            `;
+            container.appendChild(row);
+        }
+
+        function removeAccountRow(btn) {
+            btn.closest('.account-row').remove();
+        }
+
+        function buildAccountJson(containerId, jsonFieldId, countFieldId) {
+            const container = document.getElementById(containerId);
+            const rows      = container.querySelectorAll('.account-row');
+            const accounts  = [];
+
+            rows.forEach(row => {
+                const name = row.querySelector('.user-name').value.trim();
+                const type = row.querySelector('.account-type-select').value;
+                if (name !== '') {
+                    accounts.push({ name: name, type: type || '' });
+                }
+            });
+
+            document.getElementById(jsonFieldId).value  = JSON.stringify(accounts);
+            document.getElementById(countFieldId).value = accounts.length;
+        }
+
+        // ── Wire up the ADD form ──────────────────────────────────────
+        document.getElementById('addDesktopForm').addEventListener('submit', function(e) {
+            const ep = document.querySelectorAll("#addDesktopModal input[name='endpoint_security[]']:checked");
+            if (ep.length === 0) {
+                e.preventDefault();
+                alert("Select at least one Endpoint Security");
+                return;
+            }
+            buildAccountJson('addAccountContainer', 'addAccountJson', 'addAccountCount');
+        });
+
         // ── Filter checkbox helpers ────────────────────────────────────────────
         function setupFilterGroup(allSel, itemSel) {
             const allCb = document.querySelector(allSel);
@@ -993,16 +1199,6 @@ $exportParams = http_build_query([
         setupFilterGroup('#allDivision', '.division-checkbox');
         setupFilterGroup('#allOS', '.os-checkbox');
         setupFilterGroup('#allOffice', '.office-checkbox');
-
-        // ── Add modal validation ───────────────────────────────────────────────
-        document.getElementById("addDesktopForm").addEventListener("submit", function(e) {
-            const ep = document.querySelectorAll("#addDesktopModal input[name='endpoint_security[]']:checked");
-            if (ep.length === 0) {
-                e.preventDefault();
-                alert("Select at least one Endpoint Security");
-                return;
-            }
-        });
 
         // ── View → Edit transition ────────────────────────────────────────────
         document.addEventListener('click', function(e) {
