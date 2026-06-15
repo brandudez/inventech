@@ -424,43 +424,43 @@ $exportParams = http_build_query([
                                             <div class="row g-3">
                                                 <div class="col-md-6">
                                                     <div class="view-label">Personnel</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['fullname'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['fullname'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Division</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['division_name'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Brand</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['brand'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['brand'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Model</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['model'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['model'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Serial No</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['serial_no'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['serial_no'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">HDMI In</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['hdmi_in'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['hdmi_in'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">HDMI Out</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['hdmi_out'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['hdmi_out'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label"># of Ports</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_ports'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_ports'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Acquisition Details</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_details'] ?? 'N/A') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_details'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Acquisition Date</div>
-                                                    <div class="view-value"><?= (!empty($row['acquisition_date']) && $row['acquisition_date'] !== '0000-00-00') ? htmlspecialchars($row['acquisition_date']) : 'N/A' ?></div>
+                                                    <div class="view-value"><?= (!empty($row['acquisition_date']) && $row['acquisition_date'] !== '0000-00-00') ? htmlspecialchars($row['acquisition_date']) : '' ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Is Active?</div>
@@ -468,7 +468,7 @@ $exportParams = http_build_query([
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Created Date</div>
-                                                    <div class="view-value"><?= (!empty($row['created_date']) && substr($row['created_date'], 0, 10) !== '0000-00-00') ? htmlspecialchars(substr($row['created_date'], 0, 10)) : 'N/A' ?></div>
+                                                    <div class="view-value"><?= (!empty($row['created_date']) && substr($row['created_date'], 0, 10) !== '0000-00-00') ? htmlspecialchars(substr($row['created_date'], 0, 10)) : '' ?></div>
                                                 </div>
                                                 <div class="col-md-12">
                                                     <div class="view-label">Previous Handlers</div>
@@ -621,9 +621,15 @@ $exportParams = http_build_query([
 
     <script>
         function showToast(message, type = "success") {
-            const colors = { success: "#198754", danger: "#dc3545" };
-            const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
-            const toast  = document.createElement("div");
+            const colors = {
+                success: "#198754",
+                danger: "#dc3545"
+            };
+            const icons = {
+                success: "bi-check-circle-fill",
+                danger: "bi-x-circle-fill"
+            };
+            const toast = document.createElement("div");
             toast.style.cssText = `
                 position:fixed;bottom:24px;right:24px;z-index:9999;
                 background:${colors[type]};color:#fff;
