@@ -20,6 +20,7 @@ if (!isset($_POST['save_other'])) {
 ========================= */
 $personnel_id        = (int) ($_POST['personnel_id'] ?? 0);
 $division_id         = (int) ($_POST['division_id'] ?? 0);
+$device_name         = trim($_POST['device_name'] ?? '');
 $brand               = trim($_POST['brand'] ?? '');
 $model               = trim($_POST['model'] ?? '');
 $serial_no           = trim($_POST['serial_no'] ?? '');
@@ -52,6 +53,7 @@ $stmt = $conn->prepare("
     INSERT INTO others (
         personnel_id,
         division_id,
+        device_name,
         brand,
         model,
         serial_no,
@@ -61,7 +63,7 @@ $stmt = $conn->prepare("
         is_active,
         created_date
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ");
 
 if (!$stmt) {
@@ -69,9 +71,10 @@ if (!$stmt) {
 }
 
 $stmt->bind_param(
-    "iissssssis",
+    "iisssssssis",
     $personnel_id,
     $division_id,
+    $device_name,
     $brand,
     $model,
     $serial_no,

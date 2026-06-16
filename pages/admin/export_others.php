@@ -44,9 +44,9 @@ function getPreviousOwnersNamesExport($conn, $json)
     while ($row = $result->fetch_assoc()) {
         $names[] = trim(
             ($row['rank']        ?? '') . ' ' .
-            ($row['first_name']  ?? '') . ' ' .
-            ($row['middle_name'] ?? '') . ' ' .
-            ($row['last_name']   ?? '')
+                ($row['first_name']  ?? '') . ' ' .
+                ($row['middle_name'] ?? '') . ' ' .
+                ($row['last_name']   ?? '')
         );
     }
     return implode(', ', $names);
@@ -59,7 +59,7 @@ function formatDate($val)
 }
 
 /* =========================
-   FILTERS (mirrors device_others.php)
+   FILTERS
 ========================= */
 $search          = trim($_GET['search'] ?? '');
 $division_raw    = $_GET['division'] ?? [];
@@ -76,6 +76,7 @@ $types  = '';
 
 if (!empty($search)) {
     $where[] = "(
+        o.device_name LIKE ? OR
         o.brand LIKE ? OR
         o.model LIKE ? OR
         o.serial_no LIKE ? OR
@@ -84,7 +85,7 @@ if (!empty($search)) {
         d.division LIKE ?
     )";
     $sp = "%$search%";
-    for ($i = 0; $i < 6; $i++) {
+    for ($i = 0; $i < 7; $i++) {
         $params[] = $sp;
         $types   .= 's';
     }
@@ -144,6 +145,7 @@ echo '<tr style="font-weight:bold;background:#0d6ea8;color:#fff;">';
 $headers = [
     'Personnel',
     'Division',
+    'Device Name',
     'Brand',
     'Model',
     'Serial Number',
@@ -161,14 +163,15 @@ echo '</tr>';
 while ($row = $result->fetch_assoc()) {
     echo '<tr>';
     $cells = [
-        trim($row['fullname'] ?? '')       ?: '-',
-        $row['division_name']               ?? '-',
-        $row['brand']                       ?? '-',
-        $row['model']                       ?? '-',
-        $row['serial_no']                   ?? '-',
-        $row['acquisition_details']         ?? '-',
+        trim($row['fullname'] ?? '')                                         ?: '-',
+        $row['division_name']                                                 ?? '-',
+        $row['device_name']                                                   ?? '-',
+        $row['brand']                                                         ?? '-',
+        $row['model']                                                         ?? '-',
+        $row['serial_no']                                                     ?? '-',
+        $row['acquisition_details']                                           ?? '-',
         formatDate($row['acquisition_date']),
-        getPreviousOwnersNamesExport($conn, $row['previous_owners_id']) ?: '-',
+        getPreviousOwnersNamesExport($conn, $row['previous_owners_id'])      ?: '-',
         ($row['is_active'] == 1 ? 'YES' : 'NO'),
         formatDate(substr($row['created_date'] ?? '', 0, 10)),
     ];

@@ -20,6 +20,7 @@ if (!isset($_POST['id'])) {
 $id                  = (int) $_POST['id'];
 $personnel_id        = (int) $_POST['personnel_id'];
 $division_id         = (int) $_POST['division_id'];
+$device_name         = trim($_POST['device_name'] ?? '');
 $brand               = trim($_POST['brand'] ?? '');
 $model               = trim($_POST['model'] ?? '');
 $serial_no           = trim($_POST['serial_no'] ?? '');
@@ -44,6 +45,7 @@ $stmt = $conn->prepare("
     UPDATE others SET
         personnel_id        = ?,
         division_id         = ?,
+        device_name         = ?,
         brand               = ?,
         model               = ?,
         serial_no           = ?,
@@ -60,9 +62,10 @@ if (!$stmt) {
 }
 
 $stmt->bind_param(
-    "iissssssisi",
+    "iisssssssisi",
     $personnel_id,
     $division_id,
+    $device_name,
     $brand,
     $model,
     $serial_no,

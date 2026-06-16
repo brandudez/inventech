@@ -72,6 +72,7 @@ $types  = '';
 
 if (!empty($search)) {
     $where[] = "(
+        o.device_name LIKE ? OR
         o.brand LIKE ? OR
         o.model LIKE ? OR
         o.serial_no LIKE ? OR
@@ -80,7 +81,7 @@ if (!empty($search)) {
         d.division LIKE ?
     )";
     $sp = "%$search%";
-    for ($i = 0; $i < 6; $i++) {
+    for ($i = 0; $i < 7; $i++) {
         $params[] = $sp;
         $types .= 's';
     }
@@ -102,8 +103,8 @@ if ($acq_filter === 'lt5') {
     $where[] = "o.acquisition_date IS NOT NULL AND o.acquisition_date != '0000-00-00' AND o.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 } elseif ($acq_filter === 'gt5') {
     $where[] = "o.acquisition_date IS NOT NULL AND o.acquisition_date != '0000-00-00' AND o.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
-}elseif ($acq_filter === 'none') {
-    $baseWhere[] = "(d.acquisition_date IS NULL OR d.acquisition_date = '' OR d.acquisition_date = '0000-00-00')";
+} elseif ($acq_filter === 'none') {
+    $where[] = "(o.acquisition_date IS NULL OR o.acquisition_date = '' OR o.acquisition_date = '0000-00-00')";
 }
 
 $whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
@@ -170,6 +171,7 @@ $exportParams = http_build_query([
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -180,11 +182,31 @@ $exportParams = http_build_query([
     <link rel="stylesheet" href="css/superadmin_navbar.css">
     <link rel="stylesheet" href="./css/superadmin_sidebar.css">
     <style>
-        .clickable-row:hover { background-color: #f0f4ff !important; cursor: pointer; }
-        .view-label { font-size: 0.75rem; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
-        .view-value { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 8px 12px; min-height: 38px; font-size: 0.95rem; }
+        .clickable-row:hover {
+            background-color: #f0f4ff !important;
+            cursor: pointer;
+        }
+
+        .view-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            margin-bottom: 4px;
+        }
+
+        .view-value {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 8px 12px;
+            min-height: 38px;
+            font-size: 0.95rem;
+        }
     </style>
 </head>
+
 <body>
 
     <?php include 'superadmin_sidebar.php'; ?>
@@ -199,7 +221,7 @@ $exportParams = http_build_query([
                 <?php foreach ($division_filter as $v): ?>
                     <input type="hidden" name="division[]" value="<?= htmlspecialchars($v) ?>">
                 <?php endforeach; ?>
-                <input type="hidden" name="is_active"  value="<?= htmlspecialchars($active_filter) ?>">
+                <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
                 <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
                 <input type="text" name="search" class="search-input"
                     placeholder="Search other devices..." value="<?= htmlspecialchars($search) ?>">
@@ -216,8 +238,8 @@ $exportParams = http_build_query([
         <div class="right-side">
             <div class="filters">
                 <form method="GET" action="device_others.php" id="filterForm">
-                    <input type="hidden" name="search"     value="<?= htmlspecialchars($search) ?>">
-                    <input type="hidden" name="is_active"  value="<?= htmlspecialchars($active_filter) ?>">
+                    <input type="hidden" name="search" value="<?= htmlspecialchars($search) ?>">
+                    <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
                     <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
 
                     <!-- DIVISION DROPDOWN -->
@@ -328,6 +350,10 @@ $exportParams = http_build_query([
                                     <?php endforeach; ?>
                                 </select>
                             </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Device Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="device_name" required placeholder="e.g. Printer, Scanner, UPS...">
+                            </div>
                             <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand"></div>
                             <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model"></div>
                             <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no"></div>
@@ -376,6 +402,7 @@ $exportParams = http_build_query([
                     <tr>
                         <th>PERSONNEL</th>
                         <th>DIVISION</th>
+                        <th>DEVICE NAME</th>
                         <th>BRAND</th>
                         <th>MODEL</th>
                         <th>SERIAL NO</th>
@@ -395,6 +422,7 @@ $exportParams = http_build_query([
                                 data-bs-toggle="modal" data-bs-target="#viewOtherModal<?= $row['id'] ?>">
                                 <td><?= htmlspecialchars($row['fullname'] ?? '-') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['division_name'] ?? 'N/A') ?></td>
+                                <td><?= htmlspecialchars($row['device_name'] ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['brand'] ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['model'] ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['serial_no'] ?? '') ?: '-' ?></td>
@@ -428,7 +456,7 @@ $exportParams = http_build_query([
                                     <div class="modal-content">
                                         <div class="modal-header text-white" style="background-color:#0d6ea8;">
                                             <h5 class="modal-title">
-                                                <i class="bi bi-pc-display me-2"></i>Device Details — <?= htmlspecialchars(($row['brand'] ?? '') . ' ' . ($row['model'] ?? '')) ?>
+                                                <i class="bi bi-pc-display me-2"></i>Device Details — <?= htmlspecialchars(($row['device_name'] ?? '') . ' ' . ($row['brand'] ?? '') . ' ' . ($row['model'] ?? '')) ?>
                                             </h5>
                                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                         </div>
@@ -441,6 +469,10 @@ $exportParams = http_build_query([
                                                 <div class="col-md-6">
                                                     <div class="view-label">Division</div>
                                                     <div class="view-value"><?= htmlspecialchars($row['division_name'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-12">
+                                                    <div class="view-label">Device Name</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['device_name'] ?? '') ?: '-' ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Brand</div>
@@ -526,6 +558,11 @@ $exportParams = http_build_query([
                                                             <?php endforeach; ?>
                                                         </select>
                                                     </div>
+                                                    <div class="col-md-12">
+                                                        <label class="form-label">Device Name <span class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control" name="device_name" required
+                                                            value="<?= htmlspecialchars($row['device_name'] ?? '') ?>">
+                                                    </div>
                                                     <div class="col-md-6"><label class="form-label">Brand</label><input type="text" class="form-control" name="brand" value="<?= htmlspecialchars($row['brand'] ?? '') ?>"></div>
                                                     <div class="col-md-6"><label class="form-label">Model</label><input type="text" class="form-control" name="model" value="<?= htmlspecialchars($row['model'] ?? '') ?>"></div>
                                                     <div class="col-md-6"><label class="form-label">Serial Number</label><input type="text" class="form-control" name="serial_no" value="<?= htmlspecialchars($row['serial_no'] ?? '') ?>"></div>
@@ -575,7 +612,7 @@ $exportParams = http_build_query([
                         <?php endwhile; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="11" class="text-center">No other devices found.</td>
+                            <td colspan="12" class="text-center">No other devices found.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -643,9 +680,15 @@ $exportParams = http_build_query([
 
     <script>
         function showToast(message, type = "success") {
-            const colors = { success: "#198754", danger: "#dc3545" };
-            const icons  = { success: "bi-check-circle-fill", danger: "bi-x-circle-fill" };
-            const toast  = document.createElement("div");
+            const colors = {
+                success: "#198754",
+                danger: "#dc3545"
+            };
+            const icons = {
+                success: "bi-check-circle-fill",
+                danger: "bi-x-circle-fill"
+            };
+            const toast = document.createElement("div");
             toast.style.cssText = `
                 position:fixed;bottom:24px;right:24px;z-index:9999;
                 background:${colors[type]};color:#fff;
@@ -677,7 +720,8 @@ $exportParams = http_build_query([
                 showToast("<?= addslashes($_SESSION['toast_success']) ?>", "success");
             });
         </script>
-    <?php unset($_SESSION['toast_success']); endif; ?>
+    <?php unset($_SESSION['toast_success']);
+    endif; ?>
 
     <?php if (!empty($_SESSION['toast_error'])): ?>
         <script>
@@ -685,8 +729,10 @@ $exportParams = http_build_query([
                 showToast("<?= addslashes($_SESSION['toast_error']) ?>", "danger");
             });
         </script>
-    <?php unset($_SESSION['toast_error']); endif; ?>
+    <?php unset($_SESSION['toast_error']);
+    endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

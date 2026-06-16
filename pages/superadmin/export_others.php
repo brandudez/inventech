@@ -44,9 +44,9 @@ function getPreviousOwnersNamesExport($conn, $json)
     while ($row = $result->fetch_assoc()) {
         $names[] = trim(
             ($row['rank']        ?? '') . ' ' .
-            ($row['first_name']  ?? '') . ' ' .
-            ($row['middle_name'] ?? '') . ' ' .
-            ($row['last_name']   ?? '')
+                ($row['first_name']  ?? '') . ' ' .
+                ($row['middle_name'] ?? '') . ' ' .
+                ($row['last_name']   ?? '')
         );
     }
     return implode(', ', $names);
@@ -76,6 +76,7 @@ $types  = '';
 
 if (!empty($search)) {
     $where[] = "(
+        o.device_name LIKE ? OR
         o.brand LIKE ? OR
         o.model LIKE ? OR
         o.serial_no LIKE ? OR
@@ -84,7 +85,7 @@ if (!empty($search)) {
         d.division LIKE ?
     )";
     $sp = "%$search%";
-    for ($i = 0; $i < 6; $i++) {
+    for ($i = 0; $i < 7; $i++) {
         $params[] = $sp;
         $types   .= 's';
     }
@@ -106,6 +107,8 @@ if ($acq_filter === 'lt5') {
     $where[] = "o.acquisition_date IS NOT NULL AND o.acquisition_date != '0000-00-00' AND o.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 } elseif ($acq_filter === 'gt5') {
     $where[] = "o.acquisition_date IS NOT NULL AND o.acquisition_date != '0000-00-00' AND o.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+} elseif ($acq_filter === 'none') {
+    $where[] = "(o.acquisition_date IS NULL OR o.acquisition_date = '' OR o.acquisition_date = '0000-00-00')";
 }
 
 $whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
@@ -144,6 +147,7 @@ echo '<tr style="font-weight:bold;background:#0d6ea8;color:#fff;">';
 $headers = [
     'Personnel',
     'Division',
+    'Device Name',
     'Brand',
     'Model',
     'Serial Number',
@@ -163,6 +167,7 @@ while ($row = $result->fetch_assoc()) {
     $cells = [
         trim($row['fullname'] ?? '')       ?: '-',
         $row['division_name']               ?? '-',
+        $row['device_name']                 ?? '-',
         $row['brand']                       ?? '-',
         $row['model']                       ?? '-',
         $row['serial_no']                   ?? '-',

@@ -23,7 +23,8 @@ $filename = 'others_export_' . date('Ymd_His') . '.xls';
 $filePath = $exportDir . $filename;
 
 /* ── HELPERS ────────────────────────────────────────────────────────────── */
-function getPreviousOwnersNamesExport($conn, $json) {
+function getPreviousOwnersNamesExport($conn, $json)
+{
     if (empty($json)) return '-';
     $ids = json_decode($json, true);
     if (!is_array($ids) || empty($ids)) return '-';
@@ -41,12 +42,14 @@ function getPreviousOwnersNamesExport($conn, $json) {
     return !empty($names) ? implode(', ', $names) : '-';
 }
 
-function dashExport($val) {
+function dashExport($val)
+{
     $v = trim($val ?? '');
     return $v !== '' ? $v : '-';
 }
 
-function formatDate($val) {
+function formatDate($val)
+{
     if (empty($val) || $val === '0000-00-00') return '-';
     return $val;
 }
@@ -62,13 +65,17 @@ $types  = 'i';
 
 if (!empty($search)) {
     $where[] = "(
+        o.device_name LIKE ? OR
         o.brand LIKE ? OR o.model LIKE ? OR o.serial_no LIKE ? OR
         o.acquisition_details LIKE ? OR
         CONCAT(per.first_name, ' ', per.middle_name, ' ', per.last_name) LIKE ? OR
         d.division LIKE ?
     )";
     $sp = "%$search%";
-    for ($i = 0; $i < 6; $i++) { $params[] = $sp; $types .= 's'; }
+    for ($i = 0; $i < 7; $i++) {
+        $params[] = $sp;
+        $types .= 's';
+    }
 }
 
 if ($active_filter !== '') {
@@ -113,6 +120,7 @@ echo '<html><head><meta charset="UTF-8"></head><body><table border="1">';
 $headers = [
     'PERSONNEL',
     'DIVISION',
+    'DEVICE NAME',
     'BRAND',
     'MODEL',
     'SERIAL NUMBER',
@@ -131,6 +139,7 @@ while ($row = $result->fetch_assoc()) {
     $cells = [
         dashExport($row['personnel_name']             ?? ''),
         dashExport($row['division_name']              ?? ''),
+        dashExport($row['device_name']                ?? ''),
         dashExport($row['brand']                      ?? ''),
         dashExport($row['model']                      ?? ''),
         dashExport($row['serial_no']                  ?? ''),
