@@ -312,7 +312,7 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
                     <?php if (!empty($rows)): ?>
                         <?php foreach ($rows as $row): ?>
                             <tr id="row-<?= $row['id'] ?>">
-                                <td><?= htmlspecialchars($row['rank_name']          ?? 'N/A') ?></td>
+                                <td><?= htmlspecialchars($row['rank_name'] ?? '-') ?></td>
                                 <td><?= htmlspecialchars($row['full_name']) ?></td>
                                 <!-- <td><?= htmlspecialchars($row['division_name']       ?? 'N/A') ?></td> -->
                                 <td><?= htmlspecialchars($row['created_by_username'] ?? 'SYSTEM') ?></td>
@@ -321,7 +321,7 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
                                         onclick="openEditModal(
                                             '<?= $row['id'] ?>',
                                             '<?= htmlspecialchars($row['full_name'] ?? '', ENT_QUOTES) ?>',
-                                            '<?= $row['rank_id'] ?>',
+                                            '<?= $row['rank_id'] ?? '' ?>',
                                             '<?= htmlspecialchars($row['created_by_username'] ?? 'SYSTEM', ENT_QUOTES) ?>',
                                             '<?= $row['is_active'] ?>'
                                         )">
@@ -403,8 +403,9 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
                     <form id="addPersonnelForm">
                         <div class="mb-3">
                             <label class="form-label">Rank</label>
-                            <select class="form-select" name="rank" required>
+                            <select class="form-select" name="rank">
                                 <option value="" disabled selected>Select rank</option>
+                                <option value="">-</option>
                                 <?php
                                 $ranksAdd = $conn->query("SELECT id, rank FROM ranks ORDER BY id DESC");
                                 while ($r = $ranksAdd->fetch_assoc()): ?>
@@ -454,6 +455,7 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
                 <div class="form-group">
                     <label>Rank</label>
                     <select id="edit_rank" name="rank">
+                        <option value="">-</option>
                         <?php foreach ($allRanks as $r): ?>
                             <option value="<?= $r['id'] ?>"><?= htmlspecialchars($r['rank']) ?></option>
                         <?php endforeach; ?>
@@ -614,6 +616,7 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
         function openEditModal(id, name, rank, created_by, status) {
             document.getElementById('edit_id').value = id;
             document.getElementById('edit_name').value = name;
+            // rank may be empty string when NULL in DB — sets dropdown to "-" option
             document.getElementById('edit_rank').value = rank;
             document.getElementById('edit_created_by').value = created_by;
             document.getElementById('edit_status').value = status;
@@ -634,8 +637,6 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
             e.preventDefault();
 
             /* ── NAME VALIDATION ── */
-            // Allows letters (including accented: ñ, é, etc.), spaces, hyphens, apostrophes, periods
-            // Blocks digits and special characters like @, #, !, $, etc.
             const namePattern = /^[a-zA-ZÀ-ÖØ-öø-ÿ\s\-'.]+$/;
             const fields = [{
                     name: 'firstName',
@@ -657,7 +658,6 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
                 const input = this.elements[field.name];
                 const val = input.value.trim();
 
-                // Middle name is optional — skip validation if left empty
                 if (field.name === 'middleName' && val === '') {
                     input.classList.remove('is-invalid');
                     const fb = input.nextElementSibling;
@@ -667,8 +667,6 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
 
                 if (!namePattern.test(val)) {
                     input.classList.add('is-invalid');
-
-                    // Add or update the error message below the field
                     let feedback = input.nextElementSibling;
                     if (!feedback || !feedback.classList.contains('invalid-feedback')) {
                         feedback = document.createElement('div');
@@ -676,9 +674,8 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
                         input.after(feedback);
                     }
                     feedback.textContent = `${field.label} must contain letters only (no numbers or special characters).`;
-
                     if (!hasError) {
-                        input.focus(); // focus the first invalid field
+                        input.focus();
                         hasError = true;
                     }
                 } else {
@@ -688,7 +685,6 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
                 }
             }
 
-            // Stop submission if any name field failed validation
             if (hasError) return;
 
             /* ── SUBMIT via AJAX ── */
@@ -713,7 +709,7 @@ while ($r = $rq->fetch_assoc()) $allRanks[] = $r;
                 });
         });
 
-        /* ── Reset add form validation when modal is closed ── */
+        /* ── Reset add form when modal closes ── */
         document.getElementById('addPersonnelModal').addEventListener('hidden.bs.modal', function() {
             const form = document.getElementById('addPersonnelForm');
             form.reset();

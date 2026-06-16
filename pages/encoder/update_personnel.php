@@ -38,6 +38,9 @@ if ($count == 2) {
     $last_name   = implode(' ', array_slice($nameParts, 2));
 }
 
+/* NULLABLE RANK — empty string or "-" becomes NULL */
+$rank_id = ($rank !== '' && $rank !== '-') ? (int)$rank : null;
+
 /* UPDATE */
 $stmt = $conn->prepare("
     UPDATE personnels SET
@@ -55,7 +58,8 @@ if (!$stmt) {
     exit();
 }
 
-$stmt->bind_param("sssiiii", $first_name, $middle_name, $last_name, $rank, $division, $status, $user_id);
+// 's' for rank_id so MySQLi sends PHP null as SQL NULL (using 'i' would cast null to 0)
+$stmt->bind_param("ssssiii", $first_name, $middle_name, $last_name, $rank_id, $division, $status, $user_id);
 
 if ($stmt->execute()) {
     header("Location: personnel_list.php?msg=PersonnelUpdated");
@@ -65,4 +69,3 @@ if ($stmt->execute()) {
 
 $stmt->close();
 exit();
-?>

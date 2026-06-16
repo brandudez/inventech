@@ -15,23 +15,13 @@ include("../../config/db.php");
 
 header('Content-Type: application/json');
 
-/* =========================
-   CHECK SESSION
-========================= */
-if (!isset($_SESSION['user'])) {
-    echo json_encode([
-        "status" => "error",
-        "message" => "Unauthorized"
-    ]);
-    exit();
-}
-
 $created_by = $_SESSION['user']['id'] ?? 0;
 
 /* =========================
    GET INPUTS
 ========================= */
-$rank_id     = intval($_POST['rank'] ?? 0);
+$rank_raw    = $_POST['rank'] ?? '';
+$rank_id     = ($rank_raw !== '' && $rank_raw !== '-') ? intval($rank_raw) : null; // NULL = no rank
 $division_id = intval($_POST['division'] ?? 0);
 
 $first_name  = mb_strtoupper(trim($_POST['firstName']  ?? ''), 'UTF-8');
@@ -40,10 +30,11 @@ $last_name   = mb_strtoupper(trim($_POST['lastName']   ?? ''), 'UTF-8');
 
 /* =========================
    VALIDATION
+   rank_id is now optional — only division, first name, last name are required
 ========================= */
-if (!$rank_id || !$division_id || !$first_name || !$last_name) {
+if (!$division_id || !$first_name || !$last_name) {
     echo json_encode([
-        "status" => "error",
+        "status"  => "error",
         "message" => "Please fill all required fields."
     ]);
     exit();
@@ -53,14 +44,16 @@ if (!$rank_id || !$division_id || !$first_name || !$last_name) {
    INSERT QUERY
 ========================= */
 $sql = "
-INSERT INTO personnels
-(rank_id, division_id, first_name, middle_name, last_name, is_active, created_by)
-VALUES (?, ?, ?, ?, ?, 1, ?)
+    INSERT INTO personnels
+        (rank_id, division_id, first_name, middle_name, last_name, is_active, created_by)
+    VALUES (?, ?, ?, ?, ?, 1, ?)
 ";
 
 $stmt = $conn->prepare($sql);
+
+// 's' for rank_id so PHP null is sent as SQL NULL (using 'i' would cast null to 0)
 $stmt->bind_param(
-    "iisssi",
+    "sisssi",
     $rank_id,
     $division_id,
     $first_name,
@@ -71,12 +64,15 @@ $stmt->bind_param(
 
 if ($stmt->execute()) {
     echo json_encode([
-        "status" => "success",
+        "status"  => "success",
         "message" => "Personnel added successfully"
     ]);
 } else {
     echo json_encode([
-        "status" => "error",
+        "status"  => "error",
         "message" => "Failed to add personnel"
     ]);
 }
+
+$stmt->close();
+$conn->close();

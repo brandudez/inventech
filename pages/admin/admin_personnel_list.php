@@ -303,7 +303,7 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
                     </ul>
                 </div>
             </form>
-            <button type="button" class="btn btn-primary add-personnel-btn" data-bs-toggle="modal" data-bs-target="#addPersonnelModal"> Add Personnel</button>
+            <button type="button" class="btn btn-primary add-personnel-btn" data-bs-toggle="modal" data-bs-target="#addPersonnelModal">Add Personnel</button>
         </div>
     </div>
 
@@ -324,20 +324,20 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
                     <?php if (!empty($rows)): ?>
                         <?php foreach ($rows as $row): ?>
                             <tr id="row-<?= $row['id'] ?>">
-                                <td><?= htmlspecialchars($row['rank_name']          ?? 'N/A') ?></td>
+                                <td><?= htmlspecialchars($row['rank_name'] ?? '-') ?></td>
                                 <td><?= htmlspecialchars($row['full_name']) ?></td>
                                 <td><?= htmlspecialchars($row['division_name']       ?? 'N/A') ?></td>
                                 <td><?= htmlspecialchars($row['created_by_username'] ?? 'SYSTEM') ?></td>
                                 <td class="action-buttons">
                                     <button type="button" class="btn-edit"
                                         onclick="openEditModal(
-                                        '<?= $row['id'] ?>',
-                                        '<?= htmlspecialchars($row['full_name'] ?? '', ENT_QUOTES) ?>',
-                                        '<?= $row['rank_id'] ?>',
-                                        '<?= $row['division_id'] ?>',
-                                        '<?= htmlspecialchars($row['created_by_username'] ?? 'SYSTEM', ENT_QUOTES) ?>',
-                                        '<?= $row['is_active'] ?>'
-                                    )">
+                                            '<?= $row['id'] ?>',
+                                            '<?= htmlspecialchars($row['full_name'] ?? '', ENT_QUOTES) ?>',
+                                            '<?= $row['rank_id'] ?? '' ?>',
+                                            '<?= $row['division_id'] ?>',
+                                            '<?= htmlspecialchars($row['created_by_username'] ?? 'SYSTEM', ENT_QUOTES) ?>',
+                                            '<?= $row['is_active'] ?>'
+                                        )">
                                         <i class="bi bi-gear-fill"></i>
                                     </button>
                                     <button type="button" class="btn-delete"
@@ -416,8 +416,9 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
                     <form id="addPersonnelForm">
                         <div class="mb-3">
                             <label class="form-label">Rank</label>
-                            <select class="form-select" name="rank" required>
+                            <select class="form-select" name="rank">
                                 <option value="" disabled selected>Select rank</option>
+                                <option value="">-</option>
                                 <?php $ranksAdd = $conn->query("SELECT id, rank FROM ranks ORDER BY id DESC");
                                 while ($r = $ranksAdd->fetch_assoc()): ?>
                                     <option value="<?= $r['id'] ?>"><?= htmlspecialchars($r['rank']) ?></option>
@@ -466,6 +467,7 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
                 <div class="form-group">
                     <label>Rank</label>
                     <select id="edit_rank" name="rank">
+                        <option value="">-</option>
                         <?php foreach ($allRanks as $r): ?>
                             <option value="<?= $r['id'] ?>"><?= htmlspecialchars($r['rank']) ?></option>
                         <?php endforeach; ?>
@@ -628,6 +630,7 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
         function openEditModal(id, name, rank, division, created_by, status) {
             document.getElementById('edit_id').value = id;
             document.getElementById('edit_name').value = name;
+            // rank may be empty string when NULL in DB — sets dropdown to "-" option
             document.getElementById('edit_rank').value = rank;
             document.getElementById('edit_division').value = division;
             document.getElementById('edit_created_by').value = created_by;
@@ -668,7 +671,6 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
                 const input = this.elements[field.name];
                 const val = input.value.trim();
 
-                // Middle name is optional — skip validation if left empty
                 if (field.name === 'middleName' && val === '') {
                     input.classList.remove('is-invalid');
                     const fb = input.nextElementSibling;
@@ -678,8 +680,6 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
 
                 if (!namePattern.test(val)) {
                     input.classList.add('is-invalid');
-
-                    // Add or update the error message below the field
                     let feedback = input.nextElementSibling;
                     if (!feedback || !feedback.classList.contains('invalid-feedback')) {
                         feedback = document.createElement('div');
@@ -687,9 +687,8 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
                         input.after(feedback);
                     }
                     feedback.textContent = `${field.label} must contain letters only (no numbers or special characters).`;
-
                     if (!hasError) {
-                        input.focus(); // focus the first invalid field
+                        input.focus();
                         hasError = true;
                     }
                 } else {
@@ -699,7 +698,6 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
                 }
             }
 
-            // Stop submission if any name field failed validation
             if (hasError) return;
 
             /* ── SUBMIT via AJAX ── */
@@ -724,7 +722,7 @@ while ($r = $dq->fetch_assoc()) $allDivisions[] = $r;
                 });
         });
 
-        /* ── Reset add form validation when modal is closed ── */
+        /* ── Reset add form when modal closes ── */
         document.getElementById('addPersonnelModal').addEventListener('hidden.bs.modal', function() {
             const form = document.getElementById('addPersonnelForm');
             form.reset();
