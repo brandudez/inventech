@@ -83,6 +83,24 @@ function getAccountNames($json)
     return htmlspecialchars($json);
 }
 
+/**
+ * Classify a CPU generation number into a support-status badge.
+ * 7th gen and below  → End of Life        (danger)
+ * 8th – 10th gen     → Near End of Life   (warning)
+ * 11th gen and above → Recommended        (success)
+ */
+function getCpuGenStatus($gen)
+{
+    $g = trim($gen ?? '');
+    if ($g === '' || !is_numeric($g)) {
+        return ['label' => '—', 'class' => 'secondary'];
+    }
+    $g = (int)$g;
+    if ($g <= 7)  return ['label' => 'End of Life',      'class' => 'danger'];
+    if ($g <= 10) return ['label' => 'Near End of Life', 'class' => 'warning'];
+    return             ['label' => 'Recommended',        'class' => 'success'];
+}
+
 /* =========================
    PAGINATION
 ========================= */
@@ -95,13 +113,14 @@ $offset = ($page - 1) * $limit;
 ========================= */
 $search = trim($_GET['search'] ?? '');
 
-$os_filter_raw     = $_GET['filter_os']     ?? [];
-$office_filter_raw = $_GET['filter_office'] ?? [];
+$os_filter_raw      = $_GET['filter_os']      ?? [];
+$office_filter_raw  = $_GET['filter_office']  ?? [];
 
-$os_filter     = is_array($os_filter_raw)     ? array_filter(array_map('trim', $os_filter_raw))     : [];
-$office_filter = is_array($office_filter_raw) ? array_filter($office_filter_raw)                    : [];
-$active_filter = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
-$acq_filter    = trim($_GET['filter_acq'] ?? '');
+$os_filter      = is_array($os_filter_raw)     ? array_filter(array_map('trim', $os_filter_raw))    : [];
+$office_filter  = is_array($office_filter_raw) ? array_filter($office_filter_raw)                   : [];
+$active_filter  = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
+$acq_filter     = trim($_GET['filter_acq']     ?? '');
+$cpu_gen_filter = trim($_GET['filter_cpu_gen'] ?? '');
 
 /* =========================
    WHERE BUILDER
@@ -156,6 +175,15 @@ if ($acq_filter === 'lt5') {
     $where[] = "l.acquisition_date IS NOT NULL AND l.acquisition_date != '0000-00-00' AND l.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 } elseif ($acq_filter === 'none') {
     $where[] = "(l.acquisition_date IS NULL OR l.acquisition_date = '0000-00-00' OR l.acquisition_date = '')";
+}
+if ($cpu_gen_filter === 'eol') {
+    $where[] = "(l.cpu_generation IS NOT NULL AND l.cpu_generation != '' AND CAST(l.cpu_generation AS UNSIGNED) <= 7)";
+} elseif ($cpu_gen_filter === 'near_eol') {
+    $where[] = "(l.cpu_generation IS NOT NULL AND l.cpu_generation != '' AND CAST(l.cpu_generation AS UNSIGNED) BETWEEN 8 AND 10)";
+} elseif ($cpu_gen_filter === 'good') {
+    $where[] = "(l.cpu_generation IS NOT NULL AND l.cpu_generation != '' AND CAST(l.cpu_generation AS UNSIGNED) >= 11)";
+} elseif ($cpu_gen_filter === 'none') {
+    $where[] = "(l.cpu_generation IS NULL OR l.cpu_generation = '')";
 }
 
 $whereSQL = "WHERE " . implode(" AND ", $where);
@@ -278,13 +306,14 @@ while ($r = mysqli_fetch_assoc($eq)) $addEpRows[] = $r;
 
 $addHandlerRows = $addPersonnelRows;
 
-// Export query string (no division param — it's fixed server-side)
+// Export query string — carries all active filters including cpu_gen
 $exportParams = http_build_query([
-    'search'        => $search,
-    'filter_os'     => $os_filter,
-    'filter_office' => $office_filter,
-    'is_active'     => $active_filter,
-    'filter_acq'    => $acq_filter,
+    'search'          => $search,
+    'filter_os'       => $os_filter,
+    'filter_office'   => $office_filter,
+    'is_active'       => $active_filter,
+    'filter_acq'      => $acq_filter,
+    'filter_cpu_gen'  => $cpu_gen_filter,
 ]);
 ?>
 <!DOCTYPE html>
@@ -372,6 +401,12 @@ $exportParams = http_build_query([
             font-size: .9rem;
             font-weight: 500;
         }
+
+        /* CPU Gen filter: prevent label wrap */
+        .cpu-gen-dropdown .dropdown-item {
+            min-width: max-content;
+            white-space: nowrap;
+        }
     </style>
 </head>
 
@@ -387,6 +422,7 @@ $exportParams = http_build_query([
                 <?php foreach ($office_filter as $v): ?><input type="hidden" name="filter_office[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
                 <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
                 <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
+                <input type="hidden" name="filter_cpu_gen" value="<?= htmlspecialchars($cpu_gen_filter) ?>">
                 <input type="text" name="search" class="search-input" placeholder="Search laptops..." value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
                 <a href="export_laptops.php?<?= htmlspecialchars($exportParams) ?>"
@@ -404,6 +440,7 @@ $exportParams = http_build_query([
                     <input type="hidden" name="search" value="<?= htmlspecialchars($search) ?>">
                     <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
                     <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
+                    <input type="hidden" name="filter_cpu_gen" value="<?= htmlspecialchars($cpu_gen_filter) ?>">
 
                     <!-- OS FILTER -->
                     <div class="dropdown">
@@ -453,17 +490,43 @@ $exportParams = http_build_query([
                 </form>
             </div>
 
-            <!-- ACQUISITION DATE FILTER -->
-            <div class="dropdown">
+            <!-- CPU GEN FILTER -->
+            <div class="dropdown cpu-gen-dropdown">
                 <?php
-               $acqLabel = 'ACQ Date';
-                if ($acq_filter === 'lt5') $acqLabel = 'Age < 5 Years';
-                elseif ($acq_filter === 'gt5') $acqLabel = 'Age > 5 Years';
-                elseif ($acq_filter === 'none') $acqLabel = 'No ACQ Date';
-                $acqBase = '?search=' . urlencode($search) . '&' . http_build_query([
+                $cpuGenLabel = 'CPU Gen';
+                if ($cpu_gen_filter === 'eol')      $cpuGenLabel = '≤7th Gen (End of Life)';
+                elseif ($cpu_gen_filter === 'near_eol') $cpuGenLabel = '8–10th Gen (Near EOL)';
+                elseif ($cpu_gen_filter === 'good')     $cpuGenLabel = '≥11th Gen (Recommended)';
+                elseif ($cpu_gen_filter === 'none')     $cpuGenLabel = 'No CPU Gen';
+                $cpuGenBase = '?search=' . urlencode($search) . '&' . http_build_query([
                     'filter_os'     => $os_filter,
                     'filter_office' => $office_filter,
                     'is_active'     => $active_filter,
+                    'filter_acq'    => $acq_filter,
+                ]);
+                ?>
+                <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown"><?= htmlspecialchars($cpuGenLabel) ?></button>
+                <ul class="dropdown-menu p-3" style="min-width:max-content;white-space:nowrap;">
+                    <li><a class="dropdown-item" href="<?= $cpuGenBase ?>">All</a></li>
+                    <li><a class="dropdown-item" href="<?= $cpuGenBase ?>&filter_cpu_gen=eol">7th Gen &amp; below (End of Life)</a></li>
+                    <li><a class="dropdown-item" href="<?= $cpuGenBase ?>&filter_cpu_gen=near_eol">8th – 10th Gen (Near End of Life)</a></li>
+                    <li><a class="dropdown-item" href="<?= $cpuGenBase ?>&filter_cpu_gen=good">11th Gen &amp; above (Recommended)</a></li>
+                    <li><a class="dropdown-item" href="<?= $cpuGenBase ?>&filter_cpu_gen=none">No CPU Gen Specified</a></li>
+                </ul>
+            </div>
+
+            <!-- ACQUISITION DATE FILTER -->
+            <div class="dropdown">
+                <?php
+                $acqLabel = 'ACQ Date';
+                if ($acq_filter === 'lt5')  $acqLabel = 'Age < 5 Years';
+                elseif ($acq_filter === 'gt5')  $acqLabel = 'Age > 5 Years';
+                elseif ($acq_filter === 'none') $acqLabel = 'No ACQ Date';
+                $acqBase = '?search=' . urlencode($search) . '&' . http_build_query([
+                    'filter_os'      => $os_filter,
+                    'filter_office'  => $office_filter,
+                    'is_active'      => $active_filter,
+                    'filter_cpu_gen' => $cpu_gen_filter,
                 ]);
                 ?>
                 <button class="btn filter-btn dropdown-toggle" data-bs-toggle="dropdown"><?= htmlspecialchars($acqLabel) ?></button>
@@ -482,9 +545,10 @@ $exportParams = http_build_query([
                 </button>
                 <ul class="dropdown-menu p-3">
                     <?php $base = '?search=' . urlencode($search) . '&' . http_build_query([
-                        'filter_os'     => $os_filter,
-                        'filter_office' => $office_filter,
-                        'filter_acq'    => $acq_filter,
+                        'filter_os'      => $os_filter,
+                        'filter_office'  => $office_filter,
+                        'filter_acq'     => $acq_filter,
+                        'filter_cpu_gen' => $cpu_gen_filter,
                     ]); ?>
                     <li><a class="dropdown-item" href="<?= $base ?>">All</a></li>
                     <li><a class="dropdown-item" href="<?= $base ?>&is_active=1">YES</a></li>
@@ -554,10 +618,6 @@ $exportParams = http_build_query([
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">OS License Key</label>
-                                <input type="text" class="form-control" name="os_license_key">
-                            </div>
-                            <div class="col-md-6">
                                 <label class="form-label">Office Application</label>
                                 <select name="office_application" class="form-select">
                                     <option value="" disabled selected hidden>Select Office Application</option>
@@ -565,10 +625,6 @@ $exportParams = http_build_query([
                                         <option value="<?= htmlspecialchars($app) ?>"><?= htmlspecialchars($app) ?></option>
                                     <?php endforeach; ?>
                                 </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Office License Key</label>
-                                <input type="text" class="form-control" name="office_license_key">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Is Office Licensed?</label>
@@ -612,6 +668,10 @@ $exportParams = http_build_query([
                                 <input type="text" class="form-control" name="cpu_brand">
                             </div>
                             <div class="col-md-4">
+                                <label class="form-label">CPU Generation</label>
+                                <input type="number" class="form-control" name="cpu_generation" placeholder="e.g. 11">
+                            </div>
+                            <div class="col-md-4">
                                 <label class="form-label"># of CPU Cores</label>
                                 <input type="number" class="form-control" name="cpu_cores">
                             </div>
@@ -629,10 +689,6 @@ $exportParams = http_build_query([
                             </div>
 
                             <!-- ── USER ACCOUNT TYPE (Add) ──────────────────────────────── -->
-                            <!--
-                                no_of_user_accounts is now AUTO-COUNTED from the rows below.
-                                A hidden input is populated via JS before submit.
-                            -->
                             <input type="hidden" name="no_of_user_accounts" id="addLtAccountCount">
 
                             <div class="col-md-12">
@@ -651,7 +707,6 @@ $exportParams = http_build_query([
                                         </button>
                                     </div>
                                 </div>
-                                <!-- Hidden JSON field submitted to server -->
                                 <input type="hidden" name="user_account_type" id="addLtAccountJson">
                             </div>
 
@@ -728,9 +783,7 @@ $exportParams = http_build_query([
                         <th>IP ADDRESS</th>
                         <th>OPERATING SYSTEM</th>
                         <th>IS OS LICENSED?</th>
-                        <th>OS LICENSE KEY</th>
                         <th>OFFICE APPLICATION</th>
-                        <th>OFFICE LICENSE KEY</th>
                         <th>IS OFFICE LICENSED?</th>
                         <th>ENDPOINT SECURITY</th>
                         <th># OF INSTALLED ANTIVIRUS</th>
@@ -738,6 +791,7 @@ $exportParams = http_build_query([
                         <th>GUID</th>
                         <th>MAC ADDRESS</th>
                         <th>CPU BRAND</th>
+                        <th>CPU GENERATION</th>
                         <th># OF CPU CORES</th>
                         <th>GBs OF RAM</th>
                         <th>MONITOR BRAND</th>
@@ -756,7 +810,9 @@ $exportParams = http_build_query([
                 </thead>
                 <tbody>
                     <?php if ($result->num_rows > 0): ?>
-                        <?php while ($row = $result->fetch_assoc()): ?>
+                        <?php while ($row = $result->fetch_assoc()):
+                            $cpuStatus = getCpuGenStatus($row['cpu_generation'] ?? '');
+                        ?>
                             <tr class="clickable-row" data-active="<?= $row['is_active'] ? '1' : '0' ?>"
                                 data-bs-toggle="modal" data-bs-target="#viewLtModal<?= $row['id'] ?>">
                                 <td><?= htmlspecialchars($row['device_name']               ?? '') ?: '-' ?></td>
@@ -765,9 +821,7 @@ $exportParams = http_build_query([
                                 <td><?= htmlspecialchars($row['ip_address']                 ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['os']                         ?? '') ?: '-' ?></td>
                                 <td><?= ($row['is_os_licensed'] == 1) ? 'Yes' : 'No' ?></td>
-                                <td><?= htmlspecialchars($row['os_license_key']             ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['office_application']         ?? '') ?: '-' ?></td>
-                                <td><?= htmlspecialchars($row['office_license_key']         ?? '') ?: '-' ?></td>
                                 <td><?= ($row['is_office_licensed'] == 1) ? 'Yes' : 'No' ?></td>
                                 <td><?= getEndpointNames($conn, $row['endpoint_security_id']) ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?: '-' ?></td>
@@ -775,12 +829,19 @@ $exportParams = http_build_query([
                                 <td><?= htmlspecialchars($row['guid']                        ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['mac_address']                 ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['cpu_brand']                   ?? '') ?: '-' ?></td>
+                                <td>
+                                    <?php if ($cpuStatus['class'] !== 'secondary'): ?>
+                                        <?= htmlspecialchars($row['cpu_generation']) ?>th Gen
+                                        <span class="badge bg-<?= $cpuStatus['class'] ?> ms-1"><?= $cpuStatus['label'] ?></span>
+                                    <?php else: ?>
+                                        -
+                                    <?php endif; ?>
+                                </td>
                                 <td><?= htmlspecialchars($row['cpu_cores']                   ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['gb_ram']                      ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['monitor_brand']               ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['monitor_size_inches']         ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['no_of_user_accounts']         ?? '') ?: '-' ?></td>
-                                <!-- TABLE: show only names -->
                                 <td><?= getAccountNames($row['user_account_type'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($row['authorized_software']         ?? '') ?: '-' ?></td>
                                 <td><?= htmlspecialchars($row['unauthorized_software']       ?? '') ?: '-' ?></td>
@@ -839,20 +900,12 @@ $exportParams = http_build_query([
                                                     <div class="view-value"><?= ($row['is_os_licensed'] == 1) ? '<span class="text-success fw-bold">Yes</span>' : '<span class="text-danger fw-bold">No</span>' ?></div>
                                                 </div>
                                                 <div class="col-md-4">
-                                                    <div class="view-label">OS License Key</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['os_license_key'] ?? '') ?></div>
-                                                </div>
-                                                <div class="col-md-4">
                                                     <div class="view-label">Office Application</div>
                                                     <div class="view-value"><?= htmlspecialchars($row['office_application'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Is Office Licensed?</div>
                                                     <div class="view-value"><?= ($row['is_office_licensed'] == 1) ? '<span class="text-success fw-bold">Yes</span>' : '<span class="text-danger fw-bold">No</span>' ?></div>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <div class="view-label">Office License Key</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['office_license_key'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Endpoint Security</div>
@@ -869,6 +922,17 @@ $exportParams = http_build_query([
                                                 <div class="col-md-4">
                                                     <div class="view-label">CPU Brand</div>
                                                     <div class="view-value"><?= htmlspecialchars($row['cpu_brand'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">CPU Generation</div>
+                                                    <div class="view-value">
+                                                        <?php if ($cpuStatus['class'] !== 'secondary'): ?>
+                                                            <?= htmlspecialchars($row['cpu_generation']) ?>th Gen
+                                                            <span class="badge bg-<?= $cpuStatus['class'] ?> ms-1"><?= $cpuStatus['label'] ?></span>
+                                                        <?php else: ?>
+                                                            —
+                                                        <?php endif; ?>
+                                                    </div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label"># CPU Cores</div>
@@ -961,10 +1025,9 @@ $exportParams = http_build_query([
                                         </div>
                                         <div class="modal-body">
                                             <form action="edit_laptops.php" method="POST"
-                                                  id="editLtForm<?= $row['id'] ?>"
-                                                  onsubmit="buildAccountJson('editLtAccountContainer<?= $row['id'] ?>', 'editLtAccountJson<?= $row['id'] ?>', 'editLtAccountCount<?= $row['id'] ?>')">
+                                                id="editLtForm<?= $row['id'] ?>"
+                                                onsubmit="buildAccountJson('editLtAccountContainer<?= $row['id'] ?>', 'editLtAccountJson<?= $row['id'] ?>', 'editLtAccountCount<?= $row['id'] ?>')">
                                                 <input type="hidden" name="id" value="<?= $row['id'] ?>">
-                                                <!-- Division always locked to encoder's division -->
                                                 <input type="hidden" name="division_id" value="<?= $encoderDivisionId ?>">
                                                 <div class="row g-3">
                                                     <div class="col-md-4">
@@ -1023,21 +1086,13 @@ $exportParams = http_build_query([
                                                             <option value="0" <?= ($row['is_os_licensed'] ?? 0) == 0 ? 'selected' : '' ?>>No</option>
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">OS License Key</label>
-                                                        <input type="text" class="form-control" name="os_license_key" value="<?= htmlspecialchars($row['os_license_key'] ?? '') ?>">
-                                                    </div>
-                                                    <div class="col-md-6">
+                                                    <div class="col-md-4">
                                                         <label class="form-label">Office Application</label>
                                                         <select name="office_application" class="form-select">
                                                             <?php foreach ($officeAppsList as $app): ?>
                                                                 <option value="<?= $app ?>" <?= ($row['office_application'] ?? '') == $app ? 'selected' : '' ?>><?= $app ?></option>
                                                             <?php endforeach; ?>
                                                         </select>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Office License Key</label>
-                                                        <input type="text" class="form-control" name="office_license_key" value="<?= htmlspecialchars($row['office_license_key'] ?? '') ?>">
                                                     </div>
                                                     <div class="col-md-4">
                                                         <label class="form-label">Is Office Licensed?</label>
@@ -1049,6 +1104,10 @@ $exportParams = http_build_query([
                                                     <div class="col-md-4">
                                                         <label class="form-label">CPU Brand</label>
                                                         <input type="text" class="form-control" name="cpu_brand" value="<?= htmlspecialchars($row['cpu_brand'] ?? '') ?>">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">CPU Generation</label>
+                                                        <input type="number" class="form-control" name="cpu_generation" value="<?= htmlspecialchars($row['cpu_generation'] ?? '') ?>" placeholder="e.g. 11">
                                                     </div>
                                                     <div class="col-md-4">
                                                         <label class="form-label">CPU Cores</label>
@@ -1068,7 +1127,6 @@ $exportParams = http_build_query([
                                                     </div>
 
                                                     <!-- ── USER ACCOUNT TYPE (Edit) ─────────────────────────── -->
-                                                    <!-- no_of_user_accounts auto-counted, hidden field populated by JS -->
                                                     <input type="hidden" name="no_of_user_accounts" id="editLtAccountCount<?= $row['id'] ?>">
 
                                                     <div class="col-md-12">
@@ -1076,7 +1134,6 @@ $exportParams = http_build_query([
                                                         <div id="editLtAccountContainer<?= $row['id'] ?>">
                                                             <?php
                                                             $existingAccounts = json_decode($row['user_account_type'] ?? '[]', true);
-                                                            // Normalise: if empty or not a proper array-of-objects, seed one blank row
                                                             if (!is_array($existingAccounts) || empty($existingAccounts)) {
                                                                 $existingAccounts = [['name' => '', 'type' => '']];
                                                             }
@@ -1087,21 +1144,21 @@ $exportParams = http_build_query([
                                                             ?>
                                                                 <div class="account-row">
                                                                     <input type="text" class="form-control user-name"
-                                                                           placeholder="Enter account name"
-                                                                           value="<?= $accName ?>">
+                                                                        placeholder="Enter account name"
+                                                                        value="<?= $accName ?>">
                                                                     <select class="form-select account-type-select">
                                                                         <option value="" disabled <?= $accType === '' ? 'selected' : '' ?>>Type</option>
                                                                         <option value="Admin" <?= $accType === 'Admin' ? 'selected' : '' ?>>Admin</option>
-                                                                        <option value="User"  <?= $accType === 'User'  ? 'selected' : '' ?>>User</option>
+                                                                        <option value="User" <?= $accType === 'User'  ? 'selected' : '' ?>>User</option>
                                                                     </select>
                                                                     <?php if ($isFirst): ?>
                                                                         <button type="button" class="btn btn-success btn-icon"
-                                                                                onclick="addAccountRow('editLtAccountContainer<?= $row['id'] ?>')">
+                                                                            onclick="addAccountRow('editLtAccountContainer<?= $row['id'] ?>')">
                                                                             <i class="bi bi-plus-lg"></i>
                                                                         </button>
                                                                     <?php else: ?>
                                                                         <button type="button" class="btn btn-danger btn-icon"
-                                                                                onclick="removeAccountRow(this)">
+                                                                            onclick="removeAccountRow(this)">
                                                                             <i class="bi bi-dash-lg"></i>
                                                                         </button>
                                                                     <?php endif; ?>
@@ -1200,7 +1257,7 @@ $exportParams = http_build_query([
                         <?php endwhile; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="30" class="text-center">No devices found.</td>
+                            <td colspan="29" class="text-center">No devices found.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -1215,11 +1272,12 @@ $exportParams = http_build_query([
             </div>
             <?php if ($totalPages > 1):
                 $pb = http_build_query([
-                    'search'        => $search,
-                    'filter_os'     => $os_filter,
-                    'filter_office' => $office_filter,
-                    'is_active'     => $active_filter,
-                    'filter_acq'    => $acq_filter,
+                    'search'          => $search,
+                    'filter_os'       => $os_filter,
+                    'filter_office'   => $office_filter,
+                    'is_active'       => $active_filter,
+                    'filter_acq'      => $acq_filter,
+                    'filter_cpu_gen'  => $cpu_gen_filter,
                 ]); ?>
                 <div class="pagination">
                     <?php if ($page > 1): ?><a href="?page=<?= $page - 1 ?>&<?= $pb ?>">Prev</a><?php endif; ?>
@@ -1258,18 +1316,21 @@ $exportParams = http_build_query([
 
         function buildAccountJson(containerId, jsonFieldId, countFieldId) {
             const container = document.getElementById(containerId);
-            const rows      = container.querySelectorAll('.account-row');
-            const accounts  = [];
+            const rows = container.querySelectorAll('.account-row');
+            const accounts = [];
 
             rows.forEach(row => {
                 const name = row.querySelector('.user-name').value.trim();
                 const type = row.querySelector('.account-type-select').value;
                 if (name !== '') {
-                    accounts.push({ name: name, type: type || '' });
+                    accounts.push({
+                        name: name,
+                        type: type || ''
+                    });
                 }
             });
 
-            document.getElementById(jsonFieldId).value  = JSON.stringify(accounts);
+            document.getElementById(jsonFieldId).value = JSON.stringify(accounts);
             document.getElementById(countFieldId).value = accounts.length;
         }
 

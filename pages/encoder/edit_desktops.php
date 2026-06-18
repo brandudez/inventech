@@ -21,47 +21,50 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     // Helper: convert empty string to NULL
-    function nullIfEmpty($val) {
+    function nullIfEmpty($val)
+    {
         return (isset($val) && $val !== '') ? $val : null;
     }
 
-    $device_name             = $_POST['device_name'];
-    $personnel_id            = $_POST['personnel_id'];
-    $division_id             = $_POST['division_id'];
-    $ip_address              = nullIfEmpty($_POST['ip_address'] ?? '');
-    $mac_address             = nullIfEmpty($_POST['mac_address'] ?? '');
-    $is_remote_acc           = $_POST['is_remote_acc'];
-    $os                      = nullIfEmpty($_POST['os'] ?? '');
-    $is_os_licensed          = $_POST['is_os_licensed'];
-    $os_license_key          = nullIfEmpty($_POST['os_license_key'] ?? '');
-    $office_application      = nullIfEmpty($_POST['office_application'] ?? '');
-    $office_license_key      = nullIfEmpty($_POST['office_license_key'] ?? '');
-    $is_office_licensed      = $_POST['is_office_licensed'];
-    $cpu_brand               = nullIfEmpty($_POST['cpu_brand'] ?? '');
-    $cpu_cores               = nullIfEmpty($_POST['cpu_cores'] ?? '');
-    $gb_ram                  = nullIfEmpty($_POST['gb_ram'] ?? '');
-    $monitor_brand           = nullIfEmpty($_POST['monitor_brand'] ?? '');
-    $monitor_size_inches     = nullIfEmpty($_POST['monitor_size_inches'] ?? '');
-    $no_of_user_accounts     = nullIfEmpty($_POST['no_of_user_accounts'] ?? '');
-    $user_account_type       = nullIfEmpty($_POST['user_account_type'] ?? '');
-    $date_installed          = nullIfEmpty($_POST['date_installed'] ?? '');
-    $acquisition_date        = nullIfEmpty($_POST['acquisition_date'] ?? '');
+    $device_name                = $_POST['device_name'];
+    $personnel_id               = $_POST['personnel_id'];
+    $division_id                = $_POST['division_id'];
+    $ip_address                 = nullIfEmpty($_POST['ip_address'] ?? '');
+    $mac_address                = nullIfEmpty($_POST['mac_address'] ?? '');
+    $is_remote_acc              = $_POST['is_remote_acc'];
+    $os                         = nullIfEmpty($_POST['os'] ?? '');
+    $is_os_licensed             = $_POST['is_os_licensed'];
+    $office_application         = nullIfEmpty($_POST['office_application'] ?? '');
+    $is_office_licensed         = $_POST['is_office_licensed'];
+    $cpu_brand                  = nullIfEmpty($_POST['cpu_brand'] ?? '');
+    $cpu_generation             = nullIfEmpty($_POST['cpu_generation'] ?? '');
+    $cpu_cores                  = nullIfEmpty($_POST['cpu_cores'] ?? '');
+    $gb_ram                     = nullIfEmpty($_POST['gb_ram'] ?? '');
+    $monitor_brand              = nullIfEmpty($_POST['monitor_brand'] ?? '');
+    $monitor_size_inches        = nullIfEmpty($_POST['monitor_size_inches'] ?? '');
+    $no_of_user_accounts        = nullIfEmpty($_POST['no_of_user_accounts'] ?? '');
+    $user_account_type          = nullIfEmpty($_POST['user_account_type'] ?? '');
+    $date_installed             = nullIfEmpty($_POST['date_installed'] ?? '');
+    $acquisition_date           = nullIfEmpty($_POST['acquisition_date'] ?? '');
     $no_of_installed_anti_virus = nullIfEmpty($_POST['no_of_installed_anti_virus'] ?? '');
-    $guid                    = nullIfEmpty($_POST['guid'] ?? '');
-    $par_serial_no           = nullIfEmpty($_POST['par_serial_no'] ?? '');
-    $authorized_software     = nullIfEmpty($_POST['authorized_software'] ?? '');
-    $unauthorized_software   = nullIfEmpty($_POST['unauthorized_software'] ?? '');
-    $is_active               = $_POST['is_active'];
-    $previous_handlers       = json_encode($_POST['previous_owners_id'] ?? []);
-    $endpoint_security       = json_encode($_POST['endpoint_security'] ?? []);
+    $guid                       = nullIfEmpty($_POST['guid'] ?? '');
+    $par_serial_no              = nullIfEmpty($_POST['par_serial_no'] ?? '');
+    $authorized_software        = nullIfEmpty($_POST['authorized_software'] ?? '');
+    $unauthorized_software      = nullIfEmpty($_POST['unauthorized_software'] ?? '');
+    $is_active                  = $_POST['is_active'];
+    $previous_handlers          = json_encode($_POST['previous_owners_id'] ?? []);
+    $endpoint_security          = json_encode($_POST['endpoint_security'] ?? []);
 
+    // SET columns (28) + WHERE id (1) = 29 total params
+    // s  s  s  s  s  i  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  i
+    // 1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29
     $stmt = $conn->prepare("
         UPDATE desktops SET
             device_name = ?, personnel_id = ?, division_id = ?,
             ip_address = ?, mac_address = ?, is_remote_acc = ?,
-            os = ?, is_os_licensed = ?, os_license_key = ?,
-            office_application = ?, office_license_key = ?, is_office_licensed = ?,
-            cpu_brand = ?, cpu_cores = ?, gb_ram = ?,
+            os = ?, is_os_licensed = ?,
+            office_application = ?, is_office_licensed = ?,
+            cpu_brand = ?, cpu_generation = ?, cpu_cores = ?, gb_ram = ?,
             monitor_brand = ?, monitor_size_inches = ?,
             no_of_user_accounts = ?, user_account_type = ?,
             date_installed = ?, acquisition_date = ?,
@@ -74,20 +77,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     ");
 
     $stmt->bind_param(
-        "sssssisssssisssssssssssssssssi",
-        $device_name, $personnel_id, $division_id,
-        $ip_address, $mac_address, $is_remote_acc,
-        $os, $is_os_licensed, $os_license_key,
-        $office_application, $office_license_key, $is_office_licensed,
-        $cpu_brand, $cpu_cores, $gb_ram,
-        $monitor_brand, $monitor_size_inches,
-        $no_of_user_accounts, $user_account_type,
-        $date_installed, $acquisition_date,
+        "sssssissssssssssssssssssssssi",
+        $device_name,
+        $personnel_id,
+        $division_id,
+        $ip_address,
+        $mac_address,
+        $is_remote_acc,
+        $os,
+        $is_os_licensed,
+        $office_application,
+        $is_office_licensed,
+        $cpu_brand,
+        $cpu_generation,
+        $cpu_cores,
+        $gb_ram,
+        $monitor_brand,
+        $monitor_size_inches,
+        $no_of_user_accounts,
+        $user_account_type,
+        $date_installed,
+        $acquisition_date,
         $no_of_installed_anti_virus,
-        $guid, $par_serial_no,
-        $authorized_software, $unauthorized_software,
-        $previous_handlers, $endpoint_security,
-        $is_active, $id
+        $guid,
+        $par_serial_no,
+        $authorized_software,
+        $unauthorized_software,
+        $previous_handlers,
+        $endpoint_security,
+        $is_active,
+        $id
     );
 
     if ($stmt->execute()) {
