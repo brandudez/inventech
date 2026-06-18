@@ -20,8 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
     }
 
-    // Helper: convert empty string to NULL
-    function nullIfEmpty($val) {
+    function nullIfEmpty($val)
+    {
         return (isset($val) && $val !== '') ? $val : null;
     }
 
@@ -33,11 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $is_remote_acc           = $_POST['is_remote_acc'];
     $os                      = nullIfEmpty($_POST['os'] ?? '');
     $is_os_licensed          = $_POST['is_os_licensed'];
-    $os_license_key          = nullIfEmpty($_POST['os_license_key'] ?? '');
     $office_application      = nullIfEmpty($_POST['office_application'] ?? '');
-    $office_license_key      = nullIfEmpty($_POST['office_license_key'] ?? '');
     $is_office_licensed      = $_POST['is_office_licensed'];
     $cpu_brand               = nullIfEmpty($_POST['cpu_brand'] ?? '');
+    $cpu_generation          = nullIfEmpty($_POST['cpu_generation'] ?? '');
     $cpu_cores               = nullIfEmpty($_POST['cpu_cores'] ?? '');
     $gb_ram                  = nullIfEmpty($_POST['gb_ram'] ?? '');
     $monitor_brand           = nullIfEmpty($_POST['monitor_brand'] ?? '');
@@ -55,13 +54,44 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $previous_handlers       = json_encode($_POST['previous_owners_id'] ?? []);
     $endpoint_security       = json_encode($_POST['endpoint_security'] ?? []);
 
+    // Columns updated: 27 SET fields + 1 WHERE = 28 bind params
+    // 1  device_name
+    // 2  personnel_id
+    // 3  division_id
+    // 4  ip_address
+    // 5  mac_address
+    // 6  is_remote_acc
+    // 7  os
+    // 8  is_os_licensed
+    // 9  office_application
+    // 10 is_office_licensed
+    // 11 cpu_brand
+    // 12 cpu_generation
+    // 13 cpu_cores
+    // 14 gb_ram
+    // 15 monitor_brand
+    // 16 monitor_size_inches
+    // 17 no_of_user_accounts
+    // 18 user_account_type
+    // 19 date_installed
+    // 20 acquisition_date
+    // 21 no_of_installed_anti_virus
+    // 22 guid
+    // 23 par_serial_no
+    // 24 authorized_software
+    // 25 unauthorized_software
+    // 26 previous_handlers
+    // 27 endpoint_security
+    // 28 is_active
+    // 29 $id  (WHERE)
+
     $stmt = $conn->prepare("
         UPDATE desktops SET
             device_name = ?, personnel_id = ?, division_id = ?,
             ip_address = ?, mac_address = ?, is_remote_acc = ?,
-            os = ?, is_os_licensed = ?, os_license_key = ?,
-            office_application = ?, office_license_key = ?, is_office_licensed = ?,
-            cpu_brand = ?, cpu_cores = ?, gb_ram = ?,
+            os = ?, is_os_licensed = ?,
+            office_application = ?, is_office_licensed = ?,
+            cpu_brand = ?, cpu_generation = ?, cpu_cores = ?, gb_ram = ?,
             monitor_brand = ?, monitor_size_inches = ?,
             no_of_user_accounts = ?, user_account_type = ?,
             date_installed = ?, acquisition_date = ?,
@@ -74,20 +104,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     ");
 
     $stmt->bind_param(
-        "sssssisssssisssssssssssssssssi",
-        $device_name, $personnel_id, $division_id,
-        $ip_address, $mac_address, $is_remote_acc,
-        $os, $is_os_licensed, $os_license_key,
-        $office_application, $office_license_key, $is_office_licensed,
-        $cpu_brand, $cpu_cores, $gb_ram,
-        $monitor_brand, $monitor_size_inches,
-        $no_of_user_accounts, $user_account_type,
-        $date_installed, $acquisition_date,
+        "ssssssssssssssssssssssssssssi",   // 28 s + 1 i = 29 total
+        $device_name,
+        $personnel_id,
+        $division_id,
+        $ip_address,
+        $mac_address,
+        $is_remote_acc,
+        $os,
+        $is_os_licensed,
+        $office_application,
+        $is_office_licensed,
+        $cpu_brand,
+        $cpu_generation,
+        $cpu_cores,
+        $gb_ram,
+        $monitor_brand,
+        $monitor_size_inches,
+        $no_of_user_accounts,
+        $user_account_type,
+        $date_installed,
+        $acquisition_date,
         $no_of_installed_anti_virus,
-        $guid, $par_serial_no,
-        $authorized_software, $unauthorized_software,
-        $previous_handlers, $endpoint_security,
-        $is_active, $id
+        $guid,
+        $par_serial_no,
+        $authorized_software,
+        $unauthorized_software,
+        $previous_handlers,
+        $endpoint_security,
+        $is_active,
+        $id
     );
 
     if ($stmt->execute()) {

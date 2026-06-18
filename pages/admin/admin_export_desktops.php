@@ -1,33 +1,20 @@
 <?php
 session_start();
+include("../../config/db.php");
 
 if (!isset($_SESSION['user'])) {
     header("Location: ../../index.php");
     exit();
 }
-
 if ($_SESSION['user']['role_id'] != 2) {
     header("Location: ../../index.php");
     exit();
 }
 
-include "../../config/db.php";
-
-/* =========================
-   EXPORT FOLDER (FIXED)
-   Adjust based on your structure:
-   pages/superadmin/folder/desktops/
-========================= */
-
 $exportDir = $_SERVER['DOCUMENT_ROOT'] . "/inventech/pages/admin/exports/";
-
 if (!is_dir($exportDir)) {
     mkdir($exportDir, 0777, true);
 }
-
-/* =========================
-   FILENAME
-========================= */
 
 $filename = 'desktops_export_' . date('Ymd_His') . '.xls';
 $filePath = $exportDir . $filename;
@@ -42,14 +29,11 @@ function getEndpointNamesExport($conn, $json)
     $ids = json_decode($json, true);
     if (!is_array($ids) || empty($ids)) return '';
     $ids = implode(',', array_map('intval', $ids));
-
     $result = $conn->query("SELECT antivirus FROM endpoint_security WHERE id IN ($ids)");
     $names = [];
-
     while ($row = $result->fetch_assoc()) {
         $names[] = $row['antivirus'];
     }
-
     return implode(', ', $names);
 }
 
@@ -59,16 +43,13 @@ function getPersonnelNamesExport($conn, $json)
     $ids = json_decode($json, true);
     if (!is_array($ids) || empty($ids)) return '';
     $ids = implode(',', array_map('intval', $ids));
-
     $result = $conn->query("
         SELECT r.rank, p.first_name, p.middle_name, p.last_name
         FROM personnels p
         LEFT JOIN ranks r ON p.rank_id = r.id
         WHERE p.id IN ($ids)
     ");
-
     $names = [];
-
     while ($row = $result->fetch_assoc()) {
         $names[] = trim(
             ($row['rank'] ?? '') . ' ' .
@@ -77,15 +58,9 @@ function getPersonnelNamesExport($conn, $json)
                 ($row['last_name'] ?? '')
         );
     }
-
     return implode(', ', $names);
 }
 
-/**
- * Parse user_account_type JSON and return only the names as a comma-separated string.
- * Supports both new format: [{"name":"Jake","type":"Admin"}]
- * and legacy plain-text fallback.
- */
 function getAccountNamesExport($json)
 {
     if (empty($json)) return '-';
@@ -99,17 +74,35 @@ function getAccountNamesExport($json)
         }
         return !empty($names) ? implode(', ', $names) : '-';
     }
-    // Legacy: plain text stored
     return $json;
 }
 
-function formatDate($val) {
+function formatDate($val)
+{
     if (empty($val) || $val === '0000-00-00') return '-';
     return $val;
 }
 
+/**
+ * Returns ['label' => string, 'export_label' => string] for a CPU generation value.
+ */
+function getCpuGenStatusExport($gen)
+{
+    if ($gen === null || $gen === '' || !is_numeric($gen)) {
+        return ['label' => '-', 'export_label' => '-'];
+    }
+    $g = (int)$gen;
+    if ($g <= 7) {
+        return ['label' => 'End of Life', 'export_label' => 'End of Life'];
+    } elseif ($g <= 10) {
+        return ['label' => 'Near End of Life', 'export_label' => 'Near End of Life'];
+    } else {
+        return ['label' => 'Recommended', 'export_label' => 'Recommended'];
+    }
+}
+
 /* =========================
-   FILTERS (UNCHANGED LOGIC)
+   FILTERS
 ========================= */
 
 $search          = trim($_GET['search'] ?? '');
@@ -123,6 +116,7 @@ $office_filter   = is_array($office_raw) ? array_filter($office_raw) : [];
 
 $active_filter   = $_GET['is_active'] ?? '';
 $acq_filter      = trim($_GET['filter_acq'] ?? '');
+$cpu_gen_filter  = trim($_GET['filter_cpu_gen'] ?? '');
 
 $where  = [];
 $params = [];
@@ -131,7 +125,6 @@ $types  = '';
 if (!empty($search)) {
     $where[] = "(d.device_name LIKE ? OR CONCAT(p.first_name,' ',p.last_name) LIKE ? OR d.ip_address LIKE ? OR d.guid LIKE ? OR d.mac_address LIKE ?)";
     $sv = "%$search%";
-
     for ($i = 0; $i < 5; $i++) {
         $params[] = $sv;
         $types .= 's';
@@ -141,7 +134,6 @@ if (!empty($search)) {
 if (!empty($division_filter)) {
     $ph = implode(',', array_fill(0, count($division_filter), '?'));
     $where[] = "dv.division IN ($ph)";
-
     foreach ($division_filter as $v) {
         $params[] = $v;
         $types .= 's';
@@ -149,23 +141,31 @@ if (!empty($division_filter)) {
 }
 
 if (!empty($os_filter)) {
-    $ph = implode(',', array_fill(0, count($os_filter), '?'));
-    $where[] = "d.os IN ($ph)";
-
+    $conditions = [];
     foreach ($os_filter as $v) {
-        $params[] = $v;
-        $types .= 's';
+        if ($v === '-') {
+            $conditions[] = "(d.os IS NULL OR d.os = '' OR d.os = '-')";
+        } else {
+            $conditions[] = "d.os = ?";
+            $params[] = $v;
+            $types .= 's';
+        }
     }
+    $where[] = '(' . implode(' OR ', $conditions) . ')';
 }
 
 if (!empty($office_filter)) {
-    $ph = implode(',', array_fill(0, count($office_filter), '?'));
-    $where[] = "d.office_application IN ($ph)";
-
+    $conditions = [];
     foreach ($office_filter as $v) {
-        $params[] = $v;
-        $types .= 's';
+        if ($v === '-') {
+            $conditions[] = "(d.office_application IS NULL OR d.office_application = '' OR d.office_application = '-')";
+        } else {
+            $conditions[] = "d.office_application = ?";
+            $params[] = $v;
+            $types .= 's';
+        }
     }
+    $where[] = '(' . implode(' OR ', $conditions) . ')';
 }
 
 if ($active_filter !== '') {
@@ -175,16 +175,24 @@ if ($active_filter !== '') {
 }
 
 if ($acq_filter === 'lt5') {
-    $where[] = "d.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+    $where[] = "d.acquisition_date IS NOT NULL AND d.acquisition_date != '0000-00-00' AND d.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 } elseif ($acq_filter === 'gt5') {
-    $where[] = "d.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+    $where[] = "d.acquisition_date IS NOT NULL AND d.acquisition_date != '0000-00-00' AND d.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+} elseif ($acq_filter === 'none') {
+    $where[] = "(d.acquisition_date IS NULL OR d.acquisition_date = '' OR d.acquisition_date = '0000-00-00')";
+}
+
+if ($cpu_gen_filter === 'eol') {
+    $where[] = "d.cpu_generation IS NOT NULL AND d.cpu_generation != '' AND CAST(d.cpu_generation AS UNSIGNED) <= 7";
+} elseif ($cpu_gen_filter === 'near_eol') {
+    $where[] = "d.cpu_generation IS NOT NULL AND d.cpu_generation != '' AND CAST(d.cpu_generation AS UNSIGNED) BETWEEN 8 AND 10";
+} elseif ($cpu_gen_filter === 'good') {
+    $where[] = "d.cpu_generation IS NOT NULL AND d.cpu_generation != '' AND CAST(d.cpu_generation AS UNSIGNED) >= 11";
+} elseif ($cpu_gen_filter === 'none') {
+    $where[] = "(d.cpu_generation IS NULL OR d.cpu_generation = '')";
 }
 
 $whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
-
-/* =========================
-   QUERY
-========================= */
 
 $baseJoin = "FROM desktops d
              LEFT JOIN personnels p ON d.personnel_id = p.id
@@ -209,11 +217,42 @@ $result = $stmt->get_result();
 
 /* =========================
    BUILD EXPORT
+   Headers: 29 columns
 ========================= */
 
 ob_start();
 
 echo '<html><head><meta charset="UTF-8"></head><body><table border="1">';
+
+// 1  Device Name
+// 2  Personnel
+// 3  Division
+// 4  IP Address
+// 5  MAC Address
+// 6  GUID
+// 7  OS
+// 8  OS Licensed
+// 9  Office
+// 10 Office Licensed
+// 11 Endpoint Security
+// 12 Antivirus Count
+// 13 Installed Date
+// 14 CPU Brand
+// 15 CPU Generation
+// 16 CPU Status
+// 17 CPU Cores
+// 18 RAM
+// 19 Monitor Brand
+// 20 Monitor Size
+// 21 User Accounts
+// 22 User Type
+// 23 Authorized Software
+// 24 Unauthorized Software
+// 25 Acquisition Date
+// 26 PAR Serial
+// 27 Previous Handlers
+// 28 Remote
+// 29 Active
 
 $headers = [
     'Device Name',
@@ -224,14 +263,14 @@ $headers = [
     'GUID',
     'OS',
     'OS Licensed',
-    'OS Key',
     'Office',
     'Office Licensed',
-    'Office Key',
     'Endpoint Security',
     'Antivirus Count',
     'Installed Date',
     'CPU Brand',
+    'CPU Generation',
+    'CPU Status',
     'CPU Cores',
     'RAM',
     'Monitor Brand',
@@ -244,7 +283,7 @@ $headers = [
     'PAR Serial',
     'Previous Handlers',
     'Remote',
-    'Active'
+    'Active',
 ];
 
 echo '<tr style="font-weight:bold;background:#0d6ea8;color:#fff;">';
@@ -252,45 +291,45 @@ foreach ($headers as $h) echo "<td>$h</td>";
 echo '</tr>';
 
 while ($row = $result->fetch_assoc()) {
+    $cpuStatus = getCpuGenStatusExport($row['cpu_generation'] ?? null);
 
-    echo '<tr>';
-
+    // 29 cells matching 29 headers
     $cells = [
-        $row['device_name'] ?? '',
-        $row['personnel_name'] ?? '',
-        $row['division_name'] ?? '',
-        $row['ip_address'] ?? '',
-        $row['mac_address'] ?? '',
-        $row['guid'] ?? '',
-        $row['os'] ?? '',
-        ($row['is_os_licensed'] == 1 ? 'Yes' : 'No'),
-        $row['os_license_key'] ?? '',
-        $row['office_application'] ?? '',
-        ($row['is_office_licensed'] == 1 ? 'Yes' : 'No'),
-        $row['office_license_key'] ?? '',
-        getEndpointNamesExport($conn, $row['endpoint_security_id']),
-        $row['no_of_installed_anti_virus'] ?? '',
-        formatDate($row['date_installed'] ?? ''),
-        $row['cpu_brand'] ?? '',
-        $row['cpu_cores'] ?? '',
-        $row['gb_ram'] ?? '',
-        $row['monitor_brand'] ?? '',
-        $row['monitor_size_inches'] ?? '',
-        $row['no_of_user_accounts'] ?? '',
-        getAccountNamesExport($row['user_account_type'] ?? ''),
-        $row['authorized_software'] ?? '',
-        $row['unauthorized_software'] ?? '',
-        formatDate($row['acquisition_date'] ?? ''),
-        $row['par_serial_no'] ?? '',
-        getPersonnelNamesExport($conn, $row['previous_owners_id']),
-        ($row['is_remote_acc'] ? 'YES' : 'NO'),
-        ($row['is_active'] ? 'YES' : 'NO'),
+        $row['device_name'] ?? '',           // 1
+        $row['personnel_name'] ?? '',         // 2
+        $row['division_name'] ?? '',          // 3
+        $row['ip_address'] ?? '',             // 4
+        $row['mac_address'] ?? '',            // 5
+        $row['guid'] ?? '',                   // 6
+        $row['os'] ?? '',                     // 7
+        ($row['is_os_licensed'] == 1 ? 'Yes' : 'No'),  // 8
+        $row['office_application'] ?? '',     // 9
+        ($row['is_office_licensed'] == 1 ? 'Yes' : 'No'),  // 10
+        getEndpointNamesExport($conn, $row['endpoint_security_id']),  // 11
+        $row['no_of_installed_anti_virus'] ?? '',  // 12
+        formatDate($row['date_installed'] ?? ''),  // 13
+        $row['cpu_brand'] ?? '',              // 14
+        $row['cpu_generation'] ?? '',         // 15
+        $cpuStatus['export_label'],           // 16
+        $row['cpu_cores'] ?? '',              // 17
+        $row['gb_ram'] ?? '',                 // 18
+        $row['monitor_brand'] ?? '',          // 19
+        $row['monitor_size_inches'] ?? '',    // 20
+        $row['no_of_user_accounts'] ?? '',    // 21
+        getAccountNamesExport($row['user_account_type'] ?? ''),  // 22
+        $row['authorized_software'] ?? '',    // 23
+        $row['unauthorized_software'] ?? '',  // 24
+        formatDate($row['acquisition_date'] ?? ''),  // 25
+        $row['par_serial_no'] ?? '',          // 26
+        getPersonnelNamesExport($conn, $row['previous_owners_id']),  // 27
+        ($row['is_remote_acc'] ? 'YES' : 'NO'),  // 28
+        ($row['is_active'] ? 'YES' : 'NO'),   // 29
     ];
 
+    echo '<tr>';
     foreach ($cells as $c) {
         echo '<td>' . htmlspecialchars($c) . '</td>';
     }
-
     echo '</tr>';
 }
 
@@ -298,14 +337,7 @@ echo '</table></body></html>';
 
 $html = ob_get_clean();
 
-/* =========================
-   SAVE FILE TO FOLDER
-========================= */
-
 file_put_contents($filePath, $html);
-/* =========================
-   DOWNLOAD OUTPUT
-========================= */
 
 header('Content-Type: application/vnd.ms-excel');
 header('Content-Disposition: attachment; filename="' . $filename . '"');
