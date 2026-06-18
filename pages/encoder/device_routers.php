@@ -406,9 +406,9 @@ $exportParams = http_build_query([
                         <th>REMARKS</th>
                         <th>PNP FOCAL</th>
                         <th>CONTACT</th>
-                        <th>ACQ DATE</th>
-                        <th>ACQ TYPE</th>
-                        <th>ACQ DETAILS</th>
+                        <th>ACQUISITION DATE</th>
+                        <th>ACQUISITION TYPE</th>
+                        <th>ACQUISITION DETAILS</th>
                         <th>PREVIOUS HANDLERS</th>
                         <th>IS ACTIVE?</th>
                         <th>ACTIONS</th>

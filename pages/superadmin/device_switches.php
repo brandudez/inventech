@@ -115,7 +115,7 @@ if ($acq_filter === 'lt5') {
     $where[] = "s.acquisition_date IS NOT NULL AND s.acquisition_date != '0000-00-00' AND s.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 } elseif ($acq_filter === 'gt5') {
     $where[] = "s.acquisition_date IS NOT NULL AND s.acquisition_date != '0000-00-00' AND s.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
-}elseif ($acq_filter === 'none') {
+} elseif ($acq_filter === 'none') {
     $baseWhere[] = "(d.acquisition_date IS NULL OR d.acquisition_date = '' OR d.acquisition_date = '0000-00-00')";
 }
 
@@ -453,9 +453,9 @@ $exportParams = http_build_query([
                         <th>REMARKS</th>
                         <th>PNP FOCAL</th>
                         <th>CONTACT</th>
-                        <th>ACQ DATE</th>
-                        <th>ACQ TYPE</th>
-                        <th>ACQ DETAILS</th>
+                        <th>ACQUISITION DATE</th>
+                        <th>ACQUISITION TYPE</th>
+                        <th>ACQUISITION DETAILS</th>
                         <th>PREVIOUS HANDLERS</th>
                         <th>IS ACTIVE?</th>
                         <th>ACTIONS</th>

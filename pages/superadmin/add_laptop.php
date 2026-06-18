@@ -2,10 +2,17 @@
 session_start();
 include("../../config/db.php");
 
-if (!isset($_SESSION['user'])) { header("Location: ../../index.php"); exit(); }
-if ($_SESSION['user']['role_id'] != 1) { header("Location: ../../index.php"); exit(); }
+if (!isset($_SESSION['user'])) {
+    header("Location: ../../index.php");
+    exit();
+}
+if ($_SESSION['user']['role_id'] != 1) {
+    header("Location: ../../index.php");
+    exit();
+}
 
-function nullIfEmpty($val) {
+function nullIfEmpty($val)
+{
     return (isset($val) && $val !== '') ? $val : null;
 }
 
@@ -26,6 +33,7 @@ $date_installed             = nullIfEmpty($_POST['date_installed'] ?? '');
 $guid                       = nullIfEmpty($_POST['guid'] ?? '');
 $mac_address                = nullIfEmpty($_POST['mac_address'] ?? '');
 $cpu_brand                  = nullIfEmpty($_POST['cpu_brand'] ?? '');
+$cpu_generation             = nullIfEmpty($_POST['cpu_generation'] ?? '');
 $cpu_cores                  = nullIfEmpty($_POST['cpu_cores'] ?? '');
 $gb_ram                     = nullIfEmpty($_POST['gb_ram'] ?? '');
 $monitor_brand              = nullIfEmpty($_POST['monitor_brand'] ?? '');
@@ -36,36 +44,57 @@ $authorized_software        = nullIfEmpty($_POST['authorized_software'] ?? '');
 $unauthorized_software      = nullIfEmpty($_POST['unauthorized_software'] ?? '');
 $office_application         = nullIfEmpty($_POST['office_application'] ?? '');
 $is_office_licensed         = ($_POST['is_office_licensed'] ?? 1) == "1" ? 1 : 0;
-$os_license_key             = nullIfEmpty($_POST['os_license_key'] ?? '');
-$office_license_key         = nullIfEmpty($_POST['office_license_key'] ?? '');
 $par_serial_no              = nullIfEmpty($_POST['par_serial_no'] ?? '');
 $acquisition_date           = nullIfEmpty($_POST['acquisition_date'] ?? '');
 $is_active                  = ($_POST['is_active'] ?? 1) == "1" ? 1 : 0;
 
+// 29 columns — no os_license_key, no office_license_key; cpu_generation added
 $sql = "INSERT INTO laptops (
     personnel_id, device_id, device_name, division_id, ip_address, os,
     is_os_licensed, is_remote_acc, endpoint_security_id,
     no_of_installed_anti_virus, date_installed, guid, mac_address,
-    cpu_brand, cpu_cores, gb_ram, monitor_brand, monitor_size_inches,
+    cpu_brand, cpu_generation, cpu_cores, gb_ram, monitor_brand, monitor_size_inches,
     no_of_user_accounts, user_account_type, authorized_software,
     unauthorized_software, acquisition_date, office_application,
-    is_office_licensed, previous_owners_id, os_license_key,
-    office_license_key, par_serial_no, is_active
-) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    is_office_licensed, previous_owners_id, par_serial_no, is_active
+) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 $stmt = $conn->prepare($sql);
 if (!$stmt) die("Prepare failed: " . $conn->error);
 
-$types = str_repeat("s", 30);
-$stmt->bind_param($types,
-    $personnel_id, $device_id, $device_name, $division_id, $ip_address, $os,
-    $is_os_licensed, $is_remote_acc, $endpoint_security_json,
-    $no_of_installed_anti_virus, $date_installed, $guid, $mac_address,
-    $cpu_brand, $cpu_cores, $gb_ram, $monitor_brand, $monitor_size_inches,
-    $no_of_user_accounts, $user_account_type, $authorized_software,
-    $unauthorized_software, $acquisition_date, $office_application,
-    $is_office_licensed, $previous_owners_json, $os_license_key,
-    $office_license_key, $par_serial_no, $is_active
+// 29 params — all strings (ints stored as s via implicit cast, consistent with original)
+$types = str_repeat("s", 29);
+$stmt->bind_param(
+    $types,
+    $personnel_id,
+    $device_id,
+    $device_name,
+    $division_id,
+    $ip_address,
+    $os,
+    $is_os_licensed,
+    $is_remote_acc,
+    $endpoint_security_json,
+    $no_of_installed_anti_virus,
+    $date_installed,
+    $guid,
+    $mac_address,
+    $cpu_brand,
+    $cpu_generation,
+    $cpu_cores,
+    $gb_ram,
+    $monitor_brand,
+    $monitor_size_inches,
+    $no_of_user_accounts,
+    $user_account_type,
+    $authorized_software,
+    $unauthorized_software,
+    $acquisition_date,
+    $office_application,
+    $is_office_licensed,
+    $previous_owners_json,
+    $par_serial_no,
+    $is_active
 );
 
 if ($stmt->execute()) {

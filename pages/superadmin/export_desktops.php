@@ -103,9 +103,26 @@ function getAccountNamesExport($json)
     return $json;
 }
 
-function formatDate($val) {
+function formatDate($val)
+{
     if (empty($val) || $val === '0000-00-00') return '-';
     return $val;
+}
+
+/**
+ * Classify a CPU generation number into a support-status label.
+ * 7th gen and below  -> End of Life (no longer supported by manufacturer/vendor)
+ * 8th - 10th gen      -> Near End of Life / End of Service
+ * 11th gen and above  -> Recommended for continued use
+ */
+function getCpuGenStatusExport($gen)
+{
+    $gen = trim($gen ?? '');
+    if ($gen === '' || !is_numeric($gen)) return '-';
+    $g = (int)$gen;
+    if ($g <= 7) return 'End of Life';
+    if ($g <= 10) return 'Near End of Life';
+    return 'Recommended';
 }
 
 /* =========================
@@ -123,6 +140,7 @@ $office_filter   = is_array($office_raw) ? array_filter($office_raw) : [];
 
 $active_filter   = $_GET['is_active'] ?? '';
 $acq_filter      = trim($_GET['filter_acq'] ?? '');
+$cpu_gen_filter  = trim($_GET['filter_cpu_gen'] ?? '');
 
 $where  = [];
 $params = [];
@@ -175,9 +193,21 @@ if ($active_filter !== '') {
 }
 
 if ($acq_filter === 'lt5') {
-    $where[] = "d.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+    $where[] = "d.acquisition_date IS NOT NULL AND d.acquisition_date != '0000-00-00' AND d.acquisition_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
 } elseif ($acq_filter === 'gt5') {
-    $where[] = "d.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+    $where[] = "d.acquisition_date IS NOT NULL AND d.acquisition_date != '0000-00-00' AND d.acquisition_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)";
+} elseif ($acq_filter === 'none') {
+    $where[] = "(d.acquisition_date IS NULL OR d.acquisition_date = '' OR d.acquisition_date = '0000-00-00')";
+}
+
+if ($cpu_gen_filter === 'eol') {
+    $where[] = "(d.cpu_generation IS NOT NULL AND d.cpu_generation != '' AND CAST(d.cpu_generation AS UNSIGNED) <= 7)";
+} elseif ($cpu_gen_filter === 'near_eol') {
+    $where[] = "(d.cpu_generation IS NOT NULL AND d.cpu_generation != '' AND CAST(d.cpu_generation AS UNSIGNED) BETWEEN 8 AND 10)";
+} elseif ($cpu_gen_filter === 'good') {
+    $where[] = "(d.cpu_generation IS NOT NULL AND d.cpu_generation != '' AND CAST(d.cpu_generation AS UNSIGNED) >= 11)";
+} elseif ($cpu_gen_filter === 'none') {
+    $where[] = "(d.cpu_generation IS NULL OR d.cpu_generation = '')";
 }
 
 $whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
@@ -224,14 +254,14 @@ $headers = [
     'GUID',
     'OS',
     'OS Licensed',
-    'OS Key',
     'Office',
     'Office Licensed',
-    'Office Key',
     'Endpoint Security',
     'Antivirus Count',
     'Installed Date',
     'CPU Brand',
+    'CPU Generation',
+    'CPU Status',
     'CPU Cores',
     'RAM',
     'Monitor Brand',
@@ -264,14 +294,14 @@ while ($row = $result->fetch_assoc()) {
         $row['guid'] ?? '',
         $row['os'] ?? '',
         ($row['is_os_licensed'] == 1 ? 'Yes' : 'No'),
-        $row['os_license_key'] ?? '',
         $row['office_application'] ?? '',
         ($row['is_office_licensed'] == 1 ? 'Yes' : 'No'),
-        $row['office_license_key'] ?? '',
         getEndpointNamesExport($conn, $row['endpoint_security_id']),
         $row['no_of_installed_anti_virus'] ?? '',
         formatDate($row['date_installed'] ?? ''),
         $row['cpu_brand'] ?? '',
+        $row['cpu_generation'] ?? '',
+        getCpuGenStatusExport($row['cpu_generation'] ?? ''),
         $row['cpu_cores'] ?? '',
         $row['gb_ram'] ?? '',
         $row['monitor_brand'] ?? '',
