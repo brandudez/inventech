@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 13, 2026 at 04:07 PM
+-- Generation Time: Jun 19, 2026 at 07:30 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -73,6 +73,7 @@ CREATE TABLE `desktops` (
   `guid` varchar(100) DEFAULT NULL,
   `mac_address` varchar(100) DEFAULT NULL,
   `cpu_brand` varchar(100) DEFAULT NULL,
+  `cpu_generation` int(11) DEFAULT NULL,
   `cpu_cores` int(11) DEFAULT NULL,
   `gb_ram` int(11) DEFAULT NULL,
   `monitor_brand` varchar(100) DEFAULT NULL,
@@ -86,8 +87,6 @@ CREATE TABLE `desktops` (
   `previous_owners_id` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`previous_owners_id`)),
   `created_date` date DEFAULT current_timestamp(),
   `last_updated_at` date DEFAULT NULL,
-  `os_license_key` varchar(255) DEFAULT NULL,
-  `office_license_key` varchar(255) DEFAULT NULL,
   `par_serial_no` varchar(255) DEFAULT NULL,
   `is_active` tinyint(1) DEFAULT 1,
   `acquisition_date` date DEFAULT NULL
@@ -97,10 +96,15 @@ CREATE TABLE `desktops` (
 -- Dumping data for table `desktops`
 --
 
-INSERT INTO `desktops` (`id`, `personnel_id`, `device_id`, `device_name`, `division_id`, `ip_address`, `os`, `is_os_licensed`, `is_remote_acc`, `endpoint_security_id`, `no_of_installed_anti_virus`, `date_installed`, `guid`, `mac_address`, `cpu_brand`, `cpu_cores`, `gb_ram`, `monitor_brand`, `monitor_size_inches`, `no_of_user_accounts`, `user_account_type`, `authorized_software`, `unauthorized_software`, `office_application`, `is_office_licensed`, `previous_owners_id`, `created_date`, `last_updated_at`, `os_license_key`, `office_license_key`, `par_serial_no`, `is_active`, `acquisition_date`) VALUES
-(8, 7, 0, 'LAPTOP-001', 1, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2, '[{\"name\":\"asdfadsf\",\"type\":\"Admin\"},{\"name\":\"jake\",\"type\":\"User\"}]', NULL, NULL, '-', 1, '[]', '2026-06-13', NULL, NULL, NULL, NULL, 1, NULL),
-(9, 0, 0, 'A-123', 3, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '[{\"name\":\"james\",\"type\":\"Admin\"}]', NULL, NULL, '-', 1, '[\"7\",\"3\"]', '2026-06-13', NULL, NULL, NULL, NULL, 1, NULL),
-(10, 0, 0, 'LAPTOP-001', 2, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2, '[{\"name\":\"wqweqw\",\"type\":\"Admin\"},{\"name\":\"mmmm\",\"type\":\"User\"}]', NULL, NULL, '-', 1, '[]', '2026-06-13', NULL, NULL, NULL, NULL, 1, NULL);
+INSERT INTO `desktops` (`id`, `personnel_id`, `device_id`, `device_name`, `division_id`, `ip_address`, `os`, `is_os_licensed`, `is_remote_acc`, `endpoint_security_id`, `no_of_installed_anti_virus`, `date_installed`, `guid`, `mac_address`, `cpu_brand`, `cpu_generation`, `cpu_cores`, `gb_ram`, `monitor_brand`, `monitor_size_inches`, `no_of_user_accounts`, `user_account_type`, `authorized_software`, `unauthorized_software`, `office_application`, `is_office_licensed`, `previous_owners_id`, `created_date`, `last_updated_at`, `par_serial_no`, `is_active`, `acquisition_date`) VALUES
+(8, 7, 0, 'LAPTOP-001', 1, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2, '[{\"name\":\"asdfadsf\",\"type\":\"Admin\"},{\"name\":\"jake\",\"type\":\"User\"}]', NULL, NULL, '-', 1, '[]', '2026-06-13', NULL, NULL, 1, NULL),
+(9, 0, 0, 'A-123', 3, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '[{\"name\":\"james\",\"type\":\"Admin\"}]', NULL, NULL, '-', 1, '[\"7\",\"3\"]', '2026-06-13', NULL, NULL, 1, NULL),
+(10, 0, 0, 'LAPTOP-001', 2, NULL, '-', 0, 0, '[\"7\",\"8\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2, '[{\"name\":\"wqweqw\",\"type\":\"Admin\"},{\"name\":\"mmmm\",\"type\":\"User\"}]', NULL, NULL, '-', 1, '[]', '2026-06-13', NULL, NULL, 1, NULL),
+(11, 0, 0, 'A-', 1, NULL, '-', 0, 0, '[\"7\",\"8\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, '[]', NULL, NULL, '-', 1, '[]', '2026-06-18', NULL, NULL, 1, NULL),
+(12, 0, 0, '123', 1, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, 7, NULL, NULL, NULL, NULL, 1, '[{\"name\":\"asdasd\",\"type\":\"Admin\"}]', NULL, NULL, '-', 1, '[]', '2026-06-18', NULL, NULL, 1, NULL),
+(13, 0, 0, '10', 1, NULL, '-', 0, 0, '[\"7\",\"8\"]', NULL, NULL, NULL, NULL, NULL, 10, NULL, NULL, NULL, NULL, 0, '[]', NULL, NULL, '-', 1, '[]', '2026-06-18', NULL, NULL, 1, NULL),
+(14, 0, 0, 'A-11', 2, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, 8, NULL, NULL, NULL, NULL, 0, '[]', NULL, NULL, '-', 1, '[]', '2026-06-19', NULL, NULL, 1, NULL),
+(15, 0, 0, 'adad', 2, NULL, NULL, 0, 0, '[\"7\",\"8\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, '[]', NULL, NULL, '-', 1, NULL, '2026-06-19', NULL, NULL, 1, NULL);
 
 -- --------------------------------------------------------
 
@@ -194,7 +198,9 @@ INSERT INTO `endpoint_security` (`id`, `antivirus`) VALUES
 (4, 'Bitdefender'),
 (5, 'UTMStack'),
 (6, 'Qualys'),
-(7, 'Others');
+(7, 'Avast'),
+(8, 'Micorosoft Defender'),
+(9, 'Others');
 
 -- --------------------------------------------------------
 
@@ -289,6 +295,7 @@ CREATE TABLE `laptops` (
   `guid` varchar(100) DEFAULT NULL,
   `mac_address` varchar(100) DEFAULT NULL,
   `cpu_brand` varchar(100) DEFAULT NULL,
+  `cpu_generation` int(11) DEFAULT NULL,
   `cpu_cores` int(11) DEFAULT NULL,
   `gb_ram` int(11) DEFAULT NULL,
   `monitor_brand` varchar(100) DEFAULT NULL,
@@ -302,8 +309,6 @@ CREATE TABLE `laptops` (
   `previous_owners_id` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`previous_owners_id`)),
   `created_date` date DEFAULT current_timestamp(),
   `last_updated_at` date DEFAULT NULL,
-  `os_license_key` varchar(255) DEFAULT NULL,
-  `office_license_key` varchar(255) DEFAULT NULL,
   `par_serial_no` varchar(255) DEFAULT NULL,
   `is_active` tinyint(1) DEFAULT 1,
   `acquisition_date` date DEFAULT NULL
@@ -313,10 +318,10 @@ CREATE TABLE `laptops` (
 -- Dumping data for table `laptops`
 --
 
-INSERT INTO `laptops` (`id`, `personnel_id`, `device_id`, `device_name`, `division_id`, `ip_address`, `os`, `is_os_licensed`, `is_remote_acc`, `endpoint_security_id`, `no_of_installed_anti_virus`, `date_installed`, `guid`, `mac_address`, `cpu_brand`, `cpu_cores`, `gb_ram`, `monitor_brand`, `monitor_size_inches`, `no_of_user_accounts`, `user_account_type`, `authorized_software`, `unauthorized_software`, `office_application`, `is_office_licensed`, `previous_owners_id`, `created_date`, `last_updated_at`, `os_license_key`, `office_license_key`, `par_serial_no`, `is_active`, `acquisition_date`) VALUES
-(1, 7, 0, 'LAPTOP-001', 1, NULL, '-', 0, 0, '[\"7\"]', 0, NULL, NULL, NULL, '0', NULL, NULL, NULL, 0, 2, '[{\"name\":\"asdasdf\",\"type\":\"Admin\"},{\"name\":\"jake\",\"type\":\"\"}]', NULL, NULL, '-', 1, '[]', '2026-06-13', NULL, '0', NULL, NULL, 1, NULL),
-(2, 0, 0, 'LAPTOP-001', 2, NULL, '-', 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '[{\"name\":\"asdfasda\",\"type\":\"Admin\"}]', NULL, NULL, '-', 1, '[]', '2026-06-13', NULL, NULL, NULL, NULL, 1, NULL),
-(3, 0, 0, 'A-', 2, NULL, '-', 0, 0, '[\"7\"]', 0, NULL, NULL, NULL, NULL, 0, 0, NULL, 0, 1, '[{\"name\":\"hahha\",\"type\":\"Admin\"}]', NULL, NULL, '-', 0, '[]', '2026-06-13', NULL, NULL, NULL, NULL, 1, NULL);
+INSERT INTO `laptops` (`id`, `personnel_id`, `device_id`, `device_name`, `division_id`, `ip_address`, `os`, `is_os_licensed`, `is_remote_acc`, `endpoint_security_id`, `no_of_installed_anti_virus`, `date_installed`, `guid`, `mac_address`, `cpu_brand`, `cpu_generation`, `cpu_cores`, `gb_ram`, `monitor_brand`, `monitor_size_inches`, `no_of_user_accounts`, `user_account_type`, `authorized_software`, `unauthorized_software`, `office_application`, `is_office_licensed`, `previous_owners_id`, `created_date`, `last_updated_at`, `par_serial_no`, `is_active`, `acquisition_date`) VALUES
+(1, 7, 0, 'LAPTOP-001', 1, NULL, '-', 0, 0, '[\"7\"]', 0, NULL, NULL, NULL, '0', NULL, NULL, NULL, NULL, 0, 2, '[{\"name\":\"asdasdf\",\"type\":\"Admin\"},{\"name\":\"jake\",\"type\":\"\"}]', NULL, NULL, '-', 1, '[]', '2026-06-13', NULL, NULL, 1, NULL),
+(5, 0, 0, '----', 2, NULL, '-', 0, 0, '[\"7\",\"8\",\"9\"]', 3, NULL, NULL, NULL, NULL, 9, NULL, NULL, NULL, NULL, 1, '[{\"name\":\"sasadmin\",\"type\":\"Admin\"}]', NULL, NULL, '-', 1, '[]', '2026-06-18', NULL, NULL, 1, NULL),
+(6, 0, 0, 'A-11', 2, NULL, NULL, 0, 0, '[\"7\"]', NULL, NULL, NULL, NULL, NULL, 11, NULL, NULL, NULL, NULL, 0, '[]', NULL, NULL, NULL, 1, NULL, '2026-06-19', NULL, NULL, 1, NULL);
 
 -- --------------------------------------------------------
 
@@ -825,7 +830,7 @@ ALTER TABLE `cameras`
 -- AUTO_INCREMENT for table `desktops`
 --
 ALTER TABLE `desktops`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `devices`
@@ -843,7 +848,7 @@ ALTER TABLE `divisions`
 -- AUTO_INCREMENT for table `endpoint_security`
 --
 ALTER TABLE `endpoint_security`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `firewalls`
@@ -861,7 +866,7 @@ ALTER TABLE `headsets`
 -- AUTO_INCREMENT for table `laptops`
 --
 ALTER TABLE `laptops`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `others`
