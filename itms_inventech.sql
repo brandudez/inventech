@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 19, 2026 at 07:30 AM
+-- Generation Time: Jun 19, 2026 at 09:42 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -341,18 +341,20 @@ CREATE TABLE `others` (
   `previous_owners_id` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`previous_owners_id`)),
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_date` date NOT NULL DEFAULT current_timestamp(),
-  `last_update_at` date DEFAULT NULL
+  `last_update_at` date DEFAULT NULL,
+  `device_name` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `others`
 --
 
-INSERT INTO `others` (`id`, `personnel_id`, `division_id`, `brand`, `model`, `serial_no`, `acquisition_details`, `acquisition_date`, `previous_owners_id`, `is_active`, `created_date`, `last_update_at`) VALUES
-(1, 7, 2, '', '', '', '', NULL, '[]', 1, '2026-06-11', '2026-06-11'),
-(2, 3, 1, '', '', '', '', NULL, '[]', 1, '2026-06-11', '2026-06-11'),
-(3, 0, 2, '', '', '', '', NULL, '[]', 1, '2026-06-11', '2026-06-11'),
-(4, 0, 1, '', '', '', '', NULL, '[]', 1, '2026-06-11', NULL);
+INSERT INTO `others` (`id`, `personnel_id`, `division_id`, `brand`, `model`, `serial_no`, `acquisition_details`, `acquisition_date`, `previous_owners_id`, `is_active`, `created_date`, `last_update_at`, `device_name`) VALUES
+(1, 7, 2, '', '', '', '', NULL, '[]', 1, '2026-06-11', '2026-06-11', ''),
+(2, 3, 1, '', '', '', '', NULL, '[]', 1, '2026-06-11', '2026-06-11', ''),
+(3, 0, 2, '', '', '', '', NULL, '[]', 1, '2026-06-11', '2026-06-11', ''),
+(4, 0, 1, '', '', '', '', NULL, '[]', 1, '2026-06-11', '2026-06-19', 'DESKTOP-002'),
+(5, 0, 1, '', '', '', '', NULL, '[]', 1, '2026-06-19', NULL, 'A-11');
 
 -- --------------------------------------------------------
 
@@ -872,7 +874,7 @@ ALTER TABLE `laptops`
 -- AUTO_INCREMENT for table `others`
 --
 ALTER TABLE `others`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `personnels`
