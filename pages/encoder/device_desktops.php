@@ -70,8 +70,6 @@ function getAccountNames($json)
 
 /**
  * Return CPU generation status: label, badge class, display string.
- * @param  mixed $gen  Raw value from DB (int, numeric string, null, '')
- * @return array ['label'=>string, 'badge'=>string, 'display'=>string]
  */
 function getCpuGenStatus($gen)
 {
@@ -566,6 +564,8 @@ $exportParams = http_build_query([
                                 <label class="form-label">Division</label>
                                 <input type="text" class="form-control" value="<?= htmlspecialchars($encoderDivision['division'] ?? '') ?>" readonly>
                             </div>
+
+                            <!-- ── OS + LICENSE ── -->
                             <div class="col-md-4">
                                 <label class="form-label">Operating System</label>
                                 <select name="os" class="form-select">
@@ -583,7 +583,13 @@ $exportParams = http_build_query([
                                     <option value="0">No</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <label class="form-label">OS License Key</label>
+                                <input type="text" class="form-control" name="os_license_key" placeholder="e.g. XXXXX-XXXXX-XXXXX-XXXXX">
+                            </div>
+
+                            <!-- ── OFFICE + LICENSE ── -->
+                            <div class="col-md-4">
                                 <label class="form-label">Office Application</label>
                                 <select name="office_application" class="form-select">
                                     <?php foreach ($officeAppsList as $app): ?>
@@ -591,7 +597,7 @@ $exportParams = http_build_query([
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label">Is Office Licensed?</label>
                                 <select name="is_office_licensed" class="form-select">
                                     <option value="" disabled selected hidden>Select</option>
@@ -599,6 +605,11 @@ $exportParams = http_build_query([
                                     <option value="0">No</option>
                                 </select>
                             </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Office License Key</label>
+                                <input type="text" class="form-control" name="office_license_key" placeholder="e.g. XXXXX-XXXXX-XXXXX-XXXXX">
+                            </div>
+
                             <div class="col-md-12">
                                 <label class="form-label">Endpoint Security</label>
                                 <div class="row">
@@ -747,8 +758,10 @@ $exportParams = http_build_query([
                         <th>DIVISION</th>
                         <th>OPERATING SYSTEM</th>
                         <th>IS OS LICENSED?</th>
+                        <th>OS LICENSE KEY</th>
                         <th>OFFICE APPLICATION</th>
                         <th>IS OFFICE LICENSED?</th>
+                        <th>OFFICE LICENSE KEY</th>
                         <th>ENDPOINT SECURITY</th>
                         <th># OF INSTALLED ANTIVIRUS</th>
                         <th>DATE INSTALLED</th>
@@ -784,8 +797,10 @@ $exportParams = http_build_query([
                                 <td><?= dash($row['division_name'] ?? '') ?></td>
                                 <td><?= dash($row['os'] ?? '') ?></td>
                                 <td><?= ($row['is_os_licensed'] == 1) ? 'Yes' : 'No' ?></td>
+                                <td><?= dash($row['os_license_key'] ?? '') ?></td>
                                 <td><?= dash($row['office_application'] ?? '') ?></td>
                                 <td><?= ($row['is_office_licensed'] == 1) ? 'Yes' : 'No' ?></td>
+                                <td><?= dash($row['office_license_key'] ?? '') ?></td>
                                 <td><?= getEndpointNames($conn, $row['endpoint_security_id']) ?: '-' ?></td>
                                 <td><?= dash($row['no_of_installed_anti_virus'] ?? '') ?></td>
                                 <td><?= dash($row['date_installed'] ?? '') ?></td>
@@ -818,7 +833,9 @@ $exportParams = http_build_query([
                                 </td>
                             </tr>
 
-                            <!-- ── VIEW MODAL ── -->
+                            <!-- ════════════════════════════════════════
+                                 VIEW MODAL
+                                 ════════════════════════════════════════ -->
                             <div class="modal fade" id="viewDtModal<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
                                     <div class="modal-content">
@@ -842,43 +859,56 @@ $exportParams = http_build_query([
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">MAC Address</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['mac_address'] ?? '') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['mac_address'] ?? '') ?: '-' ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">GUID</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['guid'] ?? '') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['guid'] ?? '') ?: '-' ?></div>
                                                 </div>
+
+                                                <!-- OS block -->
                                                 <div class="col-md-4">
                                                     <div class="view-label">Operating System</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['os'] ?? '') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['os'] ?? '') ?: '-' ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Is OS Licensed?</div>
                                                     <div class="view-value"><?= ($row['is_os_licensed'] == 1) ? '<span class="text-success fw-bold">Yes</span>' : '<span class="text-danger fw-bold">No</span>' ?></div>
                                                 </div>
                                                 <div class="col-md-4">
+                                                    <div class="view-label">OS License Key</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['os_license_key'] ?? '') ?: '-' ?></div>
+                                                </div>
+
+                                                <!-- Office block -->
+                                                <div class="col-md-4">
                                                     <div class="view-label">Office Application</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['office_application'] ?? '') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['office_application'] ?? '') ?: '-' ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Is Office Licensed?</div>
                                                     <div class="view-value"><?= ($row['is_office_licensed'] == 1) ? '<span class="text-success fw-bold">Yes</span>' : '<span class="text-danger fw-bold">No</span>' ?></div>
                                                 </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Office License Key</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['office_license_key'] ?? '') ?: '-' ?></div>
+                                                </div>
+
                                                 <div class="col-md-6">
                                                     <div class="view-label">Endpoint Security</div>
-                                                    <div class="view-value"><?= getEndpointNames($conn, $row['endpoint_security_id']) ?: '' ?></div>
+                                                    <div class="view-value"><?= getEndpointNames($conn, $row['endpoint_security_id']) ?: '-' ?></div>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <div class="view-label"># Installed Antivirus</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_installed_anti_virus'] ?? '') ?: '-' ?></div>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <div class="view-label">Date Installed</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['date_installed'] ?? '') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['date_installed'] ?? '') ?: '-' ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">CPU Brand</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['cpu_brand'] ?? '') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['cpu_brand'] ?? '') ?: '-' ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">CPU Generation</div>
@@ -891,23 +921,23 @@ $exportParams = http_build_query([
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label"># CPU Cores</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['cpu_cores'] ?? '') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['cpu_cores'] ?? '') ?: '-' ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">GB RAM</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['gb_ram'] ?? '') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['gb_ram'] ?? '') ?: '-' ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Monitor Brand</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['monitor_brand'] ?? '') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['monitor_brand'] ?? '') ?: '-' ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Monitor Size</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['monitor_size_inches'] ?? '') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['monitor_size_inches'] ?? '') ?: '-' ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label"># User Accounts</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_user_accounts'] ?? '') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['no_of_user_accounts'] ?? '') ?: '-' ?></div>
                                                 </div>
                                                 <div class="col-md-12">
                                                     <div class="view-label">User Account Type</div>
@@ -931,19 +961,19 @@ $exportParams = http_build_query([
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Acquisition Date</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_date'] ?? '') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['acquisition_date'] ?? '') ?: '-' ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">PAR Serial Number</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['par_serial_no'] ?? '') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['par_serial_no'] ?? '') ?: '-' ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Authorized Software</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['authorized_software'] ?? '') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['authorized_software'] ?? '') ?: '-' ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Unauthorized Software</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['unauthorized_software'] ?? '') ?></div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['unauthorized_software'] ?? '') ?: '-' ?></div>
                                                 </div>
                                                 <div class="col-md-3">
                                                     <div class="view-label">Is Remotely Accessible?</div>
@@ -955,7 +985,7 @@ $exportParams = http_build_query([
                                                 </div>
                                                 <div class="col-md-12">
                                                     <div class="view-label">Previous Handlers</div>
-                                                    <div class="view-value"><?= getPersonnelNames($conn, $row['previous_owners_id']) ?: '' ?></div>
+                                                    <div class="view-value"><?= getPersonnelNames($conn, $row['previous_owners_id']) ?: '-' ?></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -969,7 +999,9 @@ $exportParams = http_build_query([
                                 </div>
                             </div>
 
-                            <!-- ── EDIT MODAL ── -->
+                            <!-- ════════════════════════════════════════
+                                 EDIT MODAL
+                                 ════════════════════════════════════════ -->
                             <div class="modal fade" id="editModal<?= $row['id'] ?>" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
                                     <div class="modal-content">
@@ -1015,6 +1047,8 @@ $exportParams = http_build_query([
                                                             <option value="0" <?= ($row['is_remote_acc'] ?? 0) == 0 ? 'selected' : '' ?>>No</option>
                                                         </select>
                                                     </div>
+
+                                                    <!-- OS block -->
                                                     <div class="col-md-4">
                                                         <label class="form-label">Operating System</label>
                                                         <select name="os" class="form-select">
@@ -1030,7 +1064,15 @@ $exportParams = http_build_query([
                                                             <option value="0" <?= ($row['is_os_licensed'] ?? 0) == 0 ? 'selected' : '' ?>>No</option>
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-6">
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">OS License Key</label>
+                                                        <input type="text" class="form-control" name="os_license_key"
+                                                            value="<?= htmlspecialchars($row['os_license_key'] ?? '') ?>"
+                                                            placeholder="e.g. XXXXX-XXXXX-XXXXX-XXXXX">
+                                                    </div>
+
+                                                    <!-- Office block -->
+                                                    <div class="col-md-4">
                                                         <label class="form-label">Office Application</label>
                                                         <select name="office_application" class="form-select">
                                                             <?php foreach ($officeAppsList as $app):
@@ -1046,6 +1088,13 @@ $exportParams = http_build_query([
                                                             <option value="0" <?= ($row['is_office_licensed'] ?? 0) == 0 ? 'selected' : '' ?>>No</option>
                                                         </select>
                                                     </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">Office License Key</label>
+                                                        <input type="text" class="form-control" name="office_license_key"
+                                                            value="<?= htmlspecialchars($row['office_license_key'] ?? '') ?>"
+                                                            placeholder="e.g. XXXXX-XXXXX-XXXXX-XXXXX">
+                                                    </div>
+
                                                     <div class="col-md-4">
                                                         <label class="form-label">CPU Brand</label>
                                                         <input type="text" class="form-control" name="cpu_brand" value="<?= htmlspecialchars($row['cpu_brand'] ?? '') ?>">
@@ -1198,7 +1247,7 @@ $exportParams = http_build_query([
                         <?php endwhile; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="28" class="text-center">No devices found.</td>
+                            <td colspan="30" class="text-center">No devices found.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

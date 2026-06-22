@@ -33,8 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $is_remote_acc              = $_POST['is_remote_acc'];
     $os                         = nullIfEmpty($_POST['os'] ?? '');
     $is_os_licensed             = $_POST['is_os_licensed'];
+    $os_license_key             = nullIfEmpty($_POST['os_license_key'] ?? '');
     $office_application         = nullIfEmpty($_POST['office_application'] ?? '');
     $is_office_licensed         = $_POST['is_office_licensed'];
+    $office_license_key         = nullIfEmpty($_POST['office_license_key'] ?? '');
     $cpu_brand                  = nullIfEmpty($_POST['cpu_brand'] ?? '');
     $cpu_generation             = nullIfEmpty($_POST['cpu_generation'] ?? '');
     $cpu_cores                  = nullIfEmpty($_POST['cpu_cores'] ?? '');
@@ -54,17 +56,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $previous_handlers          = json_encode($_POST['previous_owners_id'] ?? []);
     $endpoint_security          = json_encode($_POST['endpoint_security'] ?? []);
 
-    // SET columns (27) + WHERE id (1) = 28 total params
+    // SET columns (29) + WHERE id (1) = 30 total params
     // ip_address intentionally excluded — encoder cannot view/edit IP address;
     // only superadmin/admin manage this field.
-    // s  s  s  s  i  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  i
-    // 1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28
     $stmt = $conn->prepare("
         UPDATE desktops SET
             device_name = ?, personnel_id = ?, division_id = ?,
             mac_address = ?, is_remote_acc = ?,
-            os = ?, is_os_licensed = ?,
-            office_application = ?, is_office_licensed = ?,
+            os = ?, is_os_licensed = ?, os_license_key = ?,
+            office_application = ?, is_office_licensed = ?, office_license_key = ?,
             cpu_brand = ?, cpu_generation = ?, cpu_cores = ?, gb_ram = ?,
             monitor_brand = ?, monitor_size_inches = ?,
             no_of_user_accounts = ?, user_account_type = ?,
@@ -77,8 +77,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         WHERE id = ?
     ");
 
+    // 29 strings + 1 int (id) = 30 total
     $stmt->bind_param(
-        "ssssissssssssssssssssssssssi",
+        "ssssissssssssssssssssssssssssi",
         $device_name,
         $personnel_id,
         $division_id,
@@ -86,8 +87,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $is_remote_acc,
         $os,
         $is_os_licensed,
+        $os_license_key,
         $office_application,
         $is_office_licensed,
+        $office_license_key,
         $cpu_brand,
         $cpu_generation,
         $cpu_cores,

@@ -112,8 +112,8 @@ function formatDate($val)
 
 /**
  * Classify a CPU generation number into a support-status label.
- * 7th gen and below  -> End of Life (no longer supported by manufacturer/vendor)
- * 8th - 10th gen     -> Near End of Life / End of Service
+ * 7th gen and below  -> End of Life
+ * 8th - 10th gen     -> Near End of Life
  * 11th gen and above -> Recommended for continued use
  */
 function getCpuGenStatusExport($gen)
@@ -237,8 +237,10 @@ $headers = [
     'GUID',
     'OS',
     'OS Licensed',
+    'OS License Key',
     'Office',
     'Office Licensed',
+    'Office License Key',
     'Endpoint Security',
     'Antivirus Count',
     'Installed Date',
@@ -276,8 +278,10 @@ while ($row = $result->fetch_assoc()) {
         $row['guid']                                                 ?? '',
         $row['os']                                                   ?? '',
         ($row['is_os_licensed'] == 1 ? 'Yes' : 'No'),
+        $row['os_license_key']                                       ?? '',
         $row['office_application']                                   ?? '',
         ($row['is_office_licensed'] == 1 ? 'Yes' : 'No'),
+        $row['office_license_key']                                   ?? '',
         getEndpointNamesExport($conn, $row['endpoint_security_id']),
         $row['no_of_installed_anti_virus']                           ?? '',
         formatDate($row['date_installed']                            ?? ''),
