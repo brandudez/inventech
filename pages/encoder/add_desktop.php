@@ -20,7 +20,6 @@ $personnel_id               = $_POST['personnel_id'] ?? 0;
 $device_id                  = $_POST['device_id'] ?? 0;
 $device_name                = $_POST['device_name'] ?? '';
 $division_id                = $_POST['division_id'] ?? 0;
-$ip_address                 = nullIfEmpty($_POST['ip_address'] ?? '');
 $os                         = nullIfEmpty($_POST['os'] ?? '');
 $is_os_licensed             = ($_POST['is_os_licensed'] ?? 0) == "1" ? 1 : 0;
 $is_remote_acc              = ($_POST['is_remote_acc'] ?? 0) == "1" ? 1 : 0;
@@ -48,29 +47,29 @@ $par_serial_no              = nullIfEmpty($_POST['par_serial_no'] ?? '');
 $acquisition_date           = nullIfEmpty($_POST['acquisition_date'] ?? '');
 $is_active                  = ($_POST['is_active'] ?? 1) == "1" ? 1 : 0;
 
-// 29 columns — no os_license_key, no office_license_key; cpu_generation added
+// 28 columns — ip_address intentionally excluded (encoder cannot set IP address;
+// only superadmin/admin manage this field). No os_license_key, no office_license_key.
 $sql = "INSERT INTO desktops (
-    personnel_id, device_id, device_name, division_id, ip_address, os,
+    personnel_id, device_id, device_name, division_id, os,
     is_os_licensed, is_remote_acc, endpoint_security_id,
     no_of_installed_anti_virus, date_installed, guid, mac_address,
     cpu_brand, cpu_generation, cpu_cores, gb_ram, monitor_brand, monitor_size_inches,
     no_of_user_accounts, user_account_type, authorized_software,
     unauthorized_software, acquisition_date, office_application,
     is_office_licensed, previous_owners_id, par_serial_no, is_active
-) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 $stmt = $conn->prepare($sql);
 if (!$stmt) die("Prepare failed: " . $conn->error);
 
-// 29 params — all strings (consistent with original approach)
-$types = str_repeat("s", 29);
+// 28 params — all strings (consistent with original approach)
+$types = str_repeat("s", 28);
 $stmt->bind_param(
     $types,
     $personnel_id,
     $device_id,
     $device_name,
     $division_id,
-    $ip_address,
     $os,
     $is_os_licensed,
     $is_remote_acc,

@@ -115,9 +115,9 @@ $baseParams = [$encoderDivisionId];
 $baseTypes  = 'i';
 
 if (! empty($search)) {
-    $baseWhere[] = "(d.device_name LIKE ? OR CONCAT(p.first_name,' ',p.middle_name,' ',p.last_name) LIKE ? OR d.ip_address LIKE ? OR d.guid LIKE ? OR d.mac_address LIKE ?)";
+    $baseWhere[] = "(d.device_name LIKE ? OR CONCAT(p.first_name,' ',p.middle_name,' ',p.last_name) LIKE ? OR d.guid LIKE ? OR d.mac_address LIKE ?)";
     $sv = "%$search%";
-    for ($i = 0; $i < 5; $i++) {
+    for ($i = 0; $i < 4; $i++) {
         $baseParams[] = $sv;
         $baseTypes .= 's';
     }
@@ -567,10 +567,6 @@ $exportParams = http_build_query([
                                 <input type="text" class="form-control" value="<?= htmlspecialchars($encoderDivision['division'] ?? '') ?>" readonly>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">IP Address</label>
-                                <input type="text" class="form-control" name="ip_address">
-                            </div>
-                            <div class="col-md-4">
                                 <label class="form-label">Operating System</label>
                                 <select name="os" class="form-select">
                                     <option value="" disabled selected hidden>Select Operating System</option>
@@ -749,7 +745,6 @@ $exportParams = http_build_query([
                         <th>DEVICE NAME</th>
                         <th>PERSONNEL</th>
                         <th>DIVISION</th>
-                        <th>IP ADDRESS</th>
                         <th>OPERATING SYSTEM</th>
                         <th>IS OS LICENSED?</th>
                         <th>OFFICE APPLICATION</th>
@@ -787,7 +782,6 @@ $exportParams = http_build_query([
                                 <td><?= dash($row['device_name'] ?? '') ?></td>
                                 <td><?= dash($row['personnel_name'] ?? '') ?></td>
                                 <td><?= dash($row['division_name'] ?? '') ?></td>
-                                <td><?= dash($row['ip_address'] ?? '') ?></td>
                                 <td><?= dash($row['os'] ?? '') ?></td>
                                 <td><?= ($row['is_os_licensed'] == 1) ? 'Yes' : 'No' ?></td>
                                 <td><?= dash($row['office_application'] ?? '') ?></td>
@@ -845,10 +839,6 @@ $exportParams = http_build_query([
                                                 <div class="col-md-4">
                                                     <div class="view-label">Division</div>
                                                     <div class="view-value"><?= htmlspecialchars($row['division_name'] ?? '') ?></div>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <div class="view-label">IP Address</div>
-                                                    <div class="view-value"><?= htmlspecialchars($row['ip_address'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">MAC Address</div>
@@ -1013,10 +1003,6 @@ $exportParams = http_build_query([
                                                     <div class="col-md-4">
                                                         <label class="form-label">Division</label>
                                                         <input type="text" class="form-control" value="<?= htmlspecialchars($encoderDivision['division'] ?? '') ?>" readonly>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <label class="form-label">IP Address</label>
-                                                        <input type="text" class="form-control" name="ip_address" value="<?= htmlspecialchars($row['ip_address'] ?? '') ?>">
                                                     </div>
                                                     <div class="col-md-4">
                                                         <label class="form-label">MAC Address</label>
@@ -1212,7 +1198,7 @@ $exportParams = http_build_query([
                         <?php endwhile; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="29" class="text-center">No devices found.</td>
+                            <td colspan="28" class="text-center">No devices found.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

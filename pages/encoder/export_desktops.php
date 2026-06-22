@@ -147,9 +147,9 @@ $params = [$encoderDivisionId];
 $types  = 'i';
 
 if (!empty($search)) {
-    $where[] = "(d.device_name LIKE ? OR CONCAT(p.first_name,' ',p.middle_name,' ',p.last_name) LIKE ? OR d.ip_address LIKE ? OR d.guid LIKE ? OR d.mac_address LIKE ?)";
+    $where[] = "(d.device_name LIKE ? OR CONCAT(p.first_name,' ',p.middle_name,' ',p.last_name) LIKE ? OR d.guid LIKE ? OR d.mac_address LIKE ?)";
     $sv = "%$search%";
-    for ($i = 0; $i < 5; $i++) {
+    for ($i = 0; $i < 4; $i++) {
         $params[] = $sv;
         $types   .= 's';
     }
@@ -233,7 +233,6 @@ $headers = [
     'Device Name',
     'Personnel',
     'Division',
-    'IP Address',
     'MAC Address',
     'GUID',
     'OS',
@@ -273,7 +272,6 @@ while ($row = $result->fetch_assoc()) {
         $row['device_name']                                          ?? '',
         $row['personnel_name']                                       ?? '',
         $row['division_name']                                        ?? '',
-        $row['ip_address']                                           ?? '',
         $row['mac_address']                                          ?? '',
         $row['guid']                                                 ?? '',
         $row['os']                                                   ?? '',
