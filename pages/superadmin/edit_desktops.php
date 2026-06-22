@@ -34,8 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $is_remote_acc           = $_POST['is_remote_acc'];
     $os                      = nullIfEmpty($_POST['os'] ?? '');
     $is_os_licensed          = $_POST['is_os_licensed'];
+    $os_license_key          = nullIfEmpty($_POST['os_license_key'] ?? '');
     $office_application      = nullIfEmpty($_POST['office_application'] ?? '');
     $is_office_licensed      = $_POST['is_office_licensed'];
+    $office_license_key      = nullIfEmpty($_POST['office_license_key'] ?? '');
     $cpu_brand               = nullIfEmpty($_POST['cpu_brand'] ?? '');
     $cpu_generation          = nullIfEmpty($_POST['cpu_generation'] ?? '');
     $cpu_cores               = nullIfEmpty($_POST['cpu_cores'] ?? '');
@@ -59,8 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         UPDATE desktops SET
             device_name = ?, personnel_id = ?, division_id = ?,
             ip_address = ?, mac_address = ?, is_remote_acc = ?,
-            os = ?, is_os_licensed = ?,
-            office_application = ?, is_office_licensed = ?,
+            os = ?, is_os_licensed = ?, os_license_key = ?,
+            office_application = ?, is_office_licensed = ?, office_license_key = ?,
             cpu_brand = ?, cpu_generation = ?, cpu_cores = ?, gb_ram = ?,
             monitor_brand = ?, monitor_size_inches = ?,
             no_of_user_accounts = ?, user_account_type = ?,
@@ -74,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     ");
 
     $stmt->bind_param(
-        "sssssisssissssssssssssssssssi",
+        "sssssissssssssssssssssssssssssi",
         $device_name,
         $personnel_id,
         $division_id,
@@ -83,8 +85,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $is_remote_acc,
         $os,
         $is_os_licensed,
+        $os_license_key,
         $office_application,
         $is_office_licensed,
+        $office_license_key,
         $cpu_brand,
         $cpu_generation,
         $cpu_cores,
