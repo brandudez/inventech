@@ -34,8 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $is_remote_acc              = $_POST['is_remote_acc'];
     $os                         = nullIfEmpty($_POST['os'] ?? '');
     $is_os_licensed             = $_POST['is_os_licensed'];
+    $os_license_key             = nullIfEmpty($_POST['os_license_key'] ?? '');
     $office_application         = nullIfEmpty($_POST['office_application'] ?? '');
     $is_office_licensed         = $_POST['is_office_licensed'];
+    $office_license_key         = nullIfEmpty($_POST['office_license_key'] ?? '');
     $cpu_brand                  = nullIfEmpty($_POST['cpu_brand'] ?? '');
     $cpu_generation             = nullIfEmpty($_POST['cpu_generation'] ?? '');
     $cpu_cores                  = nullIfEmpty($_POST['cpu_cores'] ?? '');
@@ -55,15 +57,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $previous_handlers          = json_encode($_POST['previous_owners_id'] ?? []);
     $endpoint_security          = json_encode($_POST['endpoint_security'] ?? []);
 
-    // SET columns (28) + WHERE id (1) = 29 total params
-    // Types: s s s  s s i  s s  s s  s s s s  s s  s s  s s  s  s s  s s  s  s s  i
-    //        1 2 3  4 5 6  7 8  9 10 11 12 13 14  15 16  17 18  19 20  21  22 23  24 25  26  27 28  29
+    // SET columns (30) + WHERE id (1) = 31 total params
     $stmt = $conn->prepare("
         UPDATE laptops SET
             device_name = ?, personnel_id = ?, division_id = ?,
             ip_address = ?, mac_address = ?, is_remote_acc = ?,
-            os = ?, is_os_licensed = ?,
-            office_application = ?, is_office_licensed = ?,
+            os = ?, is_os_licensed = ?, os_license_key = ?,
+            office_application = ?, is_office_licensed = ?, office_license_key = ?,
             cpu_brand = ?, cpu_generation = ?, cpu_cores = ?, gb_ram = ?,
             monitor_brand = ?, monitor_size_inches = ?,
             no_of_user_accounts = ?, user_account_type = ?,
@@ -76,11 +76,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         WHERE id = ?
     ");
 
-    // 28 SET params + 1 WHERE = 29
-    // s  s  s  s  s  i  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  s  i
-    // 1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29
+    // 30 SET params + 1 WHERE = 31
     $stmt->bind_param(
-        "sssssissssssssssssssssssssssi",
+        "sssssissssssssssssssssssssssssi",
         $device_name,
         $personnel_id,
         $division_id,
@@ -89,8 +87,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $is_remote_acc,
         $os,
         $is_os_licensed,
+        $os_license_key,
         $office_application,
         $is_office_licensed,
+        $office_license_key,
         $cpu_brand,
         $cpu_generation,
         $cpu_cores,

@@ -613,6 +613,10 @@ $exportParams = http_build_query([
                                     <option value="0">No</option>
                                 </select>
                             </div>
+                            <div class="col-md-4">
+                                <label class="form-label">OS License Key</label>
+                                <input type="text" class="form-control" name="os_license_key" placeholder="e.g. XXXXX-XXXXX-XXXXX-XXXXX-XXXXX">
+                            </div>
                             <div class="col-md-6">
                                 <label class="form-label">Office Application</label>
                                 <select name="office_application" class="form-select">
@@ -628,6 +632,10 @@ $exportParams = http_build_query([
                                     <option value="1">Yes</option>
                                     <option value="0">No</option>
                                 </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Office License Key</label>
+                                <input type="text" class="form-control" name="office_license_key" placeholder="e.g. XXXXX-XXXXX-XXXXX-XXXXX-XXXXX">
                             </div>
                             <div class="col-md-12">
                                 <label class="form-label">Endpoint Security</label>
@@ -735,8 +743,10 @@ $exportParams = http_build_query([
                         <th>IP ADDRESS</th>
                         <th>OPERATING SYSTEM</th>
                         <th>IS OS LICENSED?</th>
+                        <th>OS LICENSE KEY</th>
                         <th>OFFICE APPLICATION</th>
                         <th>IS OFFICE LICENSED?</th>
+                        <th>OFFICE LICENSE KEY</th>
                         <th>ENDPOINT SECURITY</th>
                         <th># OF INSTALLED ANTIVIRUS</th>
                         <th>DATE INSTALLED</th>
@@ -773,8 +783,10 @@ $exportParams = http_build_query([
                                 <td><?= dash($row['ip_address'] ?? '') ?></td>
                                 <td><?= dash($row['os'] ?? '') ?></td>
                                 <td><?= ($row['is_os_licensed'] == 1) ? 'Yes' : 'No' ?></td>
+                                <td><?= dash($row['os_license_key'] ?? '') ?></td>
                                 <td><?= dash($row['office_application'] ?? '') ?></td>
                                 <td><?= ($row['is_office_licensed'] == 1) ? 'Yes' : 'No' ?></td>
+                                <td><?= dash($row['office_license_key'] ?? '') ?></td>
                                 <td><?= getEndpointNames($conn, $row['endpoint_security_id']) ?: '-' ?></td>
                                 <td><?= dash($row['no_of_installed_anti_virus'] ?? '') ?></td>
                                 <td><?= dash($row['date_installed'] ?? '') ?></td>
@@ -850,12 +862,20 @@ $exportParams = http_build_query([
                                                     <div class="view-value"><?= ($row['is_os_licensed'] == 1) ? '<span class="text-success fw-bold">Yes</span>' : '<span class="text-danger fw-bold">No</span>' ?></div>
                                                 </div>
                                                 <div class="col-md-4">
+                                                    <div class="view-label">OS License Key</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['os_license_key'] ?? '') ?></div>
+                                                </div>
+                                                <div class="col-md-4">
                                                     <div class="view-label">Office Application</div>
                                                     <div class="view-value"><?= htmlspecialchars($row['office_application'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Is Office Licensed?</div>
                                                     <div class="view-value"><?= ($row['is_office_licensed'] == 1) ? '<span class="text-success fw-bold">Yes</span>' : '<span class="text-danger fw-bold">No</span>' ?></div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Office License Key</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['office_license_key'] ?? '') ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Endpoint Security</div>
@@ -1018,6 +1038,10 @@ $exportParams = http_build_query([
                                                             <option value="0" <?= ($row['is_os_licensed'] ?? 0) == 0 ? 'selected' : '' ?>>No</option>
                                                         </select>
                                                     </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">OS License Key</label>
+                                                        <input type="text" class="form-control" name="os_license_key" value="<?= htmlspecialchars($row['os_license_key'] ?? '') ?>" placeholder="e.g. XXXXX-XXXXX-XXXXX-XXXXX-XXXXX">
+                                                    </div>
                                                     <div class="col-md-6">
                                                         <label class="form-label">Office Application</label>
                                                         <select name="office_application" class="form-select">
@@ -1030,6 +1054,10 @@ $exportParams = http_build_query([
                                                             <option value="1" <?= ($row['is_office_licensed'] ?? 0) == 1 ? 'selected' : '' ?>>Yes</option>
                                                             <option value="0" <?= ($row['is_office_licensed'] ?? 0) == 0 ? 'selected' : '' ?>>No</option>
                                                         </select>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">Office License Key</label>
+                                                        <input type="text" class="form-control" name="office_license_key" value="<?= htmlspecialchars($row['office_license_key'] ?? '') ?>" placeholder="e.g. XXXXX-XXXXX-XXXXX-XXXXX-XXXXX">
                                                     </div>
                                                     <div class="col-md-4"><label class="form-label">CPU Brand</label><input type="text" class="form-control" name="cpu_brand" value="<?= htmlspecialchars($row['cpu_brand'] ?? '') ?>"></div>
                                                     <div class="col-md-4"><label class="form-label">CPU Generation</label><input type="number" class="form-control" name="cpu_generation" min="1" placeholder="e.g. 11" value="<?= htmlspecialchars($row['cpu_generation'] ?? '') ?>"></div>
@@ -1142,7 +1170,7 @@ $exportParams = http_build_query([
                         <?php endwhile; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="29" class="text-center">No devices found.</td>
+                            <td colspan="31" class="text-center">No devices found.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

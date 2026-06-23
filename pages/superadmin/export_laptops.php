@@ -249,7 +249,7 @@ ob_start();
 
 echo '<html><head><meta charset="UTF-8"></head><body><table border="1">';
 
-/* HEADER — 29 columns */
+/* HEADER — 31 columns */
 $headers = [
     'Device Name',
     'Personnel',
@@ -259,8 +259,10 @@ $headers = [
     'GUID',
     'Operating System',
     'OS Licensed',
+    'OS License Key',
     'Office Application',
     'Office Licensed',
+    'Office License Key',
     'Endpoint Security',
     'Antivirus Count',
     'Date Installed',
@@ -286,7 +288,7 @@ echo '<tr style="background:#0d6ea8;color:#fff;font-weight:bold;">';
 foreach ($headers as $h) echo "<td>" . htmlspecialchars($h) . "</td>";
 echo '</tr>';
 
-/* DATA — 29 cells per row */
+/* DATA — 31 cells per row */
 while ($row = $result->fetch_assoc()) {
     $cpuSt = getCpuGenStatusExport($row['cpu_generation'] ?? null);
 
@@ -301,8 +303,10 @@ while ($row = $result->fetch_assoc()) {
         $row['guid'] ?? '',
         $row['os'] ?? '',
         ($row['is_os_licensed'] == 1 ? 'Yes' : 'No'),
+        $row['os_license_key'] ?? '',
         $row['office_application'] ?? '',
         ($row['is_office_licensed'] == 1 ? 'Yes' : 'No'),
+        $row['office_license_key'] ?? '',
         getEndpointNamesExport($conn, $row['endpoint_security_id']),
         $row['no_of_installed_anti_virus'] ?? '',
         formatDate($row['date_installed'] ?? ''),
