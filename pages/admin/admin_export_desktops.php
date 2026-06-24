@@ -83,9 +83,6 @@ function formatDate($val)
     return $val;
 }
 
-/**
- * Returns ['label' => string, 'export_label' => string] for a CPU generation value.
- */
 function getCpuGenStatusExport($gen)
 {
     if ($gen === null || $gen === '' || !is_numeric($gen)) {
@@ -111,11 +108,11 @@ $os_raw          = $_GET['filter_os'] ?? [];
 $office_raw      = $_GET['filter_office'] ?? [];
 
 $division_filter = is_array($division_raw) ? array_filter($division_raw) : [];
-$os_filter       = is_array($os_raw) ? array_filter($os_raw) : [];
-$office_filter   = is_array($office_raw) ? array_filter($office_raw) : [];
+$os_filter       = is_array($os_raw)       ? array_filter($os_raw)       : [];
+$office_filter   = is_array($office_raw)   ? array_filter($office_raw)   : [];
 
-$active_filter   = $_GET['is_active'] ?? '';
-$acq_filter      = trim($_GET['filter_acq'] ?? '');
+$active_filter   = $_GET['is_active']   ?? '';
+$acq_filter      = trim($_GET['filter_acq']     ?? '');
 $cpu_gen_filter  = trim($_GET['filter_cpu_gen'] ?? '');
 
 $where  = [];
@@ -127,7 +124,7 @@ if (!empty($search)) {
     $sv = "%$search%";
     for ($i = 0; $i < 5; $i++) {
         $params[] = $sv;
-        $types .= 's';
+        $types   .= 's';
     }
 }
 
@@ -136,7 +133,7 @@ if (!empty($division_filter)) {
     $where[] = "dv.division IN ($ph)";
     foreach ($division_filter as $v) {
         $params[] = $v;
-        $types .= 's';
+        $types   .= 's';
     }
 }
 
@@ -148,7 +145,7 @@ if (!empty($os_filter)) {
         } else {
             $conditions[] = "d.os = ?";
             $params[] = $v;
-            $types .= 's';
+            $types   .= 's';
         }
     }
     $where[] = '(' . implode(' OR ', $conditions) . ')';
@@ -162,16 +159,16 @@ if (!empty($office_filter)) {
         } else {
             $conditions[] = "d.office_application = ?";
             $params[] = $v;
-            $types .= 's';
+            $types   .= 's';
         }
     }
     $where[] = '(' . implode(' OR ', $conditions) . ')';
 }
 
 if ($active_filter !== '') {
-    $where[] = "d.is_active = ?";
+    $where[]  = "d.is_active = ?";
     $params[] = $active_filter;
-    $types .= 'i';
+    $types   .= 'i';
 }
 
 if ($acq_filter === 'lt5') {
@@ -216,74 +213,45 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 /* =========================
-   BUILD EXPORT
-   Headers: 29 columns
+   BUILD EXPORT — 31 columns
 ========================= */
 
 ob_start();
 
 echo '<html><head><meta charset="UTF-8"></head><body><table border="1">';
 
-// 1  Device Name
-// 2  Personnel
-// 3  Division
-// 4  IP Address
-// 5  MAC Address
-// 6  GUID
-// 7  OS
-// 8  OS Licensed
-// 9  Office
-// 10 Office Licensed
-// 11 Endpoint Security
-// 12 Antivirus Count
-// 13 Installed Date
-// 14 CPU Brand
-// 15 CPU Generation
-// 16 CPU Status
-// 17 CPU Cores
-// 18 RAM
-// 19 Monitor Brand
-// 20 Monitor Size
-// 21 User Accounts
-// 22 User Type
-// 23 Authorized Software
-// 24 Unauthorized Software
-// 25 Acquisition Date
-// 26 PAR Serial
-// 27 Previous Handlers
-// 28 Remote
-// 29 Active
-
 $headers = [
-    'Device Name',
-    'Personnel',
-    'Division',
-    'IP Address',
-    'MAC Address',
-    'GUID',
-    'OS',
-    'OS Licensed',
-    'Office',
-    'Office Licensed',
-    'Endpoint Security',
-    'Antivirus Count',
-    'Installed Date',
-    'CPU Brand',
-    'CPU Generation',
-    'CPU Status',
-    'CPU Cores',
-    'RAM',
-    'Monitor Brand',
-    'Monitor Size',
-    'User Accounts',
-    'User Type',
-    'Authorized Software',
-    'Unauthorized Software',
-    'Acquisition Date',
-    'PAR Serial',
-    'Previous Handlers',
-    'Remote',
-    'Active',
+    'Device Name',       // 1
+    'Personnel',         // 2
+    'Division',          // 3
+    'IP Address',        // 4
+    'MAC Address',       // 5
+    'GUID',              // 6
+    'OS',                // 7
+    'OS Licensed',       // 8
+    'OS License Key',    // 9
+    'Office',            // 10
+    'Office Licensed',   // 11
+    'Office License Key', // 12
+    'Endpoint Security', // 13
+    'Antivirus Count',   // 14
+    'Installed Date',    // 15
+    'CPU Brand',         // 16
+    'CPU Generation',    // 17
+    'CPU Status',        // 18
+    'CPU Cores',         // 19
+    'RAM',               // 20
+    'Monitor Brand',     // 21
+    'Monitor Size',      // 22
+    'User Accounts',     // 23
+    'User Type',         // 24
+    'Authorized Software',   // 25
+    'Unauthorized Software', // 26
+    'Acquisition Date',  // 27
+    'PAR Serial',        // 28
+    'Previous Handlers', // 29
+    'Remote',            // 30
+    'Active',            // 31
 ];
 
 echo '<tr style="font-weight:bold;background:#0d6ea8;color:#fff;">';
@@ -293,37 +261,38 @@ echo '</tr>';
 while ($row = $result->fetch_assoc()) {
     $cpuStatus = getCpuGenStatusExport($row['cpu_generation'] ?? null);
 
-    // 29 cells matching 29 headers
     $cells = [
-        $row['device_name'] ?? '',           // 1
-        $row['personnel_name'] ?? '',         // 2
-        $row['division_name'] ?? '',          // 3
-        $row['ip_address'] ?? '',             // 4
-        $row['mac_address'] ?? '',            // 5
-        $row['guid'] ?? '',                   // 6
-        $row['os'] ?? '',                     // 7
-        ($row['is_os_licensed'] == 1 ? 'Yes' : 'No'),  // 8
-        $row['office_application'] ?? '',     // 9
-        ($row['is_office_licensed'] == 1 ? 'Yes' : 'No'),  // 10
-        getEndpointNamesExport($conn, $row['endpoint_security_id']),  // 11
-        $row['no_of_installed_anti_virus'] ?? '',  // 12
-        formatDate($row['date_installed'] ?? ''),  // 13
-        $row['cpu_brand'] ?? '',              // 14
-        $row['cpu_generation'] ?? '',         // 15
-        $cpuStatus['export_label'],           // 16
-        $row['cpu_cores'] ?? '',              // 17
-        $row['gb_ram'] ?? '',                 // 18
-        $row['monitor_brand'] ?? '',          // 19
-        $row['monitor_size_inches'] ?? '',    // 20
-        $row['no_of_user_accounts'] ?? '',    // 21
-        getAccountNamesExport($row['user_account_type'] ?? ''),  // 22
-        $row['authorized_software'] ?? '',    // 23
-        $row['unauthorized_software'] ?? '',  // 24
-        formatDate($row['acquisition_date'] ?? ''),  // 25
-        $row['par_serial_no'] ?? '',          // 26
-        getPersonnelNamesExport($conn, $row['previous_owners_id']),  // 27
-        ($row['is_remote_acc'] ? 'YES' : 'NO'),  // 28
-        ($row['is_active'] ? 'YES' : 'NO'),   // 29
+        $row['device_name']              ?? '',                                      // 1
+        $row['personnel_name']           ?? '',                                      // 2
+        $row['division_name']            ?? '',                                      // 3
+        $row['ip_address']               ?? '',                                      // 4
+        $row['mac_address']              ?? '',                                      // 5
+        $row['guid']                     ?? '',                                      // 6
+        $row['os']                       ?? '',                                      // 7
+        ($row['is_os_licensed'] == 1 ? 'Yes' : 'No'),                               // 8
+        $row['os_license_key']           ?? '',                                      // 9
+        $row['office_application']       ?? '',                                      // 10
+        ($row['is_office_licensed'] == 1 ? 'Yes' : 'No'),                           // 11
+        $row['office_license_key']       ?? '',                                      // 12
+        getEndpointNamesExport($conn, $row['endpoint_security_id']),                 // 13
+        $row['no_of_installed_anti_virus'] ?? '',                                    // 14
+        formatDate($row['date_installed'] ?? ''),                                    // 15
+        $row['cpu_brand']                ?? '',                                      // 16
+        $row['cpu_generation']           ?? '',                                      // 17
+        $cpuStatus['export_label'],                                                  // 18
+        $row['cpu_cores']                ?? '',                                      // 19
+        $row['gb_ram']                   ?? '',                                      // 20
+        $row['monitor_brand']            ?? '',                                      // 21
+        $row['monitor_size_inches']      ?? '',                                      // 22
+        $row['no_of_user_accounts']      ?? '',                                      // 23
+        getAccountNamesExport($row['user_account_type'] ?? ''),                      // 24
+        $row['authorized_software']      ?? '',                                      // 25
+        $row['unauthorized_software']    ?? '',                                      // 26
+        formatDate($row['acquisition_date'] ?? ''),                                  // 27
+        $row['par_serial_no']            ?? '',                                      // 28
+        getPersonnelNamesExport($conn, $row['previous_owners_id']),                  // 29
+        ($row['is_remote_acc'] ? 'YES' : 'NO'),                                     // 30
+        ($row['is_active']     ? 'YES' : 'NO'),                                     // 31
     ];
 
     echo '<tr>';
