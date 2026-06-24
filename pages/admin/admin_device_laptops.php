@@ -46,9 +46,6 @@ function getPersonnelNames($conn, $json)
     return implode(",<br>", $names);
 }
 
-/**
- * Parse user_account_type JSON and return only the names as a comma-separated string.
- */
 function getAccountNames($json)
 {
     if (empty($json)) return '-';
@@ -65,11 +62,6 @@ function getAccountNames($json)
     return htmlspecialchars($json);
 }
 
-/**
- * Return CPU generation status: label, badge class, display string.
- * @param  mixed $gen  Raw value from DB (int, numeric string, null, '')
- * @return array ['label'=>string, 'badge'=>string, 'display'=>string]
- */
 function getCpuGenStatus($gen)
 {
     if ($gen === null || $gen === '' || !is_numeric($gen)) {
@@ -108,7 +100,6 @@ $active_filter   = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
 $acq_filter      = trim($_GET['filter_acq'] ?? '');
 $cpu_gen_filter  = trim($_GET['filter_cpu_gen'] ?? '');
 
-// ── Build base WHERE + params ─────────────────────────────────────────────────
 $baseWhere  = [];
 $baseParams = [];
 $baseTypes  = '';
@@ -183,14 +174,12 @@ $baseJoin = "FROM laptops l
              LEFT JOIN ranks r       ON p.rank_id = r.id
              LEFT JOIN divisions dv  ON l.division_id = dv.id";
 
-// ── Total count ───────────────────────────────────────────────────────────────
 $st = $conn->prepare("SELECT COUNT(*) AS total $baseJoin $whereSQL");
 if (!empty($baseParams)) $st->bind_param($baseTypes, ...$baseParams);
 $st->execute();
 $totalDevices = $st->get_result()->fetch_assoc()['total'] ?? 0;
 $totalPages   = (int)ceil($totalDevices / $limit);
 
-// ── Stat-box counts ───────────────────────────────────────────────────────────
 $activeWhere   = $baseWhere;
 $activeWhere[] = "l.is_active = 1";
 $activeSQL     = "WHERE " . implode(" AND ", $activeWhere);
@@ -209,7 +198,6 @@ if (!empty($baseParams)) $si->bind_param($baseTypes, ...$baseParams);
 $si->execute();
 $inactiveDevices = $si->get_result()->fetch_assoc()['total'] ?? 0;
 
-// ── Paginated row fetch ───────────────────────────────────────────────────────
 $stmt = $conn->prepare("
     SELECT l.*,
            CONCAT(r.rank,'  ',p.last_name,', ',p.first_name,' ',p.middle_name) AS personnel_name,
@@ -224,7 +212,6 @@ $stmt->bind_param($ft, ...$fp);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// ── Pre-fetch data for Add modal ──────────────────────────────────────────────
 $addPersonnelRows = [];
 $pq = $conn->query("SELECT p.id, r.rank, p.first_name, p.middle_name, p.last_name, p.rank_id FROM personnels p LEFT JOIN ranks r ON p.rank_id = r.id WHERE p.is_active = 1 ORDER BY r.id DESC, p.last_name ASC, p.first_name ASC");
 while ($r = mysqli_fetch_assoc($pq)) $addPersonnelRows[] = $r;
@@ -294,7 +281,6 @@ $officeAppsList = [
     "Other",
 ];
 
-// ── Build export query string ─────────────────────────────────────────────────
 $exportParams = http_build_query([
     'search'          => $search,
     'division'        => $division_filter,
@@ -340,7 +326,6 @@ $exportParams = http_build_query([
             font-size: 0.95rem;
         }
 
-        /* ── Account rows ─────────────────────────────────────── */
         .account-row {
             display: flex;
             gap: 8px;
@@ -379,7 +364,6 @@ $exportParams = http_build_query([
             font-weight: 500;
         }
 
-        /* CPU Gen filter dropdown — prevent label wrapping */
         .cpu-gen-dropdown .dropdown-menu {
             min-width: max-content;
             white-space: nowrap;
@@ -488,8 +472,8 @@ $exportParams = http_build_query([
                             <?php endforeach; ?>
                         </ul>
                     </div>
-                </form><!-- /filterForm -->
-            </div><!-- /filters -->
+                </form>
+            </div>
 
             <!-- ACQUISITION DATE FILTER -->
             <div class="dropdown">
@@ -562,7 +546,7 @@ $exportParams = http_build_query([
 
             <button type="button" class="btn add-laptop-btn" data-bs-toggle="modal" data-bs-target="#addLaptopModal">Add Laptop</button>
         </div>
-    </div><!-- /top-bar -->
+    </div>
 
     <!-- ════════════════════════════════════════════════════════════════════
          ADD MODAL
@@ -613,6 +597,11 @@ $exportParams = http_build_query([
                                     <option value="0">No</option>
                                 </select>
                             </div>
+                            <!-- ++ OS LICENSE KEY ++ -->
+                            <div class="col-md-4">
+                                <label class="form-label">OS License Key</label>
+                                <input type="text" class="form-control" name="os_license_key" placeholder="e.g. XXXXX-XXXXX-XXXXX">
+                            </div>
                             <div class="col-md-6">
                                 <label class="form-label">Office Application</label>
                                 <select name="office_application" class="form-select">
@@ -621,13 +610,18 @@ $exportParams = http_build_query([
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-3">
                                 <label class="form-label">Is Office Licensed?</label>
                                 <select name="is_office_licensed" class="form-select">
                                     <option value="" disabled selected hidden>Select</option>
                                     <option value="1">Yes</option>
                                     <option value="0">No</option>
                                 </select>
+                            </div>
+                            <!-- ++ OFFICE LICENSE KEY ++ -->
+                            <div class="col-md-3">
+                                <label class="form-label">Office License Key</label>
+                                <input type="text" class="form-control" name="office_license_key" placeholder="e.g. XXXXX-XXXXX-XXXXX">
                             </div>
                             <div class="col-md-12">
                                 <label class="form-label">Endpoint Security</label>
@@ -653,7 +647,6 @@ $exportParams = http_build_query([
                             <div class="col-md-4"><label class="form-label">Monitor Brand</label><input type="text" class="form-control" name="monitor_brand"></div>
                             <div class="col-md-4"><label class="form-label">Monitor Size</label><input type="text" class="form-control" name="monitor_size_inches"></div>
 
-                            <!-- ── USER ACCOUNT TYPE (Add) ──────────────────────────────── -->
                             <input type="hidden" name="no_of_user_accounts" id="addAccountCountL">
 
                             <div class="col-md-12">
@@ -735,8 +728,10 @@ $exportParams = http_build_query([
                         <th>IP ADDRESS</th>
                         <th>OPERATING SYSTEM</th>
                         <th>IS OS LICENSED?</th>
+                        <th>OS LICENSE KEY</th>
                         <th>OFFICE APPLICATION</th>
                         <th>IS OFFICE LICENSED?</th>
+                        <th>OFFICE LICENSE KEY</th>
                         <th>ENDPOINT SECURITY</th>
                         <th># OF INSTALLED ANTIVIRUS</th>
                         <th>DATE INSTALLED</th>
@@ -773,8 +768,10 @@ $exportParams = http_build_query([
                                 <td><?= dash($row['ip_address'] ?? '') ?></td>
                                 <td><?= dash($row['os'] ?? '') ?></td>
                                 <td><?= ($row['is_os_licensed'] == 1) ? 'Yes' : 'No' ?></td>
+                                <td><?= dash($row['os_license_key'] ?? '') ?></td>
                                 <td><?= dash($row['office_application'] ?? '') ?></td>
                                 <td><?= ($row['is_office_licensed'] == 1) ? 'Yes' : 'No' ?></td>
+                                <td><?= dash($row['office_license_key'] ?? '') ?></td>
                                 <td><?= getEndpointNames($conn, $row['endpoint_security_id']) ?: '-' ?></td>
                                 <td><?= dash($row['no_of_installed_anti_virus'] ?? '') ?></td>
                                 <td><?= dash($row['date_installed'] ?? '') ?></td>
@@ -849,6 +846,11 @@ $exportParams = http_build_query([
                                                     <div class="view-label">Is OS Licensed?</div>
                                                     <div class="view-value"><?= ($row['is_os_licensed'] == 1) ? '<span class="text-success fw-bold">Yes</span>' : '<span class="text-danger fw-bold">No</span>' ?></div>
                                                 </div>
+                                                <!-- ++ OS LICENSE KEY VIEW ++ -->
+                                                <div class="col-md-4">
+                                                    <div class="view-label">OS License Key</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['os_license_key'] ?? '') ?: '-' ?></div>
+                                                </div>
                                                 <div class="col-md-4">
                                                     <div class="view-label">Office Application</div>
                                                     <div class="view-value"><?= htmlspecialchars($row['office_application'] ?? '') ?></div>
@@ -856,6 +858,11 @@ $exportParams = http_build_query([
                                                 <div class="col-md-4">
                                                     <div class="view-label">Is Office Licensed?</div>
                                                     <div class="view-value"><?= ($row['is_office_licensed'] == 1) ? '<span class="text-success fw-bold">Yes</span>' : '<span class="text-danger fw-bold">No</span>' ?></div>
+                                                </div>
+                                                <!-- ++ OFFICE LICENSE KEY VIEW ++ -->
+                                                <div class="col-md-4">
+                                                    <div class="view-label">Office License Key</div>
+                                                    <div class="view-value"><?= htmlspecialchars($row['office_license_key'] ?? '') ?: '-' ?></div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="view-label">Endpoint Security</div>
@@ -1018,18 +1025,28 @@ $exportParams = http_build_query([
                                                             <option value="0" <?= ($row['is_os_licensed'] ?? 0) == 0 ? 'selected' : '' ?>>No</option>
                                                         </select>
                                                     </div>
+                                                    <!-- ++ OS LICENSE KEY EDIT ++ -->
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">OS License Key</label>
+                                                        <input type="text" class="form-control" name="os_license_key" value="<?= htmlspecialchars($row['os_license_key'] ?? '') ?>" placeholder="e.g. XXXXX-XXXXX-XXXXX">
+                                                    </div>
                                                     <div class="col-md-6">
                                                         <label class="form-label">Office Application</label>
                                                         <select name="office_application" class="form-select">
                                                             <?php foreach ($officeAppsList as $app): $isSelected = ($row['office_application'] ?? '') == $app || (trim($row['office_application'] ?? '') === '' && trim($app) === '-'); ?><option value="<?= htmlspecialchars($app) ?>" <?= $isSelected ? 'selected' : '' ?>><?= htmlspecialchars($app) ?></option><?php endforeach; ?>
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-4">
+                                                    <div class="col-md-3">
                                                         <label class="form-label">Is Office Licensed?</label>
                                                         <select class="form-select" name="is_office_licensed">
                                                             <option value="1" <?= ($row['is_office_licensed'] ?? 0) == 1 ? 'selected' : '' ?>>Yes</option>
                                                             <option value="0" <?= ($row['is_office_licensed'] ?? 0) == 0 ? 'selected' : '' ?>>No</option>
                                                         </select>
+                                                    </div>
+                                                    <!-- ++ OFFICE LICENSE KEY EDIT ++ -->
+                                                    <div class="col-md-3">
+                                                        <label class="form-label">Office License Key</label>
+                                                        <input type="text" class="form-control" name="office_license_key" value="<?= htmlspecialchars($row['office_license_key'] ?? '') ?>" placeholder="e.g. XXXXX-XXXXX-XXXXX">
                                                     </div>
                                                     <div class="col-md-4"><label class="form-label">CPU Brand</label><input type="text" class="form-control" name="cpu_brand" value="<?= htmlspecialchars($row['cpu_brand'] ?? '') ?>"></div>
                                                     <div class="col-md-4"><label class="form-label">CPU Generation</label><input type="number" class="form-control" name="cpu_generation" min="1" placeholder="e.g. 11" value="<?= htmlspecialchars($row['cpu_generation'] ?? '') ?>"></div>
@@ -1038,7 +1055,6 @@ $exportParams = http_build_query([
                                                     <div class="col-md-4"><label class="form-label">Monitor Brand</label><input type="text" class="form-control" name="monitor_brand" value="<?= htmlspecialchars($row['monitor_brand'] ?? '') ?>"></div>
                                                     <div class="col-md-4"><label class="form-label">Monitor Size</label><input type="number" class="form-control" name="monitor_size_inches" value="<?= htmlspecialchars($row['monitor_size_inches'] ?? '') ?>"></div>
 
-                                                    <!-- ── USER ACCOUNT TYPE (Edit) ─────────────────────────── -->
                                                     <input type="hidden" name="no_of_user_accounts" id="editLtAccountCount<?= $row['id'] ?>">
 
                                                     <div class="col-md-12">
@@ -1142,7 +1158,7 @@ $exportParams = http_build_query([
                         <?php endwhile; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="29" class="text-center">No devices found.</td>
+                            <td colspan="31" class="text-center">No devices found.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -1187,9 +1203,6 @@ $exportParams = http_build_query([
     </div>
 
     <script>
-        // ═══════════════════════════════════════════════════════════════
-        //  ACCOUNT ROW HELPERS
-        // ═══════════════════════════════════════════════════════════════
         function addAccountRow(containerId) {
             const container = document.getElementById(containerId);
             const row = document.createElement('div');
@@ -1217,7 +1230,6 @@ $exportParams = http_build_query([
             const container = document.getElementById(containerId);
             const rows = container.querySelectorAll('.account-row');
             const accounts = [];
-
             rows.forEach(row => {
                 const name = row.querySelector('.user-name').value.trim();
                 const type = row.querySelector('.account-type-select').value;
@@ -1228,12 +1240,10 @@ $exportParams = http_build_query([
                     });
                 }
             });
-
             document.getElementById(jsonFieldId).value = JSON.stringify(accounts);
             document.getElementById(countFieldId).value = accounts.length;
         }
 
-        // ── Wire up the ADD form ──────────────────────────────────────
         document.getElementById('addLaptopForm').addEventListener('submit', function(e) {
             const ep = document.querySelectorAll("#addLaptopModal input[name='endpoint_security[]']:checked");
             if (ep.length === 0) {
@@ -1244,7 +1254,6 @@ $exportParams = http_build_query([
             buildAccountJson('addAccountContainerL', 'addAccountJsonL', 'addAccountCountL');
         });
 
-        // ── Filter checkbox helpers ────────────────────────────────────────────
         function setupFilterGroup(allSel, itemSel) {
             const allCb = document.querySelector(allSel);
             const items = document.querySelectorAll(itemSel);
@@ -1260,7 +1269,6 @@ $exportParams = http_build_query([
         setupFilterGroup('#allOS', '.os-checkbox');
         setupFilterGroup('#allOffice', '.office-checkbox');
 
-        // ── View → Edit transition ────────────────────────────────────────────
         document.addEventListener('click', function(e) {
             const btn = e.target.closest('[data-edit-target]');
             if (!btn) return;

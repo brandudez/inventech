@@ -41,7 +41,7 @@ function getEndpointNamesExport($conn, $json)
     $ids = implode(',', array_map('intval', $ids));
 
     $result = $conn->query("SELECT antivirus FROM endpoint_security WHERE id IN ($ids)");
-    $names = [];
+    $names  = [];
 
     while ($row = $result->fetch_assoc()) {
         $names[] = $row['antivirus'];
@@ -68,10 +68,10 @@ function getPersonnelNamesExport($conn, $json)
 
     while ($row = $result->fetch_assoc()) {
         $names[] = trim(
-            ($row['rank'] ?? '') . ' ' .
-                ($row['first_name'] ?? '') . ' ' .
+            ($row['rank']        ?? '') . ' ' .
+                ($row['first_name']  ?? '') . ' ' .
                 ($row['middle_name'] ?? '') . ' ' .
-                ($row['last_name'] ?? '')
+                ($row['last_name']   ?? '')
         );
     }
 
@@ -94,11 +94,6 @@ function getAccountNamesExport($json)
     return $json;
 }
 
-/**
- * Return CPU generation status label for export (plain text, no HTML).
- * @param  mixed $gen
- * @return array ['display'=>string, 'label'=>string]
- */
 function getCpuGenStatusExport($gen)
 {
     if ($gen === null || $gen === '' || !is_numeric($gen)) {
@@ -124,16 +119,16 @@ function formatDate($val)
    FILTERS
 ========================= */
 
-$search          = trim($_GET['search'] ?? '');
-$division_raw    = $_GET['division']       ?? [];
-$os_raw          = $_GET['filter_os']      ?? [];
-$office_raw      = $_GET['filter_office']  ?? [];
+$search          = trim($_GET['search']        ?? '');
+$division_raw    = $_GET['division']           ?? [];
+$os_raw          = $_GET['filter_os']          ?? [];
+$office_raw      = $_GET['filter_office']      ?? [];
 
 $division_filter = is_array($division_raw) ? array_filter($division_raw) : [];
 $os_filter       = is_array($os_raw)       ? array_filter($os_raw)       : [];
 $office_filter   = is_array($office_raw)   ? array_filter($office_raw)   : [];
 
-$active_filter  = $_GET['is_active']       ?? '';
+$active_filter  = $_GET['is_active']           ?? '';
 $acq_filter     = trim($_GET['filter_acq']     ?? '');
 $cpu_gen_filter = trim($_GET['filter_cpu_gen'] ?? '');
 
@@ -218,9 +213,9 @@ $whereSQL = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
 ========================= */
 
 $baseJoin = "FROM laptops d
-             LEFT JOIN personnels p ON d.personnel_id = p.id
-             LEFT JOIN ranks r ON p.rank_id = r.id
-             LEFT JOIN divisions dv ON d.division_id = dv.id";
+             LEFT JOIN personnels p  ON d.personnel_id = p.id
+             LEFT JOIN ranks r       ON p.rank_id = r.id
+             LEFT JOIN divisions dv  ON d.division_id = dv.id";
 
 $stmt = $conn->prepare("
     SELECT d.*,
@@ -246,7 +241,7 @@ ob_start();
 
 echo '<html><head><meta charset="UTF-8"></head><body><table border="1">';
 
-/* HEADER — 29 columns */
+/* HEADER — 31 columns */
 $headers = [
     'Device Name',
     'Personnel',
@@ -256,8 +251,10 @@ $headers = [
     'GUID',
     'Operating System',
     'OS Licensed',
+    'OS License Key',        // ++ NEW
     'Office Application',
     'Office Licensed',
+    'Office License Key',    // ++ NEW
     'Endpoint Security',
     'Antivirus Count',
     'Date Installed',
@@ -283,42 +280,44 @@ echo '<tr style="font-weight:bold;background:#0d6ea8;color:#fff;">';
 foreach ($headers as $h) echo "<td>" . htmlspecialchars($h) . "</td>";
 echo '</tr>';
 
-/* DATA — 29 cells per row */
+/* DATA — 31 cells per row */
 while ($row = $result->fetch_assoc()) {
     $cpuSt = getCpuGenStatusExport($row['cpu_generation'] ?? null);
 
     echo '<tr>';
 
     $cells = [
-        $row['device_name'] ?? '',
-        $row['personnel_name'] ?? '',
-        $row['division_name'] ?? '',
-        $row['ip_address'] ?? '',
-        $row['mac_address'] ?? '',
-        $row['guid'] ?? '',
-        $row['os'] ?? '',
+        $row['device_name']        ?? '',
+        $row['personnel_name']     ?? '',
+        $row['division_name']      ?? '',
+        $row['ip_address']         ?? '',
+        $row['mac_address']        ?? '',
+        $row['guid']               ?? '',
+        $row['os']                 ?? '',
         ($row['is_os_licensed'] == 1 ? 'Yes' : 'No'),
+        $row['os_license_key']     ?? '',                                       // ++ NEW
         $row['office_application'] ?? '',
         ($row['is_office_licensed'] == 1 ? 'Yes' : 'No'),
+        $row['office_license_key'] ?? '',                                       // ++ NEW
         getEndpointNamesExport($conn, $row['endpoint_security_id']),
         $row['no_of_installed_anti_virus'] ?? '',
-        formatDate($row['date_installed'] ?? ''),
-        $row['cpu_brand'] ?? '',
+        formatDate($row['date_installed']  ?? ''),
+        $row['cpu_brand']          ?? '',
         $cpuSt['display'],
         $cpuSt['label'],
-        $row['cpu_cores'] ?? '',
-        $row['gb_ram'] ?? '',
-        $row['monitor_brand'] ?? '',
+        $row['cpu_cores']          ?? '',
+        $row['gb_ram']             ?? '',
+        $row['monitor_brand']      ?? '',
         $row['monitor_size_inches'] ?? '',
         $row['no_of_user_accounts'] ?? '',
         getAccountNamesExport($row['user_account_type'] ?? ''),
-        $row['authorized_software'] ?? '',
+        $row['authorized_software']   ?? '',
         $row['unauthorized_software'] ?? '',
         formatDate($row['acquisition_date'] ?? ''),
-        $row['par_serial_no'] ?? '',
+        $row['par_serial_no']      ?? '',
         getPersonnelNamesExport($conn, $row['previous_owners_id']),
         ($row['is_remote_acc'] ? 'YES' : 'NO'),
-        ($row['is_active'] ? 'YES' : 'NO'),
+        ($row['is_active']     ? 'YES' : 'NO'),
     ];
 
     foreach ($cells as $c) {
