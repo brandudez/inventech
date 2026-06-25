@@ -16,9 +16,9 @@ include("../../config/db.php");
 /* ADD USER */
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $role_id     = $_POST['role_id'];
-    $division_id = $_POST['division_id'];
-    $rank_id     = $_POST['rank_id'];
+    $role_id     = filter_input(INPUT_POST, 'role_id',     FILTER_VALIDATE_INT);
+    $division_id = filter_input(INPUT_POST, 'division_id', FILTER_VALIDATE_INT);
+    $rank_id     = filter_input(INPUT_POST, 'rank_id',     FILTER_VALIDATE_INT);
 
     $first_name  = mb_strtoupper(trim($_POST['first_name']),  'UTF-8');
     $middle_name = mb_strtoupper(trim($_POST['middle_name']), 'UTF-8');
@@ -27,25 +27,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email    = trim($_POST['email']);
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
-    /* CURRENT LOGGED IN USER */
     $creator_user_id = $_SESSION['user']['id'] ?? 1;
 
-    /* ── NAME VALIDATION: letters and spaces only ── */
+    /* ── NAME VALIDATION ── */
     $namePattern = '/^[a-zA-Z\s]+$/u';
     $nameErrors  = [];
 
+    if (!$role_id || !$division_id || !$rank_id) {
+        $nameErrors[] = 'Please select a valid Role, Division, and Rank.';
+    }
     if (!preg_match($namePattern, $first_name)) {
-        $nameErrors[] = 'First name must contain letters only (no numbers or special characters).';
+        $nameErrors[] = 'First name must contain letters only.';
     }
     if ($middle_name !== '' && !preg_match($namePattern, $middle_name)) {
-        $nameErrors[] = 'Middle name must contain letters only (no numbers or special characters).';
+        $nameErrors[] = 'Middle name must contain letters only.';
     }
     if (!preg_match($namePattern, $last_name)) {
-        $nameErrors[] = 'Last name must contain letters only (no numbers or special characters).';
+        $nameErrors[] = 'Last name must contain letters only.';
     }
 
     if (!empty($nameErrors)) {
-        $_SESSION['toast'] = ['type' => 'danger', 'message' => implode(' ', $nameErrors)];
+        $_SESSION['toast']     = ['type' => 'danger', 'message' => implode(' ', $nameErrors)];
         $_SESSION['form_data'] = [
             'role_id'     => $role_id,
             'division_id' => $division_id,
@@ -57,23 +59,41 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         header("Location: " . $_SERVER['PHP_SELF']);
         exit();
     }
-    /* ── END NAME VALIDATION ── */
 
-    /* USERNAME */
+    /* ── USERNAME GENERATION WITH COLLISION HANDLING ── */
     $firstInitial  = strtolower(substr($first_name,  0, 1));
     $middleInitial = strtolower(substr($middle_name, 0, 1));
-    $lastNameLower = strtolower($last_name);
-    $username      = $lastNameLower . $firstInitial . $middleInitial;
+    $lastNameLower = strtolower(str_replace(' ', '', $last_name)); // remove spaces for compound last names
+    $baseUsername  = $lastNameLower . $firstInitial . $middleInitial;
 
-    /* CHECK IF EMAIL EXISTS */
+    // Check how many existing usernames start with this base
+    $likePattern = $baseUsername . '%';
+    $checkUser   = $conn->prepare("SELECT username FROM users WHERE username LIKE ?");
+    $checkUser->bind_param("s", $likePattern);
+    $checkUser->execute();
+    $existingUsernames = array_column(
+        $checkUser->get_result()->fetch_all(MYSQLI_ASSOC),
+        'username'
+    );
+    $checkUser->close();
+
+    // Find a unique username: base, base2, base3, ...
+    $username = $baseUsername;
+    $counter  = 2;
+    while (in_array($username, $existingUsernames)) {
+        $username = $baseUsername . $counter;
+        $counter++;
+    }
+
+    /* ── CHECK IF EMAIL EXISTS ── */
     $check = $conn->prepare("SELECT id FROM users WHERE email = ?");
     $check->bind_param("s", $email);
     $check->execute();
+    $emailExists = $check->get_result()->num_rows > 0;
+    $check->close();
 
-    if ($check->get_result()->num_rows > 0) {
-        $_SESSION['toast'] = ['type' => 'danger', 'message' => 'Email already exists!'];
-
-        /* SAVE ALL FIELDS EXCEPT EMAIL AND PASSWORD */
+    if ($emailExists) {
+        $_SESSION['toast']     = ['type' => 'danger', 'message' => 'Email already exists!'];
         $_SESSION['form_data'] = [
             'role_id'     => $role_id,
             'division_id' => $division_id,
@@ -91,15 +111,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         ");
         $stmt->bind_param(
             "iiissssssi",
-            $role_id, $division_id, $rank_id, $username,
-            $first_name, $middle_name, $last_name, $email, $password, $creator_user_id
+            $role_id,
+            $division_id,
+            $rank_id,
+            $username,
+            $first_name,
+            $middle_name,
+            $last_name,
+            $email,
+            $password,
+            $creator_user_id
         );
 
         if ($stmt->execute()) {
-            $_SESSION['toast'] = ['type' => 'success', 'message' => 'User added successfully!'];
+            $_SESSION['toast'] = [
+                'type'    => 'success',
+                'message' => "User added! Username: {$username}"  // show generated username
+            ];
         } else {
             $_SESSION['toast'] = ['type' => 'danger', 'message' => 'Error adding user. Please try again.'];
         }
+        $stmt->close();
     }
 
     header("Location: " . $_SERVER['PHP_SELF']);
@@ -111,12 +143,12 @@ $roles     = $conn->query("SELECT * FROM roles")->fetch_all(MYSQLI_ASSOC);
 $divisions = $conn->query("SELECT * FROM divisions")->fetch_all(MYSQLI_ASSOC);
 $ranks     = $conn->query("SELECT * FROM ranks ORDER BY id DESC")->fetch_all(MYSQLI_ASSOC);
 
-/* RETRIEVE SAVED FORM DATA THEN CLEAR IT */
 $form_data = $_SESSION['form_data'] ?? [];
 unset($_SESSION['form_data']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -127,12 +159,13 @@ unset($_SESSION['form_data']);
     <link rel="stylesheet" href="./css/superadmin_sidebar.css">
     <title>Add User</title>
 </head>
+
 <body>
 
     <?php include 'superadmin_sidebar.php'; ?>
     <?php include 'superadmin_navbar.php'; ?>
 
-    <!-- TOAST CONTAINER -->
+    <!-- TOAST -->
     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 99999;">
         <div id="liveToast" class="toast align-items-center border-0 text-white" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
@@ -159,7 +192,7 @@ unset($_SESSION['form_data']);
                             <?php foreach ($roles as $role): ?>
                                 <option value="<?= $role['id'] ?>"
                                     <?= ($form_data['role_id'] ?? '') == $role['id'] ? 'selected' : '' ?>>
-                                    <?= ucfirst($role['role_name']) ?>
+                                    <?= ucfirst(htmlspecialchars($role['role_name'])) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -196,26 +229,26 @@ unset($_SESSION['form_data']);
                         <label>First Name</label>
                         <input type="text" placeholder="Enter First Name" name="first_name" required
                             pattern="[a-zA-Z\s]+"
-                            title="Letters and spaces only — no numbers or special characters"
+                            title="Letters and spaces only"
                             value="<?= htmlspecialchars($form_data['first_name'] ?? '') ?>">
                     </div>
                     <div class="form-group">
                         <label>Middle Name</label>
                         <input type="text" placeholder="Enter Middle Name" name="middle_name"
                             pattern="[a-zA-Z\s]*"
-                            title="Letters and spaces only — no numbers or special characters"
+                            title="Letters and spaces only"
                             value="<?= htmlspecialchars($form_data['middle_name'] ?? '') ?>">
                     </div>
                     <div class="form-group">
                         <label>Last Name</label>
                         <input type="text" placeholder="Enter Last Name" name="last_name" required
                             pattern="[a-zA-Z\s]+"
-                            title="Letters and spaces only — no numbers or special characters"
+                            title="Letters and spaces only"
                             value="<?= htmlspecialchars($form_data['last_name'] ?? '') ?>">
                     </div>
                 </div>
 
-                <!-- EMAIL + PASSWORD — intentionally no value (always cleared) -->
+                <!-- EMAIL + PASSWORD -->
                 <div class="form-row">
                     <div class="form-group">
                         <label>Email</label>
@@ -227,35 +260,36 @@ unset($_SESSION['form_data']);
                     </div>
                 </div>
 
-                <!-- BUTTON -->
                 <div class="button-container">
                     <button type="submit" class="btn-submit">Add User</button>
                 </div>
 
             </form>
-
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <?php if (!empty($_SESSION['toast'])): ?>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const toastEl  = document.getElementById('liveToast');
-            const toastMsg = document.getElementById('toastMessage');
-            const type     = '<?= $_SESSION['toast']['type'] ?>';
-            const message  = '<?= addslashes($_SESSION['toast']['message']) ?>';
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const toastEl = document.getElementById('liveToast');
+                const toastMsg = document.getElementById('toastMessage');
+                const type = '<?= $_SESSION['toast']['type'] ?>';
+                const message = '<?= addslashes($_SESSION['toast']['message']) ?>';
 
-            toastEl.classList.add('bg-' + type);
-            toastMsg.textContent = message;
+                toastEl.classList.add('bg-' + type);
+                toastMsg.textContent = message;
 
-            const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
-            toast.show();
-        });
-    </script>
-    <?php unset($_SESSION['toast']); ?>
+                const toast = new bootstrap.Toast(toastEl, {
+                    delay: 4000
+                });
+                toast.show();
+            });
+        </script>
+        <?php unset($_SESSION['toast']); ?>
     <?php endif; ?>
 
 </body>
+
 </html>

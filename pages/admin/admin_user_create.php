@@ -17,8 +17,8 @@ include("../../config/db.php");
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $role_id     = 3; // Hardcoded: Encoder role
-    $division_id = $_POST['division_id'];
-    $rank_id     = $_POST['rank_id'];
+    $division_id = filter_input(INPUT_POST, 'division_id', FILTER_VALIDATE_INT);
+    $rank_id     = filter_input(INPUT_POST, 'rank_id',     FILTER_VALIDATE_INT);
 
     $first_name  = mb_strtoupper(trim($_POST['first_name']),  'UTF-8');
     $middle_name = mb_strtoupper(trim($_POST['middle_name']), 'UTF-8');
@@ -27,23 +27,73 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email    = trim($_POST['email']);
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
-    /* CURRENT LOGGED IN USER */
     $creator_user_id = $_SESSION['user']['id'] ?? 1;
 
-    /* USERNAME */
+    /* ── NAME VALIDATION ── */
+    $namePattern = '/^[a-zA-Z\s]+$/u';
+    $nameErrors  = [];
+
+    if (!$division_id || !$rank_id) {
+        $nameErrors[] = 'Please select a valid Division and Rank.';
+    }
+    if (!preg_match($namePattern, $first_name)) {
+        $nameErrors[] = 'First name must contain letters only.';
+    }
+    if ($middle_name !== '' && !preg_match($namePattern, $middle_name)) {
+        $nameErrors[] = 'Middle name must contain letters only.';
+    }
+    if (!preg_match($namePattern, $last_name)) {
+        $nameErrors[] = 'Last name must contain letters only.';
+    }
+
+    if (!empty($nameErrors)) {
+        $_SESSION['toast']     = ['type' => 'danger', 'message' => implode(' ', $nameErrors)];
+        $_SESSION['form_data'] = [
+            'division_id' => $division_id,
+            'rank_id'     => $rank_id,
+            'first_name'  => $_POST['first_name'],
+            'middle_name' => $_POST['middle_name'],
+            'last_name'   => $_POST['last_name'],
+        ];
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit();
+    }
+
+    /* ── USERNAME GENERATION WITH COLLISION HANDLING ── */
     $firstInitial  = strtolower(substr($first_name,  0, 1));
     $middleInitial = strtolower(substr($middle_name, 0, 1));
-    $lastNameLower = strtolower($last_name);
-    $username      = $lastNameLower . $firstInitial . $middleInitial;
+    $lastNameLower = strtolower(str_replace(' ', '', $last_name)); // handles compound last names
+    $baseUsername  = $lastNameLower . $firstInitial . $middleInitial;
 
-    /* CHECK IF EMAIL EXISTS */
+    // Fetch all usernames that start with the base
+    $likePattern = $baseUsername . '%';
+    $checkUser   = $conn->prepare("SELECT username FROM users WHERE username LIKE ?");
+    $checkUser->bind_param("s", $likePattern);
+    $checkUser->execute();
+    $existingUsernames = array_column(
+        $checkUser->get_result()->fetch_all(MYSQLI_ASSOC),
+        'username'
+    );
+    $checkUser->close();
+
+    // Append counter until unique: base → base2 → base3 ...
+    $username = $baseUsername;
+    $counter  = 2;
+    while (in_array($username, $existingUsernames)) {
+        $username = $baseUsername . $counter;
+        $counter++;
+    }
+
+    /* ── CHECK IF EMAIL EXISTS ── */
     $check = $conn->prepare("SELECT id FROM users WHERE email = ?");
     $check->bind_param("s", $email);
     $check->execute();
+    $emailExists = $check->get_result()->num_rows > 0;
+    $check->close();
 
-    if ($check->get_result()->num_rows > 0) {
-        $_SESSION['toast'] = ['type' => 'danger', 'message' => 'Email already exists!'];
-        $_SESSION['form_data'] = $_POST;
+    if ($emailExists) {
+        $_SESSION['toast']        = ['type' => 'danger', 'message' => 'Email already exists!'];
+        $_SESSION['form_data']    = $_POST;
         $_SESSION['email_exists'] = true;
     } else {
         $stmt = $conn->prepare("
@@ -67,10 +117,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         );
 
         if ($stmt->execute()) {
-            $_SESSION['toast'] = ['type' => 'success', 'message' => 'User added successfully!'];
+            $_SESSION['toast'] = [
+                'type'    => 'success',
+                'message' => "User added! Username: {$username}"
+            ];
         } else {
             $_SESSION['toast'] = ['type' => 'danger', 'message' => 'Error adding user. Please try again.'];
         }
+        $stmt->close();
     }
 
     header("Location: " . $_SERVER['PHP_SELF']);
@@ -129,7 +183,6 @@ $ranks     = $conn->query("SELECT * FROM ranks ORDER BY id DESC")->fetch_all(MYS
                         <label>Role</label>
                         <input type="text" value="Encoder" disabled
                             style="background-color: #e9ecef; cursor: not-allowed;">
-                        <!-- Role ID is hardcoded on the server; no hidden input needed -->
                     </div>
                     <div class="form-group">
                         <label>Division</label>
@@ -162,16 +215,22 @@ $ranks     = $conn->query("SELECT * FROM ranks ORDER BY id DESC")->fetch_all(MYS
                     <div class="form-group">
                         <label>First Name</label>
                         <input type="text" placeholder="Enter First Name" name="first_name" required
+                            pattern="[a-zA-Z\s]+"
+                            title="Letters and spaces only"
                             value="<?= htmlspecialchars($formData['first_name'] ?? '') ?>">
                     </div>
                     <div class="form-group">
                         <label>Middle Name</label>
                         <input type="text" placeholder="Enter Middle Name" name="middle_name"
+                            pattern="[a-zA-Z\s]*"
+                            title="Letters and spaces only"
                             value="<?= htmlspecialchars($formData['middle_name'] ?? '') ?>">
                     </div>
                     <div class="form-group">
                         <label>Last Name</label>
                         <input type="text" placeholder="Enter Last Name" name="last_name" required
+                            pattern="[a-zA-Z\s]+"
+                            title="Letters and spaces only"
                             value="<?= htmlspecialchars($formData['last_name'] ?? '') ?>">
                     </div>
                 </div>
@@ -189,13 +248,11 @@ $ranks     = $conn->query("SELECT * FROM ranks ORDER BY id DESC")->fetch_all(MYS
                     </div>
                 </div>
 
-                <!-- BUTTON -->
                 <div class="button-container">
                     <button type="submit" class="btn-submit">Add User</button>
                 </div>
 
             </form>
-
         </div>
     </div>
 
