@@ -437,7 +437,7 @@ $exportParams = http_build_query([
                 <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
                 <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
                 <input type="hidden" name="filter_cpu_gen" value="<?= htmlspecialchars($cpu_gen_filter) ?>">
-                <input type="text" name="search" class="search-input" placeholder="Search desktops..." value="<?= htmlspecialchars($search) ?>">
+                <input type="text" name="search" class="search-input" placeholder="Search by name, personnel, IP, GUID, or MAC address..." value="<?= htmlspecialchars($search) ?>">
                 <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
                 <a href="export_desktops.php?<?= htmlspecialchars($exportParams) ?>"
                     class="btn add-desktop-btn"
