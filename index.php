@@ -1,4 +1,3 @@
-
 <?php
 session_start();
 /* =========================
@@ -19,7 +18,7 @@ if (isset($_SESSION['user'])) {
   }
 
   if ($role === 3) {
-    header("Location: pages/encoder/encoder_dashboard.php");
+    header("Location: pages/encoder/personnel_list.php");
     exit();
   }
 
