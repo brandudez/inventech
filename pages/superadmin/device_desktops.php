@@ -104,10 +104,12 @@ $search = trim($_GET['search'] ?? '');
 $division_filter_raw = $_GET['division']      ?? [];
 $os_filter_raw       = $_GET['filter_os']     ?? [];
 $office_filter_raw   = $_GET['filter_office'] ?? [];
+$ep_filter_raw       = $_GET['filter_ep']     ?? [];
 
 $division_filter = is_array($division_filter_raw) ? array_filter(array_map('trim', $division_filter_raw)) : [];
 $os_filter       = is_array($os_filter_raw)       ? array_filter(array_map('trim', $os_filter_raw))       : [];
 $office_filter   = is_array($office_filter_raw)   ? array_filter($office_filter_raw)   : [];
+$ep_filter       = is_array($ep_filter_raw)       ? array_filter(array_map('intval', $ep_filter_raw))     : [];
 $active_filter   = isset($_GET['is_active']) ? trim($_GET['is_active']) : '';
 
 $acq_filter = trim($_GET['filter_acq'] ?? '');
@@ -158,6 +160,22 @@ if (! empty($office_filter)) {
             $baseParams[] = $v;
             $baseTypes .= 's';
         }
+    }
+    $baseWhere[] = '(' . implode(' OR ', $conditions) . ')';
+}
+if (! empty($ep_filter)) {
+    // endpoint_security_id is stored as a JSON array of ids on the desktops row,
+    // e.g. "[2,5]" — so we check membership with JSON_CONTAINS rather than IN(),
+    // guarding against NULL/empty/malformed JSON on legacy rows.
+    // We check both the numeric form (JSON_CONTAINS(col, '3')) and the quoted
+    // string form (JSON_CONTAINS(col, '"3"')) since some rows may have been
+    // saved with ids as JSON strings instead of JSON numbers.
+    $conditions = [];
+    foreach ($ep_filter as $v) {
+        $conditions[] = "(d.endpoint_security_id IS NOT NULL AND d.endpoint_security_id != '' AND (JSON_CONTAINS(d.endpoint_security_id, ?) OR JSON_CONTAINS(d.endpoint_security_id, ?)))";
+        $baseParams[] = (string)$v;            // matches [3,7]
+        $baseParams[] = json_encode((string)$v); // matches ["3","7"]
+        $baseTypes  .= 'ss';
     }
     $baseWhere[] = '(' . implode(' OR ', $conditions) . ')';
 }
@@ -246,6 +264,12 @@ while ($r = mysqli_fetch_assoc($eq)) $addEpRows[] = $r;
 
 $addHandlerRows = $addPersonnelRows;
 
+// Lookup map for endpoint security id => name, used to render the filter label
+$epNameById = [];
+foreach ($addEpRows as $epRowLookup) {
+    $epNameById[$epRowLookup['id']] = $epRowLookup['antivirus'];
+}
+
 $osList = [
     "-",
     "Windows 10 Home",
@@ -307,6 +331,7 @@ $exportParams = http_build_query([
     'division'      => $division_filter,
     'filter_os'     => $os_filter,
     'filter_office' => $office_filter,
+    'filter_ep'     => $ep_filter,
     'is_active'     => $active_filter,
     'filter_acq'    => $acq_filter,
     'filter_cpu_gen' => $cpu_gen_filter,
@@ -408,6 +433,7 @@ $exportParams = http_build_query([
                 <?php foreach ($division_filter as $v): ?><input type="hidden" name="division[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
                 <?php foreach ($os_filter      as $v): ?><input type="hidden" name="filter_os[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
                 <?php foreach ($office_filter  as $v): ?><input type="hidden" name="filter_office[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
+                <?php foreach ($ep_filter      as $v): ?><input type="hidden" name="filter_ep[]" value="<?= htmlspecialchars($v) ?>"><?php endforeach; ?>
                 <input type="hidden" name="is_active" value="<?= htmlspecialchars($active_filter) ?>">
                 <input type="hidden" name="filter_acq" value="<?= htmlspecialchars($acq_filter) ?>">
                 <input type="hidden" name="filter_cpu_gen" value="<?= htmlspecialchars($cpu_gen_filter) ?>">
@@ -498,6 +524,37 @@ $exportParams = http_build_query([
                             <?php endforeach; ?>
                         </ul>
                     </div>
+
+                    <!-- ENDPOINT SECURITY -->
+                    <div class="dropdown">
+                        <?php
+                        if (empty($ep_filter)) {
+                            $epLabel = 'Endpoint Security';
+                        } elseif (count($ep_filter) === 1) {
+                            $epLabel = $epNameById[$ep_filter[0]] ?? 'Endpoint Security';
+                        } else {
+                            $epLabel = count($ep_filter) . ' Endpoint Security selected';
+                        }
+                        ?>
+                        <button class="btn filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"><?= htmlspecialchars($epLabel) ?></button>
+                        <ul class="dropdown-menu p-3 dropdown-scroll wide-dropdown">
+                            <li class="mb-2"><button type="submit" class="btn btn-primary w-100">Apply</button></li>
+                            <li class="mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input ep-all-checkbox" type="checkbox" id="allEp" <?= empty($ep_filter) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="allEp">All</label>
+                                </div>
+                            </li>
+                            <?php foreach ($addEpRows as $epRow): ?>
+                                <li class="mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input ep-filter-checkbox" type="checkbox" name="filter_ep[]" value="<?= $epRow['id'] ?>" id="ep_filter_<?= $epRow['id'] ?>" <?= in_array($epRow['id'], $ep_filter) ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="ep_filter_<?= $epRow['id'] ?>"><?= htmlspecialchars($epRow['antivirus']) ?></label>
+                                    </div>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
                 </form>
             </div>
 
@@ -512,6 +569,7 @@ $exportParams = http_build_query([
                     'division'      => $division_filter,
                     'filter_os'     => $os_filter,
                     'filter_office' => $office_filter,
+                    'filter_ep'     => $ep_filter,
                     'is_active'     => $active_filter,
                     'filter_cpu_gen' => $cpu_gen_filter,
                 ]);
@@ -535,6 +593,7 @@ $exportParams = http_build_query([
                         'division'      => $division_filter,
                         'filter_os'     => $os_filter,
                         'filter_office' => $office_filter,
+                        'filter_ep'     => $ep_filter,
                         'filter_acq'    => $acq_filter,
                         'filter_cpu_gen' => $cpu_gen_filter,
                     ]); ?>
@@ -556,6 +615,7 @@ $exportParams = http_build_query([
                     'division'      => $division_filter,
                     'filter_os'     => $os_filter,
                     'filter_office' => $office_filter,
+                    'filter_ep'     => $ep_filter,
                     'is_active'     => $active_filter,
                     'filter_acq'    => $acq_filter,
                 ]);
@@ -1228,6 +1288,7 @@ $exportParams = http_build_query([
                     'division'      => $division_filter,
                     'filter_os'     => $os_filter,
                     'filter_office' => $office_filter,
+                    'filter_ep'     => $ep_filter,
                     'is_active'     => $active_filter,
                     'filter_acq'    => $acq_filter,
                     'filter_cpu_gen' => $cpu_gen_filter,
@@ -1335,6 +1396,7 @@ $exportParams = http_build_query([
         setupFilterGroup('#allDivision', '.division-checkbox');
         setupFilterGroup('#allOS', '.os-checkbox');
         setupFilterGroup('#allOffice', '.office-checkbox');
+        setupFilterGroup('#allEp', '.ep-filter-checkbox');
 
         // ── View → Edit transition ────────────────────────────────────
         document.addEventListener('click', function(e) {
